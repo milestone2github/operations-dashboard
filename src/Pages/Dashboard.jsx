@@ -73,7 +73,7 @@ const Dashboard = () => {
             name: <div className=' text-center'>Pending Transactions</div>,
             selector: row => <div className=' flex flex-col items-center gap-2'>
                 <div className='  flex gap-1 justify-center overflow-auto'>
-                <p className=' bg-[#f0f8f0] text-green-700 rounded-md p-2 font-semibold text-xs'>{row.sysPending + row.purchRedempPending + row.switchPending}&nbsp;TC</p>
+                <p className=' bg-[#f0f8f0] text-green-700 rounded-md p-2 font-semibold text-xs'>{row.totalPending}&nbsp;TC</p>
                     <p className=' bg-[#EFF3FE] text-[#3C32E1] rounded-md p-2 font-semibold text-xs'>{row.sysPending}&nbsp;S</p>
                     <p className=' bg-[#FEFBE8] text-[#F29800] rounded-md p-2 font-semibold text-xs'>{row.purchRedempPending}&nbsp;PR</p>
                     <p className=' bg-[#FDF1F1] text-[#F53D59] rounded-md p-2 font-semibold text-xs'>{row.switchPending}&nbsp;SW</p>

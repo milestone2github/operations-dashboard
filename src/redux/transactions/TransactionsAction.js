@@ -1,5 +1,78 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
+export const getTransactionsBySession = createAsyncThunk('transactions/sessional', 
+  async (sessionId, {rejectWithValue}) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/transactions-by-session?sessionId=${sessionId}`, {
+        method: 'GET',
+        credentials: 'include'
+      })
+  
+      const resData = await response.json()
+  
+      if(!response.ok) {
+        throw new Error(resData.Error || "Internal server error while getting transactions by session id")
+      }
+  
+      return resData.data
+    } catch (error) {
+      console.error("Error getting transactions by session id: ", error.message)
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const addFraction = createAsyncThunk('transactions/addFraction', 
+  async ({id, fractionAmount, status}, {rejectWithValue}) => {
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/fraction/add/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fractionAmount, status})
+      })
+  
+      const resData = await response.json()
+  
+      if(!response.ok) {
+        throw new Error(resData.Error || "Internal server error while adding fraction")
+      }
+  
+      return resData.data
+    } catch (error) {
+      console.error("Error adding fraction: ", error.message)
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const removeFraction = createAsyncThunk('transactions/removeFraction', 
+  async ({id, fractionId}, {rejectWithValue}) => {
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/fraction/remove/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fractionId})
+      })
+  
+      const resData = await response.json()
+  
+      if(!response.ok) {
+        throw new Error(resData.Error || "Internal server error while removing fraction")
+      }
+  
+      return resData.data
+    } catch (error) {
+      console.error("Error removing fraction: ", error.message)
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// ********  NOT REQUIRED ********** 
 export const getSystematic = createAsyncThunk('transactions/systematic', 
   async (sessionId, {rejectWithValue}) => {
     try {

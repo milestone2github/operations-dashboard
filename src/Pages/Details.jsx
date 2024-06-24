@@ -8,22 +8,19 @@ import { MdClose } from "react-icons/md";
 import toast, { Toaster } from 'react-hot-toast';
 import { useParams } from 'react-router-dom';
 import Loader from '../components/Loader';
-import { getPurchRedemp, getSystematic, getSwitch } from '../redux/transactions/TransactionsAction';
+import { addFraction, getTransactionsBySession, removeFraction } from '../redux/transactions/TransactionsAction';
 import {
-  addFraction as systematicAddFraction,
-  removeFraction as removeSystematicFraction,
-  updateFractionAmount as updateSystematicFractionAmount,
-} from '../redux/transactions/SystematicSlice';
-import {
-  addFraction as purchRedAddFraction,
-  removeFraction as RemovePurchRedFraction,
-  updateFractionAmount as updatePurchRedFractionAmount
-} from '../redux/transactions/PurchRedempSlice'
-import {
-  addFraction as switchAddFraction,
-  removeFraction as RemoveSwitchFraction,
-  updateFractionAmount as updateSwitchFractionAmount
-} from '../redux/transactions/SwitchSlice'
+  systematicAddFraction,
+  removeSystematicFraction,
+  updateSystematicFractionAmount,
+  purchRedAddFraction,
+  removePurchRedFraction,
+  updatePurchRedFractionAmount,
+  switchAddFraction,
+  removeSwitchFraction,
+  updateSwitchFractionAmount
+} from '../redux/transactions/TransactionSlice';
+
 import { formatDate } from '../utils/formatDate';
 import { countPending, extractCommonData } from '../utils/extractCommonData';
 
@@ -46,57 +43,35 @@ const Details = () => {
   const dispatch = useDispatch()
   const { userdata } = useSelector((state) => state.auth)
   const {
-    transactions: systematicTransactions,
-    isLoading: sysLoading,
-    error: sysError
-  } = useSelector((state) => state.systematic)
-
-  const {
-    transactions: purchRedempTransactions,
-    isLoading: purchRedempLoading,
-    error: purchRedempError
-  } = useSelector((state) => state.purchRedemp)
-
-  const {
-    transactions: switchTransactions,
-    isLoading: switchLoading,
-    error: switchError
-  } = useSelector((state) => state.switch)
+    systematicTransactions,
+    purchRedempTransactions,
+    switchTransactions,
+    isLoading,
+    error
+  } = useSelector((state) => state.sessionalTransactions)
 
   // side effect to make api calls to get data 
   useEffect(() => {
-    dispatch(getSystematic(sessionId))
-    dispatch(getPurchRedemp(sessionId))
-    dispatch(getSwitch(sessionId))
+    dispatch(getTransactionsBySession(sessionId))
   }, [sessionId])
 
   // side effects to handle fetch errors 
   useEffect(() => {
-    if (sysError) { toast.error(sysError) }
-  }, [sysError])
-
-  useEffect(() => {
-    if (purchRedempError) { toast.error(purchRedempError) }
-  }, [purchRedempError])
-
-  useEffect(() => {
-    if (switchError) { toast.error(switchError) }
-  }, [switchError])
-  
+    if (error) { toast.error(error) }
+  }, [error])
 
   // extract common data 
   useEffect(() => {
     // if (!commonData.panNumber) {
-    console.log('extracting...') //test
-      if (purchRedempTransactions.length) {
-        setCommonData(extractCommonData(purchRedempTransactions[0]))
-      }
-      else if (systematicTransactions.length) {
-        setCommonData(extractCommonData(systematicTransactions[0]))
-      }
-      else if (switchTransactions.length) {
-        setCommonData(extractCommonData(switchTransactions[0]))
-      }
+    if (purchRedempTransactions.length) {
+      setCommonData(extractCommonData(purchRedempTransactions[0]))
+    }
+    else if (systematicTransactions.length) {
+      setCommonData(extractCommonData(systematicTransactions[0]))
+    }
+    else if (switchTransactions.length) {
+      setCommonData(extractCommonData(switchTransactions[0]))
+    }
     // }
 
     setCommonData(prevState => ({
@@ -129,97 +104,89 @@ const Details = () => {
   // HANDLERS TO ADD FRACTIONS 
   // function to add fraction in systematic transactions  
   const handleSystematicAdd = (index) => {
-    let transaction = systematicTransactions[index]
-    // let originalAmount = transaction.sip_swp_stpAmount
+    // let transaction = systematicTransactions[index]
 
     // if (!transaction.transactionFractions.length) {
-    //   dispatch(systematicAddFraction({ index, amount: originalAmount / 2, status: 'PENDING' }))
-    //   dispatch(systematicAddFraction({ index, amount: originalAmount / 2, status: 'PENDING' }))
+    //   dispatch(systematicAddFraction({ index, amount: 0, status: 'PENDING' }))
+    //   dispatch(systematicAddFraction({ index, amount: 0, status: 'PENDING' }))
     // }
     // else {
-    //   let fractionsSum = transaction.transactionFractions.reduce((accumulator, item) => (
-    //     accumulator + item.fractionAmount
-    //   ), 0)
-
-    //   dispatch(systematicAddFraction({
-    //     index,
-    //     amount: originalAmount - fractionsSum > 0 ? originalAmount - fractionsSum : 0,
-    //     status: 'PENDING'
-    //   }))
+      dispatch(systematicAddFraction({ index, amount: 0, status: 'PENDING' }))
     // }
-
-    if (!transaction.transactionFractions.length) {
-      dispatch(systematicAddFraction({ index, amount: 0, status: 'PENDING' }))
-      dispatch(systematicAddFraction({ index, amount: 0, status: 'PENDING' }))
-    }
-    else {
-      dispatch(systematicAddFraction({ index, amount: 0, status: 'PENDING' }))
-    }
   }
 
   // function to add fraction in purchase/redemption transactions 
   const handlePurchRedempAdd = (index) => {
-    let transaction = purchRedempTransactions[index]
-    if (!transaction.transactionFractions.length) {
+    // let transaction = purchRedempTransactions[index]
+    // if (!transaction.transactionFractions.length) {
+    //   dispatch(purchRedAddFraction({ index, amount: 0, status: 'PENDING' }))
+    //   dispatch(purchRedAddFraction({ index, amount: 0, status: 'PENDING' }))
+    // }
+    // else {
       dispatch(purchRedAddFraction({ index, amount: 0, status: 'PENDING' }))
-      dispatch(purchRedAddFraction({ index, amount: 0, status: 'PENDING' }))
-    }
-    else {
-      dispatch(purchRedAddFraction({ index, amount: 0, status: 'PENDING' }))
-    }
+    // }
   }
 
   // function to add fraction in switch transactions 
   const handleSwitchAdd = (index) => {
-    let transaction = switchTransactions[index]
-    if (!transaction.transactionFractions.length) {
+    // let transaction = switchTransactions[index]
+    // if (!transaction.transactionFractions.length) {
+    //   dispatch(switchAddFraction({ index, amount: 0, status: 'PENDING' }))
+    //   dispatch(switchAddFraction({ index, amount: 0, status: 'PENDING' }))
+    // }
+    // else {
       dispatch(switchAddFraction({ index, amount: 0, status: 'PENDING' }))
-      dispatch(switchAddFraction({ index, amount: 0, status: 'PENDING' }))
-    }
-    else {
-      dispatch(switchAddFraction({ index, amount: 0, status: 'PENDING' }))
-    }
+    // }
   }
 
   // HANDLERS TO REMOVE FRACTIONS 
   // function to remove fraction from systematic transactions 
   const handleDeleteSystematic = (index, fracIndex) => {
-    let fractions = systematicTransactions[index].transactionFractions
+    // let fractions = systematicTransactions[index].transactionFractions
 
-    if (fractions.length > 2)
+    // if (fractions.length > 2)
       dispatch(removeSystematicFraction({ index, fracIndex }))
-    else {
-      dispatch(removeSystematicFraction({ index, fracIndex: 0 }))
-      dispatch(removeSystematicFraction({ index, fracIndex: 0 }))
-    }
+    // else {
+    //   dispatch(removeSystematicFraction({ index, fracIndex: 0 }))
+    //   dispatch(removeSystematicFraction({ index, fracIndex: 0 }))
+    // }
   }
 
   // function to remove fraction from purchase/redemption transactions
   const handleDeletePurchRedemp = (index, fracIndex) => {
-    let fractions = purchRedempTransactions[index].transactionFractions
+    // let fractions = purchRedempTransactions[index].transactionFractions
 
-    if (fractions.length > 2)
-      dispatch(RemovePurchRedFraction({ index, fracIndex }))
-    else {
-      dispatch(RemovePurchRedFraction({ index, fracIndex: 0 }))
-      dispatch(RemovePurchRedFraction({ index, fracIndex: 0 }))
-    }
+    // if (fractions.length > 2)
+      dispatch(removePurchRedFraction({ index, fracIndex }))
+    // else {
+    //   dispatch(removePurchRedFraction({ index, fracIndex: 0 }))
+    //   dispatch(removePurchRedFraction({ index, fracIndex: 0 }))
+    // }
   }
 
   // function to remove fraction from purchase/redemption transactions
   const handleDeleteSwitch = (index, fracIndex) => {
-    let fractions = switchTransactions[index].transactionFractions
+    // let fractions = switchTransactions[index].transactionFractions
 
-    if (fractions.length > 2)
-      dispatch(RemoveSwitchFraction({ index, fracIndex }))
-    else {
-      dispatch(RemoveSwitchFraction({ index, fracIndex: 0 }))
-      dispatch(RemoveSwitchFraction({ index, fracIndex: 0 }))
-    }
+    // if (fractions.length > 2)
+      dispatch(removeSwitchFraction({ index, fracIndex }))
+    // else {
+    //   dispatch(removeSwitchFraction({ index, fracIndex: 0 }))
+    //   dispatch(removeSwitchFraction({ index, fracIndex: 0 }))
+    // }
   }
 
-  const handleGenerateLink = (transaction) => {
+  const handleGenerateLink = (id) => {
     console.log('link generated...') //todo
+  }
+
+  const handleGenerateLinkOfFraction = (id, amount) => {
+    dispatch(addFraction({id, fractionAmount: amount, status: 'PENDING'}))
+    console.log('link generated...') //todo
+  }
+
+  const handleRemoveFraction = (id, fractionId) => {
+    dispatch(removeFraction({id, fractionId}))
   }
 
   const showLoading = <tr>
@@ -310,7 +277,7 @@ const Details = () => {
                 </tr>
               </thead>
               <tbody>
-                {sysLoading ? showLoading :
+                {isLoading ? showLoading :
                   !systematicTransactions?.length ?
                     <tr><td></td><td colSpan={18} className='p-6  text-orange-500 text-lg text-left'>No Systematic Transactions Found</td></tr> :
                     systematicTransactions.map((item, index) =>
@@ -327,22 +294,22 @@ const Details = () => {
                               color: color.find((color) => color.type === item.status).color
                             }}
                           >{color.find((color) => color.type === item.status).value}</span></td>
-                          <td>{item.systematicTraxType}</td>
-                          <td>{item.systematicTraxFor}</td>
-                          <td>{item.systematicMfAmcName}</td>
-                          <td>{item.systematicSchemeName}</td>
-                          <td>{item.systematicSchemeOption}</td>
-                          <td>{item.systematicFolio}</td>
-                          <td>{item.tenureOfSip_swp_stp}</td>
+                          <td>{item.transactionType}</td>
+                          <td>{item.transactionFor}</td>
+                          <td>{item.amcName}</td>
+                          <td>{item.schemeName}</td>
+                          <td>{item.schemeOption}</td>
+                          <td>{item.folioNumber}</td>
+                          <td>{item.tenure}</td>
                           <td>{item.firstTransactionAmount}</td>
                           <td>{formatDate(item.createdAt)}</td>
-                          <td>{item.firstInstallmentPaymentMode}</td>
-                          <td>{item.sip_swp_stpAmount}</td>
-                          <td><button className=' text-2xl' onClick={() => {setRowId(item._id); handleSystematicAdd(index)}}>+</button></td>
+                          <td>{item.paymentMode}</td>
+                          <td>{item.amount}</td>
+                          <td><button className=' text-2xl' onClick={() => { setRowId(item._id); handleSystematicAdd(index) }}>+</button></td>
                           <td>
                             <button disabled={!item.transactionFractions?.length ? false : true} style={
                               !item.transactionFractions?.length ? { cursor: "pointer" } : { cursor: "not-allowed" }
-                            } className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white' onClick={handleGenerateLink}>Generate Link</button>
+                            } className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white' onClick={() => handleGenerateLink(item._id)}>Generate Link</button>
                           </td>
                         </tr>
                         {rowId === item?._id && item.transactionFractions?.length !== 0 && <td colSpan="20" className=' '>
@@ -379,30 +346,35 @@ const Details = () => {
                                         color: color.find((color) => color.type === fractionItem.status).color
                                       }}
                                     >{color.find((color) => color.type === fractionItem.status).value}</span></td>
-                                    <td>{item.systematicTraxType}</td>
-                                    <td>{item.systematicTraxFor}</td>
-                                    <td>{item.systematicMfAmcName}</td>
-                                    <td>{item.systematicSchemeName}</td>
-                                    <td>{item.systematicSchemeOption}</td>
-                                    <td>{item.systematicFolio}</td>
-                                    <td>{item.tenureOfSip_swp_stp}</td>
+                                    <td>{item.transactionType}</td>
+                                    <td>{item.transactionFor}</td>
+                                    <td>{item.amcName}</td>
+                                    <td>{item.schemeName}</td>
+                                    <td>{item.schemeOption}</td>
+                                    <td>{item.folioNumber}</td>
+                                    <td>{item.tenure}</td>
                                     <td>{item.firstTransactionAmount}</td>
-                                    <td>{formatDate(item.createdAt)}</td>
-                                    <td>{item.firstInstallmentPaymentMode}</td>
+                                    <td>{formatDate(fractionItem.transactionDate)}</td>
+                                    <td>{item.paymentMode}</td>
                                     <td>
                                       <input
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
                                         value={fractionItem.fractionAmount}
                                         type='text'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus)}
                                         onChange={(e) => handleSysAmountChange(e, index, fracIndex)} placeholder='Enter amount....' />
                                     </td>
                                     <td>
-                                      <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.sip_swp_stpAmount ? true : false}
-                                        style={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.sip_swp_stpAmount ? { cursor: "not-allowed" } : { cursor: "pointer" }}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white' onClick={() => { console.log('generateLink clicked') }}>Generate Link</button>
+                                      <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
+                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-300 disabled:cursor-not-allowed' 
+                                        onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem.fractionAmount) }}>Generate Link</button>
                                     </td>
                                     <td>
+                                      {fractionItem.linkStatus === 'generated' ?<button onClick={() => handleRemoveFraction(item._id, fractionItem._id)} className=' tracking-wide bg-orange-400 text-white px-4 py-2 rounded-3xl'>Remove</button> : 
+                                      fractionItem.linkStatus === 'deleted' ?
+                                      <span className='text-gray-800 bg-gray-300 rounded-3xl px-4 py-2 line-through'>Removed</span> :
                                       <button onClick={() => handleDeleteSystematic(index, fracIndex)} className=' tracking-wide bg-red-500 text-white px-4 py-2 rounded-3xl'>Delete</button>
+                                      }
                                     </td>
                                   </tr>)
                               }
@@ -443,7 +415,7 @@ const Details = () => {
                 </tr>
               </thead>
               <tbody>
-                {purchRedempLoading ? showLoading :
+                {isLoading ? showLoading :
                   !purchRedempTransactions?.length ?
                     <tr><td></td><td colSpan={18} className='p-6  text-orange-500 text-lg text-left'>No Purchase/Redemption Transactions Found</td></tr> :
                     purchRedempTransactions.map((item, index) =>
@@ -460,20 +432,20 @@ const Details = () => {
                               color: color.find((color) => color.type === item.status).color
                             }}
                           >{color.find((color) => color.type === item.status).value}</span></td>
-                          <td>{item.purch_RedempTraxType}</td>
-                          <td>{item.purch_redempMfAmcName}</td>
-                          <td>{item.purch_redempSchemeName}</td>
-                          <td>{item.purch_redempSchemeOption}</td>
-                          <td>{item.purch_redempFolio}</td>
-                          <td>{item.purch_redempTransactionUnits_Amount}</td>
+                          <td>{item.transactionType}</td>
+                          <td>{item.amcName}</td>
+                          <td>{item.schemeName}</td>
+                          <td>{item.schemeOption}</td>
+                          <td>{item.folioNumber}</td>
+                          <td>{item.transactionUnits}</td>
                           <td>{formatDate(item.createdAt)}</td>
                           <td>{item.paymentMode}</td>
-                          <td>{item.purch_redempTransactionAmount}</td>
-                          <td><button className=' text-2xl' onClick={() => {setRowId(item._id); handlePurchRedempAdd(index)}}>+</button></td>
+                          <td>{item.amount}</td>
+                          <td><button className=' text-2xl' onClick={() => { setRowId(item._id); handlePurchRedempAdd(index) }}>+</button></td>
                           <td>
                             <button disabled={!item.transactionFractions?.length ? false : true} style={
                               !item.transactionFractions?.length ? { cursor: "pointer" } : { cursor: "not-allowed" }
-                            } className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white' onClick={handleGenerateLink}>Generate Link</button>
+                            } className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white' onClick={() => handleGenerateLink(item._id)}>Generate Link</button>
                           </td>
                         </tr>
                         {rowId === item._id && item.transactionFractions?.length !== 0 && <td colSpan="20" className=' '>
@@ -509,28 +481,33 @@ const Details = () => {
                                         color: color.find((color) => color.type === fractionItem.status).color
                                       }}
                                     >{color.find((color) => color.type === fractionItem.status).value}</span></td>
-                                    <td>{item.purch_RedempTraxType}</td>
-                                    <td>{item.purch_redempMfAmcName}</td>
-                                    <td>{item.purch_redempSchemeName}</td>
-                                    <td>{item.purch_redempSchemeOption}</td>
-                                    <td>{item.purch_redempFolio}</td>
-                                    <td>{item.purch_redempTransactionUnits_Amount}</td>
-                                    <td>{formatDate(item.createdAt)}</td>
+                                    <td>{item.transactionType}</td>
+                                    <td>{item.amcName}</td>
+                                    <td>{item.schemeName}</td>
+                                    <td>{item.schemeOption}</td>
+                                    <td>{item.folioNumber}</td>
+                                    <td>{item.transactionUnits}</td>
+                                    <td>{formatDate(fractionItem.transactionDate)}</td>
                                     <td>{item.paymentMode}</td>
                                     <td>
                                       <input
-                                        className=' border-[2px] border-solid border-blue-400  text-black  py-3 pl-2 outline-none rounded-md'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
                                         value={fractionItem.fractionAmount}
                                         type='text'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus)}
                                         onChange={(e) => handlePurchRedAmountChange(e, index, fracIndex)} placeholder='Enter amount....' />
                                     </td>
                                     <td>
-                                      <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.firsttransactionamount ? true : false}
-                                        style={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.purch_redempTransactionAmount ? { cursor: "not-allowed" } : { cursor: "pointer" }}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white' onClick={() => handleGenerateLink()}>Generate Link</button>
+                                      <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
+                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-300 disabled:cursor-not-allowed' 
+                                        onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem.fractionAmount) }}>Generate Link</button>
                                     </td>
                                     <td>
+                                      {fractionItem.linkStatus === 'generated' ?<button onClick={() => handleRemoveFraction(item._id, fractionItem._id)} className=' tracking-wide bg-orange-400 text-white px-4 py-2 rounded-3xl'>Remove</button> : 
+                                      fractionItem.linkStatus === 'deleted' ?
+                                      <span className='text-gray-800 bg-gray-300 rounded-3xl px-4 py-2 line-through'>Removed</span> :
                                       <button onClick={() => handleDeletePurchRedemp(index, fracIndex)} className=' tracking-wide bg-red-500 text-white px-4 py-2 rounded-3xl'>Delete</button>
+                                      }
                                     </td>
                                   </tr>)
                               }
@@ -571,7 +548,7 @@ const Details = () => {
                 </tr>
               </thead>
               <tbody>
-                {switchLoading ? showLoading :
+                {isLoading ? showLoading :
                   !switchTransactions?.length ?
                     <tr><td></td><td colSpan={18} className='p-6  text-orange-500 text-lg text-left'>No Switch Transactions Found</td></tr> :
                     switchTransactions.map((item, index) =>
@@ -588,20 +565,20 @@ const Details = () => {
                               color: color.find((color) => color.type === item.status).color
                             }}
                           >{color.find((color) => color.type === item.status).value}</span></td>
-                          <td>{item.switchMfAmcName}</td>
-                          <td>{item.switchFromScheme}</td>
-                          <td>{item.switchFromSchemeOption}</td>
-                          <td>{item.switchToScheme}</td>
-                          <td>{item.switchToSchemeOption}</td>
-                          <td>{item.switchFolio}</td>
-                          <td>{item.switchTransactionUnits_Amount}</td>
+                          <td>{item.amcName}</td>
+                          <td>{item.fromSchemeName}</td>
+                          <td>{item.fromSchemeOption}</td>
+                          <td>{item.schemeName}</td>
+                          <td>{item.schemeOption}</td>
+                          <td>{item.folioNumber}</td>
+                          <td>{item.transactionUnits}</td>
                           <td>{formatDate(item.createdAt)}</td>
-                          <td>{item.switchTransactionAmount}</td>
-                          <td><button className=' text-2xl' onClick={() => {setRowId(item._id); handleSwitchAdd(index)}}>+</button></td>
+                          <td>{item.amount}</td>
+                          <td><button className=' text-2xl' onClick={() => { setRowId(item._id); handleSwitchAdd(index) }}>+</button></td>
                           <td>
                             <button disabled={!item.transactionFractions?.length ? false : true} style={
                               !item.transactionFractions?.length ? { cursor: "pointer" } : { cursor: "not-allowed" }
-                            } className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white' onClick={handleGenerateLink}>Generate Link</button>
+                            } className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white' onClick={() => handleGenerateLink(item._id)}>Generate Link</button>
                           </td>
                         </tr>
                         {rowId === item._id && item.transactionFractions?.length !== 0 && <td colSpan="20" className=' '>
@@ -637,28 +614,33 @@ const Details = () => {
                                         color: color.find((color) => color.type === fractionItem.status).color
                                       }}
                                     >{color.find((color) => color.type === fractionItem.status).value}</span></td>
-                                    <td>{item.switchMfAmcName}</td>
-                                    <td>{item.switchFromScheme}</td>
-                                    <td>{item.switchFromSchemeOption}</td>
-                                    <td>{item.switchToScheme}</td>
-                                    <td>{item.switchToSchemeOption}</td>
-                                    <td>{item.switchFolio}</td>
-                                    <td>{item.switchTransactionUnits_Amount}</td>
-                                    <td>{formatDate(item.createdAt)}</td>
+                                    <td>{item.amcName}</td>
+                                    <td>{item.fromSchemeName}</td>
+                                    <td>{item.fromSchemeOption}</td>
+                                    <td>{item.schemeName}</td>
+                                    <td>{item.schemeOption}</td>
+                                    <td>{item.folioNumber}</td>
+                                    <td>{item.transactionUnits}</td>
+                                    <td>{formatDate(fractionItem.transactionDate)}</td>
                                     <td>
                                       <input
-                                        className=' border-[2px] border-solid border-blue-400  text-black  py-3 pl-2 outline-none rounded-md'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
                                         value={fractionItem.fractionAmount}
                                         type='text'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus)}
                                         onChange={(e) => handleSwitchAmountChange(e, index, fracIndex)} placeholder='Enter amount....' />
                                     </td>
                                     <td>
-                                      <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.firsttransactionamount ? true : false}
-                                        style={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.purch_redempTransactionAmount ? { cursor: "not-allowed" } : { cursor: "pointer" }}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white' onClick={() => handleGenerateLink()}>Generate Link</button>
+                                      <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
+                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-300 disabled:cursor-not-allowed' 
+                                        onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem.fractionAmount) }}>Generate Link</button>
                                     </td>
                                     <td>
+                                      {fractionItem.linkStatus === 'generated' ?<button onClick={() => handleRemoveFraction(item._id, fractionItem._id)} className=' tracking-wide bg-orange-400 text-white px-4 py-2 rounded-3xl'>Remove</button> : 
+                                      fractionItem.linkStatus === 'deleted' ?
+                                      <span className='text-gray-800 bg-gray-300 rounded-3xl px-4 py-2 line-through'>Removed</span> :
                                       <button onClick={() => handleDeleteSwitch(index, fracIndex)} className=' tracking-wide bg-red-500 text-white px-4 py-2 rounded-3xl'>Delete</button>
+                                      }
                                     </td>
                                   </tr>)
                               }

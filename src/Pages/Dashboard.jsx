@@ -49,15 +49,15 @@ const Dashboard = () => {
             center: "true",
             maxWidth: "60px",
         },
+        // {
+        //     name: <div>Session ID</div>,
+        //     selector: row => <span className='text-xs'>{row._id}</span>,
+        //     center: "true",
+        //     minWidth: "200px",
+        // },
         {
-            name: <div>Session ID</div>,
-            selector: row => <span className='text-xs'>{row._id}</span>,
-            center: "true",
-            minWidth: "200px",
-        },
-        {
-            name: <div className='text-start'>Client Name / Family Head</div>,
-            selector: row => <span>{row.investorName} / {row.familyHead}</span>,
+            name: <div className='text-start'>Family Head</div>,
+            selector: row => <span>{row.familyHead}</span>,
             center: "true", 
             minWidth: "260px",
 
@@ -318,8 +318,7 @@ const Dashboard = () => {
     //     },
     // ]
     const handlclick = (row) => {
-        console.log('clicked: ', row._id) //test
-        navigate(`/details/${row._id}`)
+        navigate(`/details?fh=${row.familyHead}&rm=${row.registrantName}`)
     }
 
     return (

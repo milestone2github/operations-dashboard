@@ -1,9 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const getTransactionsBySession = createAsyncThunk('transactions/sessional', 
-  async (sessionId, {rejectWithValue}) => {
+  async ({fh, rm}, {rejectWithValue}) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/transactions-by-session?sessionId=${sessionId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/transactions-of-fhrm?fh=${fh}&rm=${rm}`, {
         method: 'GET',
         credentials: 'include'
       })
@@ -11,12 +11,12 @@ export const getTransactionsBySession = createAsyncThunk('transactions/sessional
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while getting transactions by session id")
+        throw new Error(resData.Error || "Internal server error while getting transactions of a family head and RM")
       }
   
       return resData.data
     } catch (error) {
-      console.error("Error getting transactions by session id: ", error.message)
+      console.error("Error getting transactions of a family head and RM: ", error.message)
       return rejectWithValue(error.message)
     }
   }

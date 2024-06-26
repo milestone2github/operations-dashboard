@@ -6,7 +6,7 @@ import { color } from '../Statuscolor/color';
 import { IoIosArrowForward } from "react-icons/io";
 import { MdClose } from "react-icons/md";
 import toast, { Toaster } from 'react-hot-toast';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import Loader from '../components/Loader';
 import { addFraction, getTransactionsBySession, removeFraction } from '../redux/transactions/TransactionsAction';
 import {
@@ -35,7 +35,8 @@ const initialCommonData = {
 }
 
 const Details = () => {
-  const { sessionId } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  // const { sessionId } = useParams()
   const [errorAlert, setErrorAlert] = useState(false)
   const [rowId, setRowId] = useState(null)
   const [commonData, setCommonData] = useState(initialCommonData)
@@ -52,8 +53,10 @@ const Details = () => {
 
   // side effect to make api calls to get data 
   useEffect(() => {
-    dispatch(getTransactionsBySession(sessionId))
-  }, [sessionId])
+    let fh = searchParams.get('fh');
+    let rm = searchParams.get('rm');
+    dispatch(getTransactionsBySession({fh, rm}))
+  }, [])
 
   // side effects to handle fetch errors 
   useEffect(() => {
@@ -213,10 +216,10 @@ const Details = () => {
       <div className="table-section  bg-[#F8FAFC] p-3 flex flex-col items-center gap-4 overflow-y-auto h-[88vh]">
         <div className='card text-[#000000] client-data w-[90vw] md:w-[87vw]  lg:w-[90vw] grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-6'>
           <div className=' bg-blue-50 w-full rounded-md border-2 border-solid border-[#EDEDED] flex  flex-col gap-4 p-4 tracking-wide'>
-            <div>
+            {/* <div>
               <h2 className=' text-xs font-semibold'>Client Name</h2>
               <p className=' text-lg'>{commonData.investorName}</p>
-            </div>
+            </div> */}
 
             <div>
               <h2 className=' text-xs font-semibold'>Family Head</h2>
@@ -261,6 +264,7 @@ const Details = () => {
                   <th></th>
                   <th>S No.</th>
                   <th>Status</th>
+                  <th>Investor Name</th>
                   <th>Transaction Type</th>
                   <th>Transaction For</th>
                   <th>MF (AMC) Name</th>
@@ -294,6 +298,7 @@ const Details = () => {
                               color: color.find((color) => color.type === item.status).color
                             }}
                           >{color.find((color) => color.type === item.status).value}</span></td>
+                          <td>{item.investorName}</td>
                           <td>{item.transactionType}</td>
                           <td>{item.transactionFor}</td>
                           <td>{item.amcName}</td>
@@ -302,7 +307,7 @@ const Details = () => {
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
                           <td>{item.firstTransactionAmount}</td>
-                          <td>{formatDate(item.createdAt)}</td>
+                          <td>{formatDate(item.transactionPreference)}</td>
                           <td>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td><button className=' text-2xl' onClick={() => { setRowId(item._id); handleSystematicAdd(index) }}>+</button></td>
@@ -319,6 +324,7 @@ const Details = () => {
                                 <th></th>
                                 <th className=''>S No.</th>
                                 <th>Status</th>
+                                <th>Investor Name</th>
                                 <th>Transaction Type</th>
                                 <th>Transaction For</th>
                                 <th>MF (AMC) Name</th>
@@ -346,6 +352,7 @@ const Details = () => {
                                         color: color.find((color) => color.type === fractionItem.status).color
                                       }}
                                     >{color.find((color) => color.type === fractionItem.status).value}</span></td>
+                                    <td>{item.investorName}</td>
                                     <td>{item.transactionType}</td>
                                     <td>{item.transactionFor}</td>
                                     <td>{item.amcName}</td>
@@ -401,6 +408,7 @@ const Details = () => {
                   <th></th>
                   <th>S No.</th>
                   <th>Status</th>
+                  <th>Investor Name</th>
                   <th>Transaction Type</th>
                   <th>MF (AMC) Name</th>
                   <th>Scheme Name</th>
@@ -432,13 +440,14 @@ const Details = () => {
                               color: color.find((color) => color.type === item.status).color
                             }}
                           >{color.find((color) => color.type === item.status).value}</span></td>
+                          <td>{item.investorName}</td>
                           <td>{item.transactionType}</td>
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.transactionUnits}</td>
-                          <td>{formatDate(item.createdAt)}</td>
+                          <td>{formatDate(item.transactionPreference)}</td>
                           <td>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td><button className=' text-2xl' onClick={() => { setRowId(item._id); handlePurchRedempAdd(index) }}>+</button></td>
@@ -455,6 +464,7 @@ const Details = () => {
                                 <th></th>
                                 <th>S No.</th>
                                 <th>Status</th>
+                                <th>Investor Name</th>
                                 <th>Transaction Type</th>
                                 <th>MF (AMC) Name</th>
                                 <th>Scheme Name</th>
@@ -481,6 +491,7 @@ const Details = () => {
                                         color: color.find((color) => color.type === fractionItem.status).color
                                       }}
                                     >{color.find((color) => color.type === fractionItem.status).value}</span></td>
+                                    <td>{item.investorName}</td>
                                     <td>{item.transactionType}</td>
                                     <td>{item.amcName}</td>
                                     <td>{item.schemeName}</td>
@@ -534,6 +545,7 @@ const Details = () => {
                   <th></th>
                   <th>S No.</th>
                   <th>Status</th>
+                  <th>Investor Name</th>
                   <th>MF (AMC) Name</th>
                   <th>From Scheme</th>
                   <th>From Scheme option</th>
@@ -565,6 +577,7 @@ const Details = () => {
                               color: color.find((color) => color.type === item.status).color
                             }}
                           >{color.find((color) => color.type === item.status).value}</span></td>
+                          <td>{item.investorName}</td>
                           <td>{item.amcName}</td>
                           <td>{item.fromSchemeName}</td>
                           <td>{item.fromSchemeOption}</td>
@@ -572,7 +585,7 @@ const Details = () => {
                           <td>{item.schemeOption}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.transactionUnits}</td>
-                          <td>{formatDate(item.createdAt)}</td>
+                          <td>{formatDate(item.transactionPreference)}</td>
                           <td>{item.amount}</td>
                           <td><button className=' text-2xl' onClick={() => { setRowId(item._id); handleSwitchAdd(index) }}>+</button></td>
                           <td>
@@ -588,6 +601,7 @@ const Details = () => {
                                 <th></th>
                                 <th>S No.</th>
                                 <th>Status</th>
+                                <th>Investor Name</th>
                                 <th>MF (AMC) Name</th>
                                 <th>From Scheme</th>
                                 <th>From Scheme option</th>
@@ -614,6 +628,7 @@ const Details = () => {
                                         color: color.find((color) => color.type === fractionItem.status).color
                                       }}
                                     >{color.find((color) => color.type === fractionItem.status).value}</span></td>
+                                    <td>{item.investorName}</td>
                                     <td>{item.amcName}</td>
                                     <td>{item.fromSchemeName}</td>
                                     <td>{item.fromSchemeOption}</td>

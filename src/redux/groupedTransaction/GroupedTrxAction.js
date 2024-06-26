@@ -3,7 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 export const getGroupedTransactions = createAsyncThunk('groupedTrx/get',
   async (_, {rejectWithValue}) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/group-by-fhrm`, {
         method: 'GET',
         credentials: 'include'
       })

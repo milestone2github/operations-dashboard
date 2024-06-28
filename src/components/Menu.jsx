@@ -16,7 +16,6 @@ import Nestedtable from './Nestedtable';
 
 const Menu = ({ menu, func }) => {
   const location = useLocation()
-  console.log(location.pathname);
   const navigate = useNavigate()
   const { isloading, userdata, iserror } = useSelector((state) => state.auth)
   const dispatch = useDispatch()

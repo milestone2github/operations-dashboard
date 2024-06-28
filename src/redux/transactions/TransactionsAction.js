@@ -22,6 +22,57 @@ export const getTransactionsBySession = createAsyncThunk('transactions/sessional
   }
 )
 
+export const saveFractions = createAsyncThunk('transactions/saveFractions', 
+  async ({id, fractions}, {rejectWithValue}) => {
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/fraction/add-all/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fractions})
+      })
+  
+      const resData = await response.json()
+  
+      if(!response.ok) {
+        throw new Error(resData.Error || "Internal server error while saving fractions")
+      }
+  
+      return resData.data
+    } catch (error) {
+      console.error("Error saving fractions: ", error.message)
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const generateLink = createAsyncThunk('transactions/generateLink', 
+  async ({id, fractionId}, {rejectWithValue}) => {
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/generate-link/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fractionId})
+      })
+  
+      const resData = await response.json()
+  
+      if(!response.ok) {
+        throw new Error(resData.Error || "Internal server error while generating link")
+      }
+  
+      return resData.data
+    } catch (error) {
+      console.error("Error generating link: ", error.message)
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// ********  NOT REQUIRED ********** 
 export const addFraction = createAsyncThunk('transactions/addFraction', 
   async ({id, fractionAmount, status}, {rejectWithValue}) => {
 
@@ -72,7 +123,6 @@ export const removeFraction = createAsyncThunk('transactions/removeFraction',
   }
 )
 
-// ********  NOT REQUIRED ********** 
 export const getSystematic = createAsyncThunk('transactions/systematic', 
   async (sessionId, {rejectWithValue}) => {
     try {

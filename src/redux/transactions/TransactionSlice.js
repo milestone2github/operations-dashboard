@@ -6,7 +6,8 @@ const initialState = {
   purchRedempTransactions: [],
   switchTransactions: [],
   isLoading: false,
-  error: null
+  error: null,
+  linkGenerated: 'idle' // pending | failed | completed
 }
 
 const transactionSlice = createSlice({
@@ -283,14 +284,13 @@ const transactionSlice = createSlice({
 
     builder.addCase(generateLink.pending, (state) => {
       state.error = null
-      state.isLoading = true
+      state.linkGenerated = 'pending'
     })
     builder.addCase(generateLink.rejected, (state, action) => {
       state.error = action.payload
-      state.isLoading = false
+      state.linkGenerated = 'failed'
     })
     builder.addCase(generateLink.fulfilled, (state, action) => {
-      state.isLoading = false
       let transaction = action.payload
       if (transaction.category === 'systematic') {
         state.systematicTransactions = state.systematicTransactions.map(item =>
@@ -307,6 +307,7 @@ const transactionSlice = createSlice({
           item._id === transaction._id ? transaction : item
         )
       }
+      state.linkGenerated = 'completed'
     })
   }
 })

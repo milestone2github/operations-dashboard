@@ -27,6 +27,7 @@ import {
 
 import { formatDate, formatDateToYYYYMMDD } from '../utils/formatDate';
 import { countPending, extractCommonData } from '../utils/extractCommonData';
+import GenerateLinkModal from '../components/GenerateLinkModal';
 
 const initialCommonData = {
   investorName: '',
@@ -44,6 +45,8 @@ const Details = () => {
   const [errorAlert, setErrorAlert] = useState(false)
   const [rowId, setRowId] = useState(null)
   const [commonData, setCommonData] = useState(initialCommonData)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [transactionForLink, setTransactionForLink] = useState({id: '', fractionId: ''})
 
   const dispatch = useDispatch()
   const { userdata } = useSelector((state) => state.auth)
@@ -52,7 +55,8 @@ const Details = () => {
     purchRedempTransactions,
     switchTransactions,
     isLoading,
-    error
+    error,
+    linkGenerated
   } = useSelector((state) => state.sessionalTransactions)
 
   const [sips, setSips] = useState([])
@@ -380,14 +384,34 @@ const Details = () => {
   }
 
   const handleGenerateLink = (id) => {
-    dispatch(generateLink({ id }))
+    setIsModalOpen(true)
+    setTransactionForLink({id})
+    // dispatch(generateLink({ id }))
     console.log('link generated...') //todo
   }
 
   const handleGenerateLinkOfFraction = (id, fractionId) => {
-    dispatch(generateLink({ id, fractionId }))
+    setIsModalOpen(true)
+    setTransactionForLink({ id, fractionId })
+    // dispatch(generateLink({ id, fractionId }))
     console.log('link generated...') //todo
   }
+
+  const handleProceed = (platform, orderId) => {
+    dispatch(generateLink({...transactionForLink, platform, orderId}))
+  }
+
+  const handleCancelModal = () => {
+    setIsModalOpen(false)
+    setTransactionForLink({id: '', fractionId: ''})
+  }
+
+  useEffect(() => {
+    if(linkGenerated === 'completed') {
+      handleCancelModal()
+      toast.success('Generated')
+    }
+  }, [linkGenerated])
 
   // const handleRemoveFraction = (id, fractionId) => {
   //   dispatch(removeFraction({ id, fractionId }))
@@ -1662,6 +1686,12 @@ const Details = () => {
           <button onClick={() => setErrorAlert(false)}><MdClose /></button>
         </span>
       </div>
+      <GenerateLinkModal 
+        isOpen={isModalOpen} 
+        title={"Generate Transaction Link"} 
+        handleProceed={handleProceed}
+        handleCancel={handleCancelModal}
+      />
       <Toaster />
     </div>
   )

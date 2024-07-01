@@ -21,7 +21,7 @@ function App() {
           <Routes>
           { userdata && <>
            <Route path="/" element={<Dashboard />} />
-            <Route path="/details/" element={<Details />} />
+            <Route path="/pending-transaction/details/" element={<Details />} />
              <Route path="/pending-transaction" element={<Pending/>}/>
              <Route path="all-transaction" element={<All/>}/>
              <Route path="/transactions-reco" element={<Reco/>}/>

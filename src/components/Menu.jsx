@@ -27,14 +27,14 @@ const Menu = ({ menu, func }) => {
       icon: <MdOutlineDashboard className=' text-xl' />,
       sname: "DASH",
       lname: "Dashboard",
-      path:["/" , `/details/${location.pathname[9]}`]
+      path: "/"
     },
     {
       id: 2,
       icon: <MdOutlinePendingActions className=' text-xl' />,
       sname: "PT",
       lname: "Pending Transactions",
-      path: "/pending-transaction"
+      path: ["/pending-transaction", `/pending-transaction/details`]
     },
     {
       id: 3,

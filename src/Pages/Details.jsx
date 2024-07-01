@@ -39,6 +39,9 @@ const initialCommonData = {
   transactionCount: ''
 }
 
+const currentDate = formatDateToYYYYMMDD(new Date)
+console.log(currentDate)//test
+
 const Details = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   // const { sessionId } = useParams()
@@ -625,9 +628,11 @@ const Details = () => {
                                       <input
                                         type="date"
                                         name="transactionDate"
+                                        min={currentDate}
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
                                         onChange={(e) => {
                                           const { value } = e.target;
                                           setSips(prevState => {
@@ -829,9 +834,11 @@ const Details = () => {
                                       <input
                                         type="date"
                                         name="transactionDate"
+                                        min={currentDate}
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
                                         onChange={(e) => {
                                           const { value } = e.target;
                                           setStps(prevState => {
@@ -1033,9 +1040,11 @@ const Details = () => {
                                       <input
                                         type="date"
                                         name="transactionDate"
+                                        min={currentDate}
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
                                         onChange={(e) => {
                                           const { value } = e.target;
                                           setSwps(prevState => {
@@ -1231,9 +1240,11 @@ const Details = () => {
                                       <input
                                         type="date"
                                         name="transactionDate"
+                                        min={currentDate}
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
                                         onChange={(e) => {
                                           const { value } = e.target;
                                           setPurchases(prevState => {
@@ -1429,9 +1440,11 @@ const Details = () => {
                                       <input
                                         type="date"
                                         name="transactionDate"
+                                        min={currentDate}
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
                                         onChange={(e) => {
                                           const { value } = e.target;
                                           setRedemptions(prevState => {
@@ -1628,9 +1641,11 @@ const Details = () => {
                                       <input
                                         type="date"
                                         name="transactionDate"
+                                        min={currentDate}
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
                                         onChange={(e) => { dispatch(updateSwitchTransactionDate({ index, fracIndex, value: e.target.value })) }}
                                       />
                                     </td>
@@ -1639,7 +1654,7 @@ const Details = () => {
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
                                         value={fractionItem.fractionAmount}
                                         type='text'
-                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus)}
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
                                         onChange={(e) => handleSwitchAmountChange(e, index, fracIndex)} placeholder='Enter amount....' />
                                     </td>
                                     <td>

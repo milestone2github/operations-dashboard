@@ -74,7 +74,7 @@ const Menu = ({ menu, func }) => {
         </div>
         <ul className=' listoftabs whitespace-nowrap flex flex-col gap-3 items-center text-xs w-full'>
           {
-            tabs.map((tab, index) => <Link key={tab.id} className='w-full' to={Array.isArray(tab.path) ? tab.path[0] : tab.path}><motion.li style={Array.isArray(tab.path) ? tab.path.find((item)=>item===location.pathname) ? {backgroundColor:"#6AA0F3"}:{} : location.pathname===tab.path ? {backgroundColor:"#6AA0F3"}:{}} key={index} onMouseOver={() => setId(tab.id)} onMouseOut={() => setId(null)} className=' hover:bg-[#6AA0F3] cursor-pointer relative  text-[#F1F6FF] font-medium rounded py-2  flex flex-col items-center gap-1'>{tab.icon}{tab.sname}
+            tabs.map((tab, index) => <Link key={tab.id} className='w-full' to={Array.isArray(tab.path) ? tab.path[0] : tab.path}><motion.li style={Array.isArray(tab.path) ? tab.path.find((item) => item === location.pathname) ? { backgroundColor: "#6AA0F3" } : {} : location.pathname === tab.path ? { backgroundColor: "#6AA0F3" } : {}} key={index} onMouseOver={() => setId(tab.id)} onMouseOut={() => setId(null)} className=' hover:bg-[#6AA0F3] cursor-pointer relative  text-[#F1F6FF] font-medium rounded py-2  flex flex-col items-center gap-1'>{tab.icon}{tab.sname}
               <AnimatePresence>
                 {id === tab.id && <motion.div
                   animate={{
@@ -101,11 +101,17 @@ const Menu = ({ menu, func }) => {
             </Link>)
           }
         </ul>
-          
-        <button onClick={()=>dispatch(logout())} >
-          <FaPowerOff className=' text-[#F1F6FF] text-2xl'/>
+
+        <button onClick={() => dispatch(logout())} >
+          <FaPowerOff className=' text-[#F1F6FF] text-2xl' />
         </button>
 
+        <button className='md:hidden absolute left-full rounded-md bg-gray-100 top-0 p-2 border' onClick={() => dispatch({
+          type: "togglenavtab",
+          payload: "-100%"
+        })}>
+          <IoCloseSharp />
+        </button>
       </div>}
     </>
   )

@@ -1,0 +1,32 @@
+/* For Webkit-based browsers (Chrome, Safari) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px; /* Thin scrollbar */
+  height: 4px; /* Thin scrollbar for horizontal scrolling */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light background color */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #ccc; /* Light thumb color */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #999; /* Darker thumb color on hover */
+}
+
+/* For Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin; /* "auto" or "thin" */
+  scrollbar-color: #ccc #f1f1f1; /* thumb and track */
+}
+
+/* Style scrollbar for Internet Explorer and Edge */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  .custom-scrollbar {
+    -ms-overflow-style: -ms-autohiding-scrollbar; /* Hide scrollbar buttons */
+  }
+}

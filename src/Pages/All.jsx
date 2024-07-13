@@ -16,7 +16,8 @@ const initialFilters = {
   amcName: '',
   schemeName: '',
   rmName: '',
-  type: ''
+  type: '',
+  sort: 'trxdate-desc'
 }
 
 const All = () => {
@@ -34,9 +35,6 @@ const All = () => {
   }, [filters])
 
   useEffect(() => {
-    // if(status === 'completed') {
-    //   setCurrentPage(currPage => currPage + 1)
-    // }
     if (status === 'failed' && error) {
       toast.error(error)
     }
@@ -154,22 +152,22 @@ const All = () => {
 
         </article>
 
-        <div className='flex gap-6 mt-3 mb-4 w-full justify-center'>
+        <div className='flex gap-0 bg-blue-50 w-fit  mt-4 mb-4 mx-auto rounded-full justify-center'>
           <button
             title='Previous'
             onClick={handlePrev}
             disabled={page <= 1}
-            className='px-4 py-2 rounded-md bg-gray-100 border border-gray-100 focus:outline-2 focus:outline-blue-400 hover:text-blue-700 hover:border-blue-200 disabled:text-gray-400 disabled:border-0 rotate-180'
+            className='px-5 py-3 rounded-e-full border border-blue-200 focus:outline-2 focus:outline-blue-400 hover:text-blue-700 hover:border-blue-200 disabled:text-gray-400 rotate-180'
           ><BsArrowRight /></button>
           <span
             title='Current page'
-            className='w-9 h-9 rounded-full bg-gray-50 text-gray-700 flex items-center justify-center'
+            className='w-20 border-y border-blue-200 text-gray-700 flex items-center justify-center'
           >{page}</span>
           <button
             title='Next'
             onClick={handleNext}
             disabled={transactions.length < items}
-            className='px-4 py-2 rounded-md bg-gray-100 border border-gray-100 focus:outline-2 focus:outline-blue-400 hover:text-blue-700 hover:border-blue-200 disabled:text-gray-400 disabled:border-0'
+            className='px-5 py-3 rounded-e-full border border-blue-200 focus:outline-2 focus:outline-blue-400 hover:text-blue-700 hover:border-blue-400 disabled:text-gray-400 disabled:border-0'
           ><BsArrowRight /></button>
         </div>
       </section>

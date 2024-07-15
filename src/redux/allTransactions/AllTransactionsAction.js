@@ -2,11 +2,12 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const getFilteredTransactions = createAsyncThunk('allTransactions/getFilteredTransactions', 
   async ({filters, page, items}, {rejectWithValue}) => {
-    const { minDate, maxDate, amcName, schemeName, rmName, type } = filters
+    const { minDate, maxDate, amcName, schemeName, rmName, type, sort } = filters
     
     let query = new URLSearchParams()
     query.append('page', page || 1)
     query.append('items', items || 10)
+    query.append('sort', sort)
     if(minDate) {query.append('minDate', minDate)}
     if(maxDate) {query.append('maxDate', maxDate)}
     if(amcName) {query.append('amcName', amcName)}

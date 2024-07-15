@@ -40,7 +40,6 @@ const initialCommonData = {
 }
 
 const currentDate = formatDateToYYYYMMDD(new Date)
-console.log(currentDate)//test
 
 const Details = () => {
   const [searchParams, setSearchParams] = useSearchParams()

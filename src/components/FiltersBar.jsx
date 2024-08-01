@@ -60,6 +60,26 @@ function FiltersBar({ filters, updateFilters }) {
     updateFilters({ ...filters, [name]: value })
   }
 
+  const handleMinAmountChange = (e) => {
+    const value = e.target.value
+    let prevValue = minAmountRef.current?.prevValue
+
+    if (prevValue !== value) {
+      minAmountRef.current.prevValue = value
+      handleFilterChange(e)
+    }
+  }
+
+  const handleMaxAmountChange = (e) => {
+    const value = e.target.value
+    let prevValue = maxAmountRef.current?.prevValue
+
+    if (prevValue !== value) {
+      maxAmountRef.current.prevValue = value
+      handleFilterChange(e)
+    }
+  }
+
   const handleFilterAmc = (key) => {
     setFilteredAmcs(amcList.filter(item => item.toLowerCase().includes(key.toLowerCase())))
   }
@@ -100,7 +120,7 @@ function FiltersBar({ filters, updateFilters }) {
             placeholder='Min'
             title='Min amount'
             className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center hover:bg-gray-100 placeholder:text-gray-500 ${!filters.minAmount ? 'text-gray-500' : 'text-blue-600'}`}
-            onBlur={handleFilterChange}
+            onBlur={handleMinAmountChange}
           />
           <div className='h-7 border-s'></div>
           <input
@@ -111,7 +131,7 @@ function FiltersBar({ filters, updateFilters }) {
             placeholder='Max'
             title='Max amount'
             className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center rounded-e-md hover:bg-gray-100 placeholder:text-gray-500 ${!filters.maxAmount ? 'text-gray-500' : 'text-blue-600'}`}
-            onBlur={handleFilterChange}
+            onBlur={handleMaxAmountChange}
           />
         </div>
         <SortMenu

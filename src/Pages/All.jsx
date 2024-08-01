@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 import { formatDateDDShortMonthNameYY } from '../utils/formatDate'
 import { color } from '../Statuscolor/color'
 import Loader from '../components/Loader'
-const items = 12
+const items = 25
 
 const initialFilters = {
   minDate: '',
@@ -17,7 +17,9 @@ const initialFilters = {
   schemeName: '',
   rmName: '',
   type: '',
-  sort: 'trxdate-desc'
+  sort: 'trxdate-desc',
+  minAmount: '',
+  maxAmount: ''
 }
 
 const All = () => {
@@ -152,24 +154,25 @@ const All = () => {
 
         </article>
 
-        <div className='flex gap-0 bg-blue-50 w-fit  mt-4 mb-4 mx-auto rounded-full justify-center'>
+        <div className='flex gap-4 w-fit mt-4 mb-5 mx-auto rounded-full items-center justify-center'>
           <button
             title='Previous'
             onClick={handlePrev}
             disabled={page <= 1}
-            className='px-5 py-3 rounded-e-full border border-blue-200 focus:outline-2 focus:outline-blue-400 hover:text-blue-700 hover:border-blue-200 disabled:text-gray-400 rotate-180'
-          ><BsArrowRight /></button>
+            className='px-4 py-1 rounded-md border flex gap-2 items-center text-gray-600 border-gray-200 focus:outline-2 focus:outline-blue-400 enabled:hover:bg-blue-50 enabled:hover:text-blue-700 enabled:hover:border-blue-200 disabled:text-gray-400'
+          ><BsArrowRight className='rotate-180'/>Prev</button>
           <span
             title='Current page'
-            className='w-20 border-y border-blue-200 text-gray-700 flex items-center justify-center'
+            className='w-9 h-9 rounded-full bg-blue-500 text-gray-100 flex items-center justify-center'
           >{page}</span>
           <button
             title='Next'
             onClick={handleNext}
             disabled={transactions.length < items}
-            className='px-5 py-3 rounded-e-full border border-blue-200 focus:outline-2 focus:outline-blue-400 hover:text-blue-700 hover:border-blue-400 disabled:text-gray-400 disabled:border-0'
-          ><BsArrowRight /></button>
+            className='px-4 py-1 rounded-md border flex gap-2 items-center text-gray-600 border-gray-200 focus:outline-2 focus:outline-blue-400 enabled:hover:bg-blue-50 enabled:hover:text-blue-700 enabled:hover:border-blue-200 disabled:text-gray-400'
+          >Next<BsArrowRight /></button>
         </div>
+        
       </section>
     </main>
   )

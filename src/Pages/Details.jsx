@@ -1,13 +1,11 @@
 import React, { Fragment, useEffect, useState } from 'react'
-import { RiMenu3Line } from "react-icons/ri";
 import { CiLock } from "react-icons/ci";
 import { useDispatch, useSelector } from 'react-redux';
-import logo from '../assets/logo.png'
 import { color } from '../Statuscolor/color';
 import { IoIosArrowForward, IoMdClose } from "react-icons/io";
 import { MdClose } from "react-icons/md";
 import toast, { Toaster } from 'react-hot-toast';
-import { useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import Loader from '../components/Loader';
 import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions } from '../redux/transactions/TransactionsAction';
 import {
@@ -28,6 +26,7 @@ import {
 import { formatDate, formatDateToYYYYMMDD } from '../utils/formatDate';
 import { countPending, extractCommonData } from '../utils/extractCommonData';
 import GenerateLinkModal from '../components/GenerateLinkModal';
+import Header from '../components/Header';
 
 const initialCommonData = {
   investorName: '',
@@ -51,7 +50,6 @@ const Details = () => {
   const [transactionForLink, setTransactionForLink] = useState({id: '', fractionId: ''})
 
   const dispatch = useDispatch()
-  const { userdata } = useSelector((state) => state.auth)
   const {
     systematicTransactions,
     purchRedempTransactions,
@@ -450,20 +448,9 @@ const Details = () => {
 
   return (
     <div className='home-section w-full h-[100vh] relative'>
-      <div className="first-section sticky top-0 z-40 bg-white flex justify-between items-center h-[12vh] px-3 ">
-        <div className=' flex gap-1'>
-          <button className='md:hidden' onClick={() => dispatch({
-            type: "togglenavtab",
-            payload: "0"
-          })}>
-            <RiMenu3Line className=' text-2xl font-semibold' />
-          </button>
-          <h1 className=' md:text-3xl  font-medium'>Transaction Details</h1>
-        </div>
-        <div className=' flex flex-col items-end gap-2'>
-          <img src={logo} alt="" className=' w-32' />
-          {userdata && <p>Welcome , {userdata.name}</p>}
-        </div>
+      <div className="first-section sticky top-0 z-40 bg-white flex justify-between items-center h-[12vh] py-1 px-2 md:px-6 ">
+        
+        <Header title='Transaction Details'/>
       </div>
       <div className="table-section  bg-[#F8FAFC] p-3 flex flex-col items-center gap-4 overflow-y-auto h-[88vh]">
         <div className='card text-[#000000] client-data w-[90vw] md:w-[87vw]  lg:w-[90vw] grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-6'>
@@ -508,23 +495,22 @@ const Details = () => {
 
         {/* ******* SIP TRANSACTIONS TABLE ******* */}
         <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
-          <h2 className=' text-left sm:text-3xl top-0 p-4 bg-white w-full'>SIP</h2>
+          <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>SIP</h2>
           <div className=' w-full overflow-auto p-2'>
             <table className=''>
               <thead className=' rounded-full'>
-                <tr className=' whitespace-nowrap '>
+                <tr className=''>
                   <th></th>
                   <th>S No.</th>
                   <th>Status</th>
                   <th>Investor Name</th>
-                  {/* <th>Transaction Type</th> */}
                   <th>Transaction For</th>
-                  <th>MF (AMC) Name</th>
+                  <th>AMC Name</th>
                   <th>Scheme Name</th>
                   <th>Scheme Option</th>
                   <th>Folio</th>
                   <th>Tenure of SIP</th>
-                  <th>First Transaction Amount</th>
+                  <th>First Traxn Amount</th>
                   <th>SIP Date</th>
                   <th>First Installment Payment Mode</th>
                   <th>SIP Amount</th>
@@ -543,7 +529,7 @@ const Details = () => {
                             <IoIosArrowForward style={rowId === item._id ? { transform: "rotate(90deg)", transition: "0.2s" } : { transform: " rotate(0deg)", transition: "0.2s" }} className=' text-lg' />
 
                           </button></td>
-                          <td className=''>{index + 1}</td>
+                          <td className='min-w-16'>{index + 1}</td>
                           <td><span className=' px-3 py-2 rounded-3xl font-medium text-xs'
                             style={{
                               backgroundColor: color.find((color) => color.type === item.status).bgcolor,
@@ -558,9 +544,9 @@ const Details = () => {
                           <td>{item.schemeOption}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
-                          <td>{item.firstTransactionAmount}</td>
+                          <td className='min-w-32'>{item.firstTransactionAmount}</td>
                           <td>{formatDate(item.transactionPreference)}</td>
-                          <td>{item.paymentMode}</td>
+                          <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>{['generated', 'locked'].includes(item.linkStatus) ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
@@ -570,31 +556,30 @@ const Details = () => {
                           <td>
                             {!item.transactionFractions?.length ? <button
                               disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-green-500 disabled:cursor-not-allowed'
+                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
                               onClick={() => handleGenerateLink(item._id)}
                             >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
                               : <button
                                 disabled={item.transactionFractions?.length < 2 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                         </tr>
                         {rowId === item?._id && item.transactionFractions?.length !== 0 && <td colSpan="20" className=' '>
                           <table className='relative '>
                             <thead className=' rounded-full   '>
-                              <tr className=' whitespace-nowrap  '>
+                              <tr className=''>
                                 <th></th>
-                                <th className=''>S No.</th>
+                                <th>S No.</th>
                                 <th>Status</th>
                                 <th>Investor Name</th>
-                                {/* <th>Transaction Type</th> */}
                                 <th>Transaction For</th>
-                                <th>MF (AMC) Name</th>
+                                <th>AMC Name</th>
                                 <th>Scheme Name</th>
                                 <th>Scheme Option</th>
                                 <th>Folio</th>
                                 <th>Tenure of SIP</th>
-                                <th>First Transaction Amount</th>
+                                <th>First Traxn Amount</th>
                                 <th>SIP Date</th>
                                 <th>First Installment Payment Mode</th>
                                 <th>SIP Amount</th>
@@ -607,7 +592,7 @@ const Details = () => {
                                 item.transactionFractions?.map((fractionItem, fracIndex) =>
                                   <tr key={fracIndex} className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
                                     <td className=''></td>
-                                    <td className=''>{index + 1}.{fracIndex + 1}</td>
+                                    <td className='min-w-16'>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium '
                                       style={{
                                         backgroundColor: color.find((color) => color.type === fractionItem.status).bgcolor,
@@ -622,7 +607,7 @@ const Details = () => {
                                     <td>{item.schemeOption}</td>
                                     <td>{item.folioNumber}</td>
                                     <td>{item.tenure}</td>
-                                    <td>{item.firstTransactionAmount}</td>
+                                    <td className='min-w-32'>{item.firstTransactionAmount}</td>
                                     <td>{
                                       <input
                                         type="date"
@@ -654,7 +639,7 @@ const Details = () => {
                                       />
 
                                     }</td>
-                                    <td>{item.paymentMode}</td>
+                                    <td className='min-w-36'>{item.paymentMode}</td>
                                     <td>
                                       <input
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
@@ -683,7 +668,7 @@ const Details = () => {
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                     </td>
                                     <td>
@@ -714,25 +699,24 @@ const Details = () => {
 
         {/* ******* STP or Capital Appreciation STP TRANSACTIONS TABLE ******* */}
         <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
-          <h2 className=' text-left sm:text-3xl top-0 p-4 bg-white w-full'>STP</h2>
+          <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>STP</h2>
           <div className=' w-full overflow-auto p-2'>
             <table className=''>
               <thead className=' rounded-full'>
-                <tr className=' whitespace-nowrap '>
+                <tr className=''>
                   <th></th>
-                  <th>S No.</th>
+                  <th className='min-w-16'>S No.</th>
                   <th>Status</th>
                   <th>Investor Name</th>
-                  {/* <th>Transaction Type</th> */}
                   <th>Transaction For</th>
-                  <th>MF (AMC) Name</th>
+                  <th>AMC Name</th>
                   <th>Scheme Name</th>
                   <th>Scheme Option</th>
                   <th>Folio</th>
                   <th>Tenure of SIP</th>
-                  <th>First Transaction Amount</th>
+                  <th className='min-w-32'>First Traxn Amount</th>
                   <th>SIP Date</th>
-                  <th>First Installment Payment Mode</th>
+                  <th className='min-w-36'>First Installment Payment Mode</th>
                   <th>SIP Amount</th>
                   <th>Action</th>
                   <th>Links</th>
@@ -749,7 +733,7 @@ const Details = () => {
                             <IoIosArrowForward style={rowId === item._id ? { transform: "rotate(90deg)", transition: "0.2s" } : { transform: " rotate(0deg)", transition: "0.2s" }} className=' text-lg' />
 
                           </button></td>
-                          <td className=''>{index + 1}</td>
+                          <td className='min-w-16'>{index + 1}</td>
                           <td><span className=' px-3 py-2 rounded-3xl font-medium text-xs'
                             style={{
                               backgroundColor: color.find((color) => color.type === item.status).bgcolor,
@@ -757,16 +741,15 @@ const Details = () => {
                             }}
                           >{color.find((color) => color.type === item.status).value}</span></td>
                           <td>{item.investorName}</td>
-                          {/* <td>{item.transactionType}</td> */}
                           <td>{item.transactionFor}</td>
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
-                          <td>{item.firstTransactionAmount}</td>
+                          <td className='min-w-32'>{item.firstTransactionAmount}</td>
                           <td>{formatDate(item.transactionPreference)}</td>
-                          <td>{item.paymentMode}</td>
+                          <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>{['generated', 'locked'].includes(item.linkStatus) ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
@@ -776,12 +759,12 @@ const Details = () => {
                           <td>
                             {!item.transactionFractions?.length ? <button
                               disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-green-500 disabled:cursor-not-allowed'
+                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
                               onClick={() => handleGenerateLink(item._id)}
                             >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
                               : <button
                                 disabled={item.transactionFractions?.length < 2 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                         </tr>
@@ -790,19 +773,18 @@ const Details = () => {
                             <thead className=' rounded-full   '>
                               <tr className=' whitespace-nowrap  '>
                                 <th></th>
-                                <th className=''>S No.</th>
+                                <th className='min-w-16'>S No.</th>
                                 <th>Status</th>
                                 <th>Investor Name</th>
-                                {/* <th>Transaction Type</th> */}
                                 <th>Transaction For</th>
-                                <th>MF (AMC) Name</th>
+                                <th>AMC Name</th>
                                 <th>Scheme Name</th>
                                 <th>Scheme Option</th>
                                 <th>Folio</th>
                                 <th>Tenure of SIP</th>
-                                <th>First Transaction Amount</th>
+                                <th className='min-w-32'>First Traxn Amount</th>
                                 <th>SIP Date</th>
-                                <th>First Installment Payment Mode</th>
+                                <th className='min-w-36'>First Installment Payment Mode</th>
                                 <th>SIP Amount</th>
                                 <th>Link</th>
                                 <th>Actions</th>
@@ -813,7 +795,7 @@ const Details = () => {
                                 item.transactionFractions?.map((fractionItem, fracIndex) =>
                                   <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
                                     <td className=''></td>
-                                    <td className=''>{index + 1}.{fracIndex + 1}</td>
+                                    <td className='min-w-16'>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium '
                                       style={{
                                         backgroundColor: color.find((color) => color.type === fractionItem.status).bgcolor,
@@ -821,14 +803,13 @@ const Details = () => {
                                       }}
                                     >{color.find((color) => color.type === fractionItem.status).value}</span></td>
                                     <td>{item.investorName}</td>
-                                    {/* <td>{item.transactionType}</td> */}
                                     <td>{item.transactionFor}</td>
                                     <td>{item.amcName}</td>
                                     <td>{item.schemeName}</td>
                                     <td>{item.schemeOption}</td>
                                     <td>{item.folioNumber}</td>
                                     <td>{item.tenure}</td>
-                                    <td>{item.firstTransactionAmount}</td>
+                                    <td className='min-w-32'>{item.firstTransactionAmount}</td>
                                     <td>{
                                       <input
                                         type="date"
@@ -860,7 +841,7 @@ const Details = () => {
                                       />
 
                                     }</td>
-                                    <td>{item.paymentMode}</td>
+                                    <td className='min-w-36'>{item.paymentMode}</td>
                                     <td>
                                       <input
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
@@ -889,7 +870,7 @@ const Details = () => {
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                     </td>
                                     <td>
@@ -920,25 +901,24 @@ const Details = () => {
 
         {/* ******* SWP or Capital Appreciation SWP TRANSACTIONS TABLE ******* */}
         <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
-          <h2 className=' text-left sm:text-3xl top-0 p-4 bg-white w-full'>SWP</h2>
+          <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>SWP</h2>
           <div className=' w-full overflow-auto p-2'>
             <table className=''>
               <thead className=' rounded-full'>
-                <tr className=' whitespace-nowrap '>
+                <tr className=''>
                   <th></th>
-                  <th>S No.</th>
+                  <th className='min-w-16'>S No.</th>
                   <th>Status</th>
                   <th>Investor Name</th>
-                  {/* <th>Transaction Type</th> */}
                   <th>Transaction For</th>
-                  <th>MF (AMC) Name</th>
+                  <th>AMC Name</th>
                   <th>Scheme Name</th>
                   <th>Scheme Option</th>
                   <th>Folio</th>
                   <th>Tenure of SIP</th>
-                  <th>First Transaction Amount</th>
+                  <th className='min-w-32'>First Traxn Amount</th>
                   <th>SIP Date</th>
-                  <th>First Installment Payment Mode</th>
+                  <th className='min-w-36'>First Installment Payment Mode</th>
                   <th>SIP Amount</th>
                   <th>Action</th>
                   <th>Links</th>
@@ -950,12 +930,12 @@ const Details = () => {
                     <tr><td></td><td colSpan={18} className='p-6  text-orange-500 text-lg text-left'>No SWP Transactions Found</td></tr> :
                     swps.map((item, index) =>
                       <Fragment key={item._id}>
-                        <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
+                        <tr className='border-b-[2px] border-solid border-[#E3EAF4]'>
                           <td><button onClick={rowId === item._id ? () => setRowId(null) : () => setRowId(item._id)}>
                             <IoIosArrowForward style={rowId === item._id ? { transform: "rotate(90deg)", transition: "0.2s" } : { transform: " rotate(0deg)", transition: "0.2s" }} className=' text-lg' />
 
                           </button></td>
-                          <td className=''>{index + 1}</td>
+                          <td className='min-w-16'>{index + 1}</td>
                           <td><span className=' px-3 py-2 rounded-3xl font-medium text-xs'
                             style={{
                               backgroundColor: color.find((color) => color.type === item.status).bgcolor,
@@ -963,16 +943,15 @@ const Details = () => {
                             }}
                           >{color.find((color) => color.type === item.status).value}</span></td>
                           <td>{item.investorName}</td>
-                          {/* <td>{item.transactionType}</td> */}
                           <td>{item.transactionFor}</td>
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
-                          <td>{item.firstTransactionAmount}</td>
+                          <td className='min-w-32'>{item.firstTransactionAmount}</td>
                           <td>{formatDate(item.transactionPreference)}</td>
-                          <td>{item.paymentMode}</td>
+                          <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>{['generated', 'locked'].includes(item.linkStatus) ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
@@ -982,33 +961,32 @@ const Details = () => {
                           <td>
                             {!item.transactionFractions?.length ? <button
                               disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-green-500 disabled:cursor-not-allowed'
+                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
                               onClick={() => handleGenerateLink(item._id)}
                             >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
                               : <button
                                 disabled={item.transactionFractions?.length < 2 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                         </tr>
                         {rowId === item?._id && item.transactionFractions?.length !== 0 && <td colSpan="20" className=' '>
                           <table className='relative '>
                             <thead className=' rounded-full   '>
-                              <tr className=' whitespace-nowrap  '>
+                              <tr className=''>
                                 <th></th>
-                                <th className=''>S No.</th>
+                                <th className='min-w-16'>S No.</th>
                                 <th>Status</th>
                                 <th>Investor Name</th>
-                                {/* <th>Transaction Type</th> */}
                                 <th>Transaction For</th>
-                                <th>MF (AMC) Name</th>
+                                <th>AMC Name</th>
                                 <th>Scheme Name</th>
                                 <th>Scheme Option</th>
                                 <th>Folio</th>
                                 <th>Tenure of SIP</th>
-                                <th>First Transaction Amount</th>
+                                <th className='min-w-32'>First Traxn Amount</th>
                                 <th>SIP Date</th>
-                                <th>First Installment Payment Mode</th>
+                                <th className='min-w-36'>First Installment Payment Mode</th>
                                 <th>SIP Amount</th>
                                 <th>Link</th>
                                 <th>Actions</th>
@@ -1017,9 +995,9 @@ const Details = () => {
                             <tbody className=' bg-[#ECF9FF] text-black '>
                               {
                                 item.transactionFractions?.map((fractionItem, fracIndex) =>
-                                  <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
-                                    <td className=''></td>
-                                    <td className=''>{index + 1}.{fracIndex + 1}</td>
+                                  <tr className=' border-b-[2px] border-solid border-[#E3EAF4]'>
+                                    <td></td>
+                                    <td className='min-w-16'>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium '
                                       style={{
                                         backgroundColor: color.find((color) => color.type === fractionItem.status).bgcolor,
@@ -1027,14 +1005,13 @@ const Details = () => {
                                       }}
                                     >{color.find((color) => color.type === fractionItem.status).value}</span></td>
                                     <td>{item.investorName}</td>
-                                    {/* <td>{item.transactionType}</td> */}
                                     <td>{item.transactionFor}</td>
                                     <td>{item.amcName}</td>
                                     <td>{item.schemeName}</td>
                                     <td>{item.schemeOption}</td>
                                     <td>{item.folioNumber}</td>
                                     <td>{item.tenure}</td>
-                                    <td>{item.firstTransactionAmount}</td>
+                                    <td className='min-w-32'>{item.firstTransactionAmount}</td>
                                     <td>{
                                       <input
                                         type="date"
@@ -1066,7 +1043,7 @@ const Details = () => {
                                       />
 
                                     }</td>
-                                    <td>{item.paymentMode}</td>
+                                    <td className='min-w-36'>{item.paymentMode}</td>
                                     <td>
                                       <input
                                         className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
@@ -1095,7 +1072,7 @@ const Details = () => {
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                     </td>
                                     <td>
@@ -1126,23 +1103,22 @@ const Details = () => {
 
         {/* ******* PURCHASE TABLE ******** */}
         <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
-          <h2 className=' text-left sm:text-3xl top-0 p-4 bg-white w-full'>Purchase</h2>
+          <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>Purchase</h2>
 
           <div className=' w-full overflow-auto p-2'>
             <table className=''>
               <thead className=' rounded-full'>
-                <tr className=' whitespace-nowrap '>
+                <tr className='whitespace-nowrap'>
                   <th></th>
                   <th>S No.</th>
                   <th>Status</th>
                   <th>Investor Name</th>
-                  {/* <th>Transaction Type</th> */}
-                  <th>MF (AMC) Name</th>
+                  <th>AMC Name</th>
                   <th>Scheme Name</th>
                   <th>Scheme Option</th>
                   <th>Folio</th>
-                  <th>Transaction Units/Amount</th>
-                  <th>Purchase/Redemption Date</th>
+                  <th>Traxn Units/Amount</th>
+                  <th>Purchase Date</th>
                   <th>Payment Mode</th>
                   <th>Transaction Amount</th>
                   <th>Action</th>
@@ -1185,12 +1161,12 @@ const Details = () => {
                           <td>
                             {!item.transactionFractions?.length ? <button
                               disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-green-500 disabled:cursor-not-allowed'
+                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
                               onClick={() => handleGenerateLink(item._id)}
                             >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
                               : <button
                                 disabled={item.transactionFractions?.length < 2 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                         </tr>
@@ -1202,13 +1178,12 @@ const Details = () => {
                                 <th>S No.</th>
                                 <th>Status</th>
                                 <th>Investor Name</th>
-                                {/* <th>Transaction Type</th> */}
-                                <th>MF (AMC) Name</th>
+                                <th>AMC Name</th>
                                 <th>Scheme Name</th>
                                 <th>Scheme Option</th>
                                 <th>Folio</th>
-                                <th>Transaction Units/Amount</th>
-                                <th>Purchase/Redemption Date</th>
+                                <th>Traxn Units/Amount</th>
+                                <th>Purchase Date</th>
                                 <th>Payment Mode</th>
                                 <th>Transaction Amount</th>
                                 <th>Link</th>
@@ -1219,7 +1194,6 @@ const Details = () => {
                               {
                                 item.transactionFractions?.map((fractionItem, fracIndex) =>
                                   <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
-                                    {/* <td><IoIosArrowForward className=' text-lg' /></td> */}
                                     <td className=''></td>
                                     <td className=''>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium'
@@ -1229,7 +1203,6 @@ const Details = () => {
                                       }}
                                     >{color.find((color) => color.type === fractionItem.status).value}</span></td>
                                     <td>{item.investorName}</td>
-                                    {/* <td>{item.transactionType}</td> */}
                                     <td>{item.amcName}</td>
                                     <td>{item.schemeName}</td>
                                     <td>{item.schemeOption}</td>
@@ -1295,7 +1268,7 @@ const Details = () => {
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                     </td>
                                     <td>
@@ -1326,7 +1299,7 @@ const Details = () => {
 
         {/* ******* REDEMPTION  TABLE ******** */}
         <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
-          <h2 className=' text-left sm:text-3xl top-0 p-4 bg-white w-full'>Redemption</h2>
+          <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>Redemption</h2>
 
           <div className=' w-full overflow-auto p-2'>
             <table className=''>
@@ -1336,13 +1309,12 @@ const Details = () => {
                   <th>S No.</th>
                   <th>Status</th>
                   <th>Investor Name</th>
-                  {/* <th>Transaction Type</th> */}
-                  <th>MF (AMC) Name</th>
+                  <th>AMC Name</th>
                   <th>Scheme Name</th>
                   <th>Scheme Option</th>
                   <th>Folio</th>
-                  <th>Transaction Units/Amount</th>
-                  <th>Purchase/Redemption Date</th>
+                  <th>Traxn Units/Amount</th>
+                  <th>Redemption Date</th>
                   <th>Payment Mode</th>
                   <th>Transaction Amount</th>
                   <th>Action</th>
@@ -1385,12 +1357,12 @@ const Details = () => {
                           <td>
                             {!item.transactionFractions?.length ? <button
                               disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-green-500 disabled:cursor-not-allowed'
+                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
                               onClick={() => handleGenerateLink(item._id)}
                             >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
                               : <button
                                 disabled={item.transactionFractions?.length < 2 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                         </tr>
@@ -1402,13 +1374,12 @@ const Details = () => {
                                 <th>S No.</th>
                                 <th>Status</th>
                                 <th>Investor Name</th>
-                                {/* <th>Transaction Type</th> */}
-                                <th>MF (AMC) Name</th>
+                                <th>AMC Name</th>
                                 <th>Scheme Name</th>
                                 <th>Scheme Option</th>
                                 <th>Folio</th>
-                                <th>Transaction Units/Amount</th>
-                                <th>Purchase/Redemption Date</th>
+                                <th>Traxn Units/Amount</th>
+                                <th>Redemption Date</th>
                                 <th>Payment Mode</th>
                                 <th>Transaction Amount</th>
                                 <th>Link</th>
@@ -1419,7 +1390,6 @@ const Details = () => {
                               {
                                 item.transactionFractions?.map((fractionItem, fracIndex) =>
                                   <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
-                                    {/* <td><IoIosArrowForward className=' text-lg' /></td> */}
                                     <td className=''></td>
                                     <td className=''>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium'
@@ -1429,7 +1399,6 @@ const Details = () => {
                                       }}
                                     >{color.find((color) => color.type === fractionItem.status).value}</span></td>
                                     <td>{item.investorName}</td>
-                                    {/* <td>{item.transactionType}</td> */}
                                     <td>{item.amcName}</td>
                                     <td>{item.schemeName}</td>
                                     <td>{item.schemeOption}</td>
@@ -1495,7 +1464,7 @@ const Details = () => {
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                     </td>
                                     <td>
@@ -1526,7 +1495,7 @@ const Details = () => {
 
         {/* ******* SWITCH TABLE  ******** */}
         <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
-          <h2 className=' text-left sm:text-3xl top-0 p-4 bg-white w-full'>Switch</h2>
+          <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>Switch</h2>
 
           <div className=' w-full overflow-auto p-2'>
             <table className=''>
@@ -1536,13 +1505,13 @@ const Details = () => {
                   <th>S No.</th>
                   <th>Status</th>
                   <th>Investor Name</th>
-                  <th>MF (AMC) Name</th>
+                  <th>AMC Name</th>
                   <th>From Scheme</th>
                   <th>From Scheme option</th>
                   <th>To Scheme</th>
                   <th>To Scheme option</th>
                   <th>Folio</th>
-                  <th>Transaction Units/Amount</th>
+                  <th>Traxn Units/Amount</th>
                   <th>Switch Date</th>
                   <th>Transaction Amount</th>
                   <th>Action</th>
@@ -1585,12 +1554,12 @@ const Details = () => {
                           <td>
                             {!item.transactionFractions?.length ? <button
                               disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-green-500 disabled:cursor-not-allowed'
+                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
                               onClick={() => handleGenerateLink(item._id)}
                             >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
                               : <button
                                 disabled={item.transactionFractions?.length < 2 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                         </tr>
@@ -1602,7 +1571,7 @@ const Details = () => {
                                 <th>S No.</th>
                                 <th>Status</th>
                                 <th>Investor Name</th>
-                                <th>MF (AMC) Name</th>
+                                <th>AMC Name</th>
                                 <th>From Scheme</th>
                                 <th>From Scheme option</th>
                                 <th>To Scheme</th>
@@ -1658,7 +1627,7 @@ const Details = () => {
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-base text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                     </td>
                                     <td>

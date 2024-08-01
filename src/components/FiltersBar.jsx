@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import SearchSelectMenu from './SearchSelectMenu'
 import { useDispatch, useSelector } from 'react-redux'
 import { getAllAmc, getAllSchemes, getRMNames } from '../redux/allFilterOptions/FilterOptionsAction'
@@ -7,6 +7,7 @@ import { CiCalendarDate } from 'react-icons/ci'
 import { formatDateDDShortMonthNameYY } from '../utils/formatDate'
 import { resetSchemeList } from '../redux/allFilterOptions/FilterOptionsSlice'
 import SortMenu from './SortMenu'
+import { MdCurrencyRupee } from 'react-icons/md'
 
 const sortOptions = ['Latest', 'Oldest', 'Amount: low to high', 'Amount: high to low']
 const sortMap = new Map()
@@ -21,6 +22,8 @@ function FiltersBar({ filters, updateFilters }) {
   const [sortBy, setSortBy] = useState('Latest')
   const { amcList, typeList, schemesList, rmNameList, error } = useSelector(state => state.allFilterOptions)
   const dispatch = useDispatch()
+  const minAmountRef = useRef(null)
+  const maxAmountRef = useRef(null)
 
   useEffect(() => {
     dispatch(getAllAmc())
@@ -73,14 +76,44 @@ function FiltersBar({ filters, updateFilters }) {
       schemeName: '',
       rmName: '',
       type: '',
-      sort: 'trxdate-desc'
+      sort: 'trxdate-desc',
+      minAmount: '',
+      maxAmount: ''
     })
+    setSortBy('Latest')
+    minAmountRef.current.value = ''
+    maxAmountRef.current.value = ''
   }
 
   return (
     <div className="flex flex-col text-sm text-gray-700">
       <div className="flex justify-start gap-2">
         <p className='text-gray-700 font-medium text-lg me-auto'>Filters</p>
+
+        <div title='Amount' className="flex bg-white items-center rounded-md border">
+          <span className='text-base text-gray-500 px-1'><MdCurrencyRupee /></span>
+          <input
+            ref={minAmountRef}
+            type="number"
+            name="minAmount"
+            id="filter-min-amount"
+            placeholder='Min'
+            title='Min amount'
+            className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center hover:bg-gray-100 placeholder:text-gray-500 ${!filters.minAmount ? 'text-gray-500' : 'text-blue-600'}`}
+            onBlur={handleFilterChange}
+          />
+          <div className='h-7 border-s'></div>
+          <input
+            ref={maxAmountRef}
+            type="number"
+            name="maxAmount"
+            id="filter-max-amount"
+            placeholder='Max'
+            title='Max amount'
+            className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center rounded-e-md hover:bg-gray-100 placeholder:text-gray-500 ${!filters.maxAmount ? 'text-gray-500' : 'text-blue-600'}`}
+            onBlur={handleFilterChange}
+          />
+        </div>
         <SortMenu
           list={sortOptions}
           selectedValue={sortBy}

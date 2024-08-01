@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import DataTable from 'react-data-table-component'
 import { useNavigate } from 'react-router-dom'
-import { RiMenu3Line } from "react-icons/ri";
 import { useDispatch, useSelector } from 'react-redux';
-import logo from '../assets/logo.png'
 import { getGroupedTransactions } from '../redux/groupedTransaction/GroupedTrxAction';
 import Loader from '../components/Loader';
 import { formatDate } from '../utils/formatDate';
+import Header from '../components/Header';
 
 const Pending = () => {
     const dispatch = useDispatch()
-    const { userdata } = useSelector((state) => state.auth)
     const { isLoading, error, data } = useSelector((state) => state.groupedTransactions)
     const navigate = useNavigate()
 
@@ -98,23 +96,8 @@ const Pending = () => {
 
     return (
         <div className='home-section w-full h-[100vh]'>
-            <div className="first-section sticky top-0 z-30 flex justify-between items-center h-[12vh] px-3 ">
-                <div className="first-section sticky top-0 z-40 bg-white flex justify-between items-center h-[12vh] px-3 ">
-                    <div className=' flex gap-1'>
-                        <button className='md:hidden' onClick={() => dispatch({
-                            type: "togglenavtab",
-                            payload: "0"
-                        })}>
-                            <RiMenu3Line className=' text-2xl font-semibold' />
-                        </button>
-                        <h1 className=' md:text-3xl  font-medium'>Overview</h1>
-                    </div>
-                </div>
-                {/* <img src={logo} alt="" className=' w-44'/> */}
-                <div className=' flex flex-col items-end gap-2'>
-                    <img src={logo} alt="" className=' w-32' />
-                    {userdata && <p>Welcome , {userdata.name}</p>}
-                </div>
+            <div className="first-section sticky top-0 z-30 flex justify-between items-center h-[12vh] px-2 md:px-6 ">
+                <Header title='Pending Transactions' />
             </div>
             <div className="table-section h-[88vh] bg-[#F8FAFC] flex justify-center p-3">
                 <div className='relative inner-section bg-white rounded-md  h-full w-full md:w-[87vw] lg:w-[90vw]  '>

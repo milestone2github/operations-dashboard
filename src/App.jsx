@@ -10,23 +10,24 @@ import All from './Pages/All'
 import Reco from './Pages/Reco'
 import History from './Pages/History'
 import Piechart from './Pages/Piechart'
+import Protected from './components/Protected'
 
 function App() {
-  const { userdata } = useSelector((state) => state.auth)
+
   return (
     <>
       <Router>
         <div className='flex'>
           <Menu />
           <Routes>
-            {userdata && <>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/pending-transaction/details/" element={<Details />} />
-              <Route path="/pending-transaction" element={<Pending />} />
-              <Route path="/all-transaction" element={<All />} />
-              <Route path="/transactions-reco" element={<Reco />} />
-              <Route path="/transaction-history" element={<History />} />
-            </>}
+            
+              <Route path="/" element={<Protected><Dashboard /> </Protected>} />
+              <Route path="/pending-transaction/details/" element={<Protected><Details /></Protected>} />
+              <Route path="/pending-transaction" element={<Protected><Pending /></Protected>} />
+              <Route path="/all-transaction" element={<Protected><All /></Protected>} />
+              <Route path="/transactions-reco" element={<Protected><Reco /></Protected>} />
+              <Route path="/transaction-history" element={<Protected><History /></Protected>} />
+            
             <Route path='/login' element={<Login />} />
             <Route path='/piechart' element={<Piechart />} />
           </Routes>

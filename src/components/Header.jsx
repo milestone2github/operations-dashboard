@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import logo from '../assets/logo.png'
 
 function Header({title}) {
-  const { userdata } = useSelector((state) => state.auth)
+  const { userData } = useSelector((state) => state.user)
   const dispatch = useDispatch()
 
   return (
@@ -19,7 +19,7 @@ function Header({title}) {
       <h3 className='text-xl md:text-3xl font-medium '>{title}</h3>
       <div className=' flex flex-col items-end gap-2'>
         <img src={logo} alt="" className=' w-32' />
-        {userdata && <p>Welcome , {userdata?.name}</p>}
+        {userData && <p>Welcome, {userData?.name}</p>}
       </div>
       </div>
     </header>

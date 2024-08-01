@@ -13,11 +13,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { checkeduserloggedin, logout } from '../redux/auth/action';
 import { FaPowerOff } from "react-icons/fa6";
 import Nestedtable from './Nestedtable';
+import { setLoggedIn } from '../redux/auth/userSlice';
 
 const Menu = ({ menu, func }) => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { isloading, userdata, iserror } = useSelector((state) => state.auth)
+  const { isLoading, isLoggedIn } = useSelector((state) => state.user)
   const dispatch = useDispatch()
   const { postionleft } = useSelector((state) => state.nav)
   const [id, setId] = useState(null)
@@ -58,17 +59,28 @@ const Menu = ({ menu, func }) => {
       path: "/transaction-history"
     },
   ]
-  useEffect(() => {
-    dispatch(checkeduserloggedin())
-  }, [])
-  useEffect(() => {
-    if (!isloading && !userdata) {
-      navigate("/login")
+
+  // Method to handle logout
+  const handleLogout = async () => {
+    try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+        if (response.ok) {
+            dispatch(setLoggedIn(false));
+            navigate('/login', { replace: true });
+        } else {
+            console.error("Logout failed: Server responded with status", response.status);
+        }
+    } catch (error) {
+        console.error("Logout error:", error);
     }
-  }, [isloading, userdata])
+}
+
   return (
     <>
-      {isloading ? <h1>loading...</h1> : userdata && <div style={{ transition: "0.5s", left: postionleft }} className='fixed md:sticky  h-[100vh] top-0 md:left-0 z-50 flex flex-col justify-between items-center py-4  bg-[#2879F3] px-2'>
+      {isLoading ? <h1>loading...</h1> : isLoggedIn && <div style={{ transition: "0.5s", left: postionleft }} className='fixed md:sticky  h-[100vh] top-0 md:left-0 z-50 flex flex-col justify-between items-center py-4  bg-[#2879F3] px-2'>
         <div className="logo text-[#F9FBFD] break-words invisible">
           mnivesh
         </div>
@@ -102,7 +114,7 @@ const Menu = ({ menu, func }) => {
           }
         </ul>
 
-        <button onClick={() => dispatch(logout())} >
+        <button title='Logout' onClick={handleLogout} >
           <FaPowerOff className=' text-[#F1F6FF] text-2xl' />
         </button>
 

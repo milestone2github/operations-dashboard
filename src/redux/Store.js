@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { navtab } from "./navtoggle/navreducer";
-import { userauth } from "./auth/userreducer";
+import UserSlice from "./auth/userSlice"
 import GroupedTrxSlice from "./groupedTransaction/GroupedTrxSlice";
 import SystematicSlice from "./transactions/SystematicSlice";
 import PurchRedempSlice from "./transactions/PurchRedempSlice";
@@ -12,7 +12,7 @@ import AllTransactionsSlice from "./allTransactions/AllTransactionsSlice";
 export const store = configureStore({
     reducer:{
         nav: navtab,
-        auth: userauth,
+        user: UserSlice,
         groupedTransactions: GroupedTrxSlice,
         sessionalTransactions: TransactionSlice,
         allFilterOptions: FilterOptionsSlice,

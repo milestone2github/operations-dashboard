@@ -1,5 +1,6 @@
 import React from 'react'
 import Header from '../components/Header'
+import ComingSoon from '../components/ComingSoon'
 
 function Dashboard() {
   return (
@@ -8,7 +9,7 @@ function Dashboard() {
         <Header title='Overview' />
         <hr className='border-b border-slate-100 w-full' />
       </div>
-      <div className='px-4 text-xl'>Dashboard</div>
+      <ComingSoon/>
     </main>
   )
 }

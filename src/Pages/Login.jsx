@@ -12,6 +12,7 @@ const Login = () => {
         if(error === 'permissionDenied') {
             toast.error('Access not allowed')
         }
+        else if(error === 'InternalServerError') { toast.error("Login failed: Internal server error") }
         else if(error) { toast.error("Login Failed") }
 
     }, []);

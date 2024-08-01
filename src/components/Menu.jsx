@@ -80,7 +80,7 @@ const Menu = ({ menu, func }) => {
 
   return (
     <>
-      {isLoading ? <h1>loading...</h1> : isLoggedIn && <div style={{ transition: "0.5s", left: postionleft }} className='fixed md:sticky  h-[100vh] top-0 md:left-0 z-50 flex flex-col justify-between items-center py-4  bg-[#2879F3] px-2'>
+      { isLoggedIn && <div style={{ transition: "0.5s", left: postionleft }} className='fixed md:sticky  h-[100vh] top-0 md:left-0 z-50 flex flex-col justify-between items-center py-4  bg-[#2879F3] px-2'>
         <div className="logo text-[#F9FBFD] break-words invisible">
           mnivesh
         </div>

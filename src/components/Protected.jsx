@@ -30,6 +30,7 @@ function Protected({children}) {
         dispatch(setUser(data.user));
       } catch (error) {
         console.error("Error Checking session", error);
+        navigate('/login?error=InternalServerError', {replace: true})
       } finally {
         dispatch(setLoading(false));
       }
@@ -42,7 +43,7 @@ function Protected({children}) {
 
   if (isLoading) {
     return (
-      <div className='h-full w-full flex items-center justify-center'>
+      <div className='h-screen w-screen flex items-center justify-center'>
         <div className='loader'>
         </div>
       </div>

@@ -10,8 +10,7 @@ import { FaSadTear } from 'react-icons/fa'
 const items = 12
 
 function NfoTransactions() {
-  const transactions = []
-  const { transactionss, status, error, page } = useSelector(state => state.nfoTransactions)
+  const { transactions, status, error, page } = useSelector(state => state.nfoTransactions)
   const dispatch = useDispatch()
 
   useEffect(() => {

@@ -71,15 +71,15 @@
 }
 
 
-.filtered-trx th {
+.filtered-trx th, .nfo-table th {
   background: transparent;
   text-align: left;
-  padding: 12px 16px;
+  padding: 12px 12px;
 }
 
-.filtered-trx td {
+.filtered-trx td, .nfo-table td {
   text-align: left;
-  padding: 12px 16px;
+  padding: 12px 12px;
 }
 
 /* Apply this class to the td tags */

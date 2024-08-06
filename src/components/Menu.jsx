@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { MdOutlineDashboard } from "react-icons/md";
+import { MdOutlineDashboard, MdOutlineDataThresholding } from "react-icons/md";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { CiBank } from "react-icons/ci";
 import { GoHistory } from "react-icons/go";
@@ -57,6 +57,13 @@ const Menu = ({ menu, func }) => {
       sname: "TH",
       lname: "Transactions History",
       path: "/transaction-history"
+    },
+    {
+      id: 6,
+      icon: <MdOutlineDataThresholding className=' text-xl' />,
+      sname: "NFO",
+      lname: "NFO Transactions",
+      path: "/nfo-transactions"
     },
   ]
 

@@ -494,7 +494,7 @@ const Details = () => {
         </div>
 
         {/* ******* SIP TRANSACTIONS TABLE ******* */}
-        <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
+        {!!sips?.length && <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
           <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>SIP</h2>
           <div className=' w-full overflow-auto p-2'>
             <table className=''>
@@ -695,10 +695,10 @@ const Details = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </div>}
 
         {/* ******* STP or Capital Appreciation STP TRANSACTIONS TABLE ******* */}
-        <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
+        {!!stps?.length &&<div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
           <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>STP</h2>
           <div className=' w-full overflow-auto p-2'>
             <table className=''>
@@ -897,10 +897,10 @@ const Details = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </div>}
 
         {/* ******* SWP or Capital Appreciation SWP TRANSACTIONS TABLE ******* */}
-        <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
+        {!!swps?.length && <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
           <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>SWP</h2>
           <div className=' w-full overflow-auto p-2'>
             <table className=''>
@@ -1099,10 +1099,10 @@ const Details = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </div>}
 
         {/* ******* PURCHASE TABLE ******** */}
-        <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
+        {!!purchases?.length && <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
           <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>Purchase</h2>
 
           <div className=' w-full overflow-auto p-2'>
@@ -1295,10 +1295,10 @@ const Details = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </div>}
 
         {/* ******* REDEMPTION  TABLE ******** */}
-        <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
+        {!!redemptions?.length && <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
           <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>Redemption</h2>
 
           <div className=' w-full overflow-auto p-2'>
@@ -1491,10 +1491,10 @@ const Details = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </div>}
 
         {/* ******* SWITCH TABLE  ******** */}
-        <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
+        {!!switchTransactions?.length && <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
           <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>Switch</h2>
 
           <div className=' w-full overflow-auto p-2'>
@@ -1659,7 +1659,7 @@ const Details = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        </div>}
 
       </div>
 

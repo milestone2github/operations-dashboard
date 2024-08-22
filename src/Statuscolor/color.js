@@ -24,6 +24,12 @@ export const color =[
         value:"EXPIRED"
     },
     {
+        type:"REJECTED",
+        bgcolor:"rgb(254 226 226)",
+        color:"rgb(220 38 38)",
+        value:"REJECTED"
+    },
+    {
         type:"2FA_VALIDATED_PAYMENT_PENDING",
         bgcolor:"rgb(243 244 246)",
         color:"rgb(75 85 99)",
@@ -34,6 +40,12 @@ export const color =[
         bgcolor:"rgb(220 252 231)",
         color:"rgb(22 163 74)",
         value:"PAYMENT_PROCESSED"
+    },
+    {
+        type:"APPROVED",
+        bgcolor:"rgb(220 252 231)",
+        color:"rgb(22 163 74)",
+        value:"APPROVED"
     },
     {
         type:"PAYMENT_STATUS_PENDING",

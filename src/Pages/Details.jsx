@@ -9,18 +9,15 @@ import { useSearchParams } from 'react-router-dom';
 import Loader from '../components/Loader';
 import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions } from '../redux/transactions/TransactionsAction';
 import {
-  systematicAddFraction,
-  removeSystematicFraction,
-  updateSystematicFractionAmount,
-  purchRedAddFraction,
-  removePurchRedFraction,
-  updatePurchRedFractionAmount,
   switchAddFraction,
   removeSwitchFraction,
   updateSwitchFractionAmount,
   unlockTransaction,
   updateSwitchTransactionDate,
-  cancelSwitchFraction
+  cancelSwitchFraction,
+  updateSwitchFractionFolio,
+  updateSwitchApprovalStatus,
+  updateSwitchFractionApprovalStatus
 } from '../redux/transactions/TransactionSlice';
 
 import { formatDate, formatDateToYYYYMMDD } from '../utils/formatDate';
@@ -38,6 +35,21 @@ const initialCommonData = {
   transactionCount: ''
 }
 
+const approvalStatusOptions = [
+  "",
+  "Approved",
+  "Link still Pending",
+  "KYC not Compliant",
+  "Technical Issue",
+  "Client Declined",
+  "RM Declined",
+  "Submitted to RTA",
+  "System Update Awaiting",
+  "RM Hold the Execution",
+  "Wrongly / Double Entry",
+  "Onboarding Pending"
+]
+
 const currentDate = formatDateToYYYYMMDD(new Date)
 
 const Details = () => {
@@ -47,7 +59,7 @@ const Details = () => {
   const [rowId, setRowId] = useState(null)
   const [commonData, setCommonData] = useState(initialCommonData)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [transactionForLink, setTransactionForLink] = useState({id: '', fractionId: ''})
+  const [transactionForLink, setTransactionForLink] = useState({ id: '', fractionId: '' })
 
   const dispatch = useDispatch()
   const {
@@ -138,7 +150,8 @@ const Details = () => {
       const updatedTransactionFractions = [...updatedSips[index].transactionFractions, {
         fractionAmount: 0,
         status: 'PENDING',
-        transactionDate: ''
+        transactionDate: '',
+        folioNumber: prevSips[index].folioNumber
       }];
 
       updatedSips[index] = {
@@ -158,7 +171,8 @@ const Details = () => {
       const updatedTransactionFractions = [...updatedStps[index].transactionFractions, {
         fractionAmount: 0,
         status: 'PENDING',
-        transactionDate: ''
+        transactionDate: '',
+        folioNumber: prevStps[index].folioNumber
       }];
 
       updatedStps[index] = {
@@ -178,7 +192,8 @@ const Details = () => {
       const updatedTransactionFractions = [...updatedSwps[index].transactionFractions, {
         fractionAmount: 0,
         status: 'PENDING',
-        transactionDate: ''
+        transactionDate: '',
+        folioNumber: prevSwps[index].folioNumber
       }];
 
       updatedSwps[index] = {
@@ -197,7 +212,8 @@ const Details = () => {
       const updatedTransactionFractions = [...updatedPurchases[index].transactionFractions, {
         fractionAmount: 0,
         status: 'PENDING',
-        transactionDate: ''
+        transactionDate: '',
+        folioNumber: prevPurchases[index].folioNumber
       }];
       updatedPurchases[index] = {
         ...updatedPurchases[index],
@@ -214,7 +230,8 @@ const Details = () => {
       const updatedTransactionFractions = [...updatedRedemptions[index].transactionFractions, {
         fractionAmount: 0,
         status: 'PENDING',
-        transactionDate: ''
+        transactionDate: '',
+        folioNumber: prevRedemptions[index].folioNumber
       }];
       updatedRedemptions[index] = {
         ...updatedRedemptions[index],
@@ -284,7 +301,7 @@ const Details = () => {
       return updatedPurchases;
     });
   };
-  
+
   // function to remove fraction from purchases transactions
   const handleRemoveRedemptionsFraction = (index, fracIndex) => {
     setRedemptions(prevRedemptions => {
@@ -297,7 +314,7 @@ const Details = () => {
       return updatedRedemptions;
     });
   };
-  
+
   // function to remove fraction from purchase/redemption transactions
   const handleRemoveSwitchFraction = (index, fracIndex) => {
     dispatch(removeSwitchFraction({ index, fracIndex }))
@@ -309,10 +326,10 @@ const Details = () => {
     setSips(prevState => {
       let updatedState = [...prevState]
       let updatedFractions = [...updatedState[index].transactionFractions]
-      updatedFractions[fracIndex] = {...updatedFractions[fracIndex], linkStatus: 'deleted'}
-      
+      updatedFractions[fracIndex] = { ...updatedFractions[fracIndex], linkStatus: 'deleted' }
+
       updatedState[index] = {
-        ...updatedState[index], 
+        ...updatedState[index],
         transactionFractions: updatedFractions
       }
       return updatedState
@@ -324,10 +341,10 @@ const Details = () => {
     setStps(prevState => {
       let updatedState = [...prevState]
       let updatedFractions = [...updatedState[index].transactionFractions]
-      updatedFractions[fracIndex] = {...updatedFractions[fracIndex], linkStatus: 'deleted'}
-      
+      updatedFractions[fracIndex] = { ...updatedFractions[fracIndex], linkStatus: 'deleted' }
+
       updatedState[index] = {
-        ...updatedState[index], 
+        ...updatedState[index],
         transactionFractions: updatedFractions
       }
       return updatedState
@@ -339,10 +356,10 @@ const Details = () => {
     setSwps(prevState => {
       let updatedState = [...prevState]
       let updatedFractions = [...updatedState[index].transactionFractions]
-      updatedFractions[fracIndex] = {...updatedFractions[fracIndex], linkStatus: 'deleted'}
-      
+      updatedFractions[fracIndex] = { ...updatedFractions[fracIndex], linkStatus: 'deleted' }
+
       updatedState[index] = {
-        ...updatedState[index], 
+        ...updatedState[index],
         transactionFractions: updatedFractions
       }
       return updatedState
@@ -354,10 +371,10 @@ const Details = () => {
     setPurchases(prevState => {
       let updatedState = [...prevState]
       let updatedFractions = [...updatedState[index].transactionFractions]
-      updatedFractions[fracIndex] = {...updatedFractions[fracIndex], linkStatus: 'deleted'}
-      
+      updatedFractions[fracIndex] = { ...updatedFractions[fracIndex], linkStatus: 'deleted' }
+
       updatedState[index] = {
-        ...updatedState[index], 
+        ...updatedState[index],
         transactionFractions: updatedFractions
       }
       return updatedState
@@ -369,10 +386,10 @@ const Details = () => {
     setRedemptions(prevState => {
       let updatedState = [...prevState]
       let updatedFractions = [...updatedState[index].transactionFractions]
-      updatedFractions[fracIndex] = {...updatedFractions[fracIndex], linkStatus: 'deleted'}
-      
+      updatedFractions[fracIndex] = { ...updatedFractions[fracIndex], linkStatus: 'deleted' }
+
       updatedState[index] = {
-        ...updatedState[index], 
+        ...updatedState[index],
         transactionFractions: updatedFractions
       }
       return updatedState
@@ -380,12 +397,12 @@ const Details = () => {
   }
 
   const handleCancelSwitchFraction = (index, fracIndex) => {
-    dispatch(cancelSwitchFraction({index, fracIndex}))
+    dispatch(cancelSwitchFraction({ index, fracIndex }))
   }
 
   const handleGenerateLink = (id) => {
     setIsModalOpen(true)
-    setTransactionForLink({id})
+    setTransactionForLink({ id })
     // dispatch(generateLink({ id }))
     console.log('link generated...') //todo
   }
@@ -398,16 +415,16 @@ const Details = () => {
   }
 
   const handleProceed = (platform, orderId) => {
-    dispatch(generateLink({...transactionForLink, platform, orderId}))
+    dispatch(generateLink({ ...transactionForLink, platform, orderId }))
   }
 
   const handleCancelModal = () => {
     setIsModalOpen(false)
-    setTransactionForLink({id: '', fractionId: ''})
+    setTransactionForLink({ id: '', fractionId: '' })
   }
 
   useEffect(() => {
-    if(linkGenerated === 'completed') {
+    if (linkGenerated === 'completed') {
       handleCancelModal()
       toast.success('Generated')
     }
@@ -442,6 +459,26 @@ const Details = () => {
     dispatch(saveFractions({ id: item._id, fractions: item.transactionFractions }))
   }
 
+  const updateApprovalStatus = async (id, approvalStatus, fractionId) => {
+    const data = { approvalStatus }
+    if (fractionId) { data.fractionId = fractionId }
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/update-status/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      })
+      const jsonData = await response.json()
+      if (!response.ok) {
+        throw new Error(jsonData.error || response.statusText)
+      }
+    } catch (error) {
+      console.error('Error updating approval status: ', error.message)
+      toast.error('Unable to update approval status')
+    }
+  }
+
   const showLoading = <tr>
     <td colSpan={7} className='p-[11px]'><Loader /></td>
   </tr>
@@ -449,8 +486,8 @@ const Details = () => {
   return (
     <div className='home-section w-full h-[100vh] relative'>
       <div className="first-section sticky top-0 z-40 bg-white flex justify-between items-center h-[12vh] py-1 px-2 md:px-6 ">
-        
-        <Header title='Transaction Details'/>
+
+        <Header title='Transaction Details' />
       </div>
       <div className="table-section  bg-[#F8FAFC] p-3 flex flex-col items-center gap-4 overflow-y-auto h-[88vh]">
         <div className='card text-[#000000] client-data w-[90vw] md:w-[87vw]  lg:w-[90vw] grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-6'>
@@ -508,12 +545,14 @@ const Details = () => {
                   <th>AMC Name</th>
                   <th>Scheme Name</th>
                   <th>Scheme Option</th>
+                  <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Tenure of SIP</th>
                   <th>First Traxn Amount</th>
                   <th>SIP Date</th>
                   <th>First Installment Payment Mode</th>
                   <th>SIP Amount</th>
+                  <th>Approval Status</th>
                   <th>Action</th>
                   <th>Links</th>
                 </tr>
@@ -532,22 +571,39 @@ const Details = () => {
                           <td className='min-w-16'>{index + 1}</td>
                           <td><span className=' px-3 py-2 rounded-3xl font-medium text-xs'
                             style={{
-                              backgroundColor: color.find((color) => color.type === item.status).bgcolor,
-                              color: color.find((color) => color.type === item.status).color
+                              backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
+                              color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status).value}</span></td>
+                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
                           <td>{item.investorName}</td>
                           {/* <td>{item.transactionType}</td> */}
                           <td>{item.transactionFor}</td>
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
+                          <td>{formatDate(item.createdAt)}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
                           <td>{formatDate(item.transactionPreference)}</td>
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
+                          <td><select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            const value = e.target.value
+                            if (!value) return
+
+                            let updatedSips = [...sips].map(sip => ({
+                              ...sip,
+                              transactionFractions: [...sip.transactionFractions]
+                            }));
+                            updatedSips[index].approvalStatus = value;
+                            setSips(updatedSips);
+                            updateApprovalStatus(item._id, value)
+                          }}>
+                            {approvalStatusOptions.map(statusOption => (
+                              <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                            ))}
+                          </select></td>
                           <td>{['generated', 'locked'].includes(item.linkStatus) ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
@@ -583,6 +639,7 @@ const Details = () => {
                                 <th>SIP Date</th>
                                 <th>First Installment Payment Mode</th>
                                 <th>SIP Amount</th>
+                                <th>Approval Status</th>
                                 <th>Link</th>
                                 <th>Actions</th>
                               </tr>
@@ -595,17 +652,41 @@ const Details = () => {
                                     <td className='min-w-16'>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium '
                                       style={{
-                                        backgroundColor: color.find((color) => color.type === fractionItem.status).bgcolor,
-                                        color: color.find((color) => color.type === fractionItem.status).color
+                                        backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
+                                        color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                       }}
-                                    >{color.find((color) => color.type === fractionItem.status).value}</span></td>
+                                    >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
                                     <td>{item.investorName}</td>
-                                    {/* <td>{item.transactionType}</td> */}
                                     <td>{item.transactionFor}</td>
                                     <td>{item.amcName}</td>
                                     <td>{item.schemeName}</td>
                                     <td>{item.schemeOption}</td>
-                                    <td>{item.folioNumber}</td>
+                                    <td>
+                                      <input
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                        value={fractionItem.folioNumber}
+                                        type='text'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        onChange={(e) => {
+                                          const { value } = e.target;
+                                          setSips(prevState => {
+                                            return prevState.map((transaction, i) => {
+                                              if (i === index) {
+                                                return {
+                                                  ...transaction,
+                                                  transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                    if (j === fracIndex) {
+                                                      return { ...fraction, folioNumber: value };
+                                                    }
+                                                    return fraction;
+                                                  })
+                                                };
+                                              }
+                                              return transaction;
+                                            });
+                                          });
+                                        }} />
+                                    </td>
                                     <td>{item.tenure}</td>
                                     <td className='min-w-32'>{item.firstTransactionAmount}</td>
                                     <td>{
@@ -613,7 +694,7 @@ const Details = () => {
                                         type="date"
                                         name="transactionDate"
                                         min={currentDate}
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -642,7 +723,7 @@ const Details = () => {
                                     <td className='min-w-36'>{item.paymentMode}</td>
                                     <td>
                                       <input
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={fractionItem.fractionAmount}
                                         type='number'
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -665,6 +746,38 @@ const Details = () => {
                                             });
                                           });
                                         }} />
+                                    </td>
+                                    <td>
+                                      <select
+                                        name="approval-status"
+                                        className='disabled:bg-blue-50 py-2'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        value={fractionItem.approvalStatus}
+                                        onChange={(e) => {
+                                          const value = e.target.value
+                                          if (!value) return
+
+                                          setSips(prevState => {
+                                            return prevState.map((transaction, i) => {
+                                              if (i === index) {
+                                                return {
+                                                  ...transaction,
+                                                  transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                    if (j === fracIndex) {
+                                                      return { ...fraction, approvalStatus: value };
+                                                    }
+                                                    return fraction;
+                                                  })
+                                                };
+                                              }
+                                              return transaction;
+                                            });
+                                          });
+                                        }}>
+                                        {approvalStatusOptions.map(statusOption => (
+                                          <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                        ))}
+                                      </select>
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
@@ -698,7 +811,7 @@ const Details = () => {
         </div>}
 
         {/* ******* STP or Capital Appreciation STP TRANSACTIONS TABLE ******* */}
-        {!!stps?.length &&<div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
+        {!!stps?.length && <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
           <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>STP</h2>
           <div className=' w-full overflow-auto p-2'>
             <table className=''>
@@ -712,12 +825,14 @@ const Details = () => {
                   <th>AMC Name</th>
                   <th>Scheme Name</th>
                   <th>Scheme Option</th>
+                  <th>Execution Date</th>
                   <th>Folio</th>
-                  <th>Tenure of SIP</th>
+                  <th>Tenure of STP</th>
                   <th className='min-w-32'>First Traxn Amount</th>
-                  <th>SIP Date</th>
+                  <th>STP Date</th>
                   <th className='min-w-36'>First Installment Payment Mode</th>
-                  <th>SIP Amount</th>
+                  <th>STP Amount</th>
+                  <th>Approval Status</th>
                   <th>Action</th>
                   <th>Links</th>
                 </tr>
@@ -736,21 +851,38 @@ const Details = () => {
                           <td className='min-w-16'>{index + 1}</td>
                           <td><span className=' px-3 py-2 rounded-3xl font-medium text-xs'
                             style={{
-                              backgroundColor: color.find((color) => color.type === item.status).bgcolor,
-                              color: color.find((color) => color.type === item.status).color
+                              backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
+                              color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status).value}</span></td>
+                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
                           <td>{item.investorName}</td>
                           <td>{item.transactionFor}</td>
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
+                          <td>{formatDate(item.createdAt)}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
                           <td>{formatDate(item.transactionPreference)}</td>
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
+                          <td><select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            const value = e.target.value
+                            if (!value) return
+
+                            let updatedStps = [...stps].map(stp => ({
+                              ...stp,
+                              transactionFractions: [...stp.transactionFractions]
+                            }));
+                            updatedStps[index].approvalStatus = value;
+                            setStps(updatedStps);
+                            updateApprovalStatus(item._id, value)
+                          }}>
+                            {approvalStatusOptions.map(statusOption => (
+                              <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                            ))}
+                          </select></td>
                           <td>{['generated', 'locked'].includes(item.linkStatus) ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
@@ -781,11 +913,12 @@ const Details = () => {
                                 <th>Scheme Name</th>
                                 <th>Scheme Option</th>
                                 <th>Folio</th>
-                                <th>Tenure of SIP</th>
+                                <th>Tenure of STP</th>
                                 <th className='min-w-32'>First Traxn Amount</th>
-                                <th>SIP Date</th>
+                                <th>STP Date</th>
                                 <th className='min-w-36'>First Installment Payment Mode</th>
-                                <th>SIP Amount</th>
+                                <th>STP Amount</th>
+                                <th>Approval Status</th>
                                 <th>Link</th>
                                 <th>Actions</th>
                               </tr>
@@ -798,16 +931,41 @@ const Details = () => {
                                     <td className='min-w-16'>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium '
                                       style={{
-                                        backgroundColor: color.find((color) => color.type === fractionItem.status).bgcolor,
-                                        color: color.find((color) => color.type === fractionItem.status).color
+                                        backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
+                                        color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                       }}
-                                    >{color.find((color) => color.type === fractionItem.status).value}</span></td>
+                                    >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
                                     <td>{item.investorName}</td>
                                     <td>{item.transactionFor}</td>
                                     <td>{item.amcName}</td>
                                     <td>{item.schemeName}</td>
                                     <td>{item.schemeOption}</td>
-                                    <td>{item.folioNumber}</td>
+                                    <td>
+                                      <input
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                        value={fractionItem.folioNumber}
+                                        type='text'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        onChange={(e) => {
+                                          const { value } = e.target;
+                                          setStps(prevState => {
+                                            return prevState.map((transaction, i) => {
+                                              if (i === index) {
+                                                return {
+                                                  ...transaction,
+                                                  transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                    if (j === fracIndex) {
+                                                      return { ...fraction, folioNumber: value };
+                                                    }
+                                                    return fraction;
+                                                  })
+                                                };
+                                              }
+                                              return transaction;
+                                            });
+                                          });
+                                        }} />
+                                    </td>
                                     <td>{item.tenure}</td>
                                     <td className='min-w-32'>{item.firstTransactionAmount}</td>
                                     <td>{
@@ -815,7 +973,7 @@ const Details = () => {
                                         type="date"
                                         name="transactionDate"
                                         min={currentDate}
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -844,7 +1002,7 @@ const Details = () => {
                                     <td className='min-w-36'>{item.paymentMode}</td>
                                     <td>
                                       <input
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={fractionItem.fractionAmount}
                                         type='number'
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -867,6 +1025,38 @@ const Details = () => {
                                             });
                                           });
                                         }} />
+                                    </td>
+                                    <td>
+                                      <select 
+                                        name="approval-status" 
+                                        className='disabled:bg-blue-50 py-2'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        value={fractionItem.approvalStatus} 
+                                        onChange={(e) => {
+                                        const value = e.target.value
+                                        if (!value) return
+
+                                        setStps(prevState => {
+                                          return prevState.map((transaction, i) => {
+                                            if (i === index) {
+                                              return {
+                                                ...transaction,
+                                                transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                  if (j === fracIndex) {
+                                                    return { ...fraction, approvalStatus: value };
+                                                  }
+                                                  return fraction;
+                                                })
+                                              };
+                                            }
+                                            return transaction;
+                                          });
+                                        });
+                                      }}>
+                                        {approvalStatusOptions.map(statusOption => (
+                                          <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                        ))}
+                                      </select>
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
@@ -914,12 +1104,14 @@ const Details = () => {
                   <th>AMC Name</th>
                   <th>Scheme Name</th>
                   <th>Scheme Option</th>
+                  <th>Execution Date</th>
                   <th>Folio</th>
-                  <th>Tenure of SIP</th>
+                  <th>Tenure of SWP</th>
                   <th className='min-w-32'>First Traxn Amount</th>
-                  <th>SIP Date</th>
+                  <th>SWP Date</th>
                   <th className='min-w-36'>First Installment Payment Mode</th>
-                  <th>SIP Amount</th>
+                  <th>SWP Amount</th>
+                  <th>Approval Status</th>
                   <th>Action</th>
                   <th>Links</th>
                 </tr>
@@ -938,21 +1130,40 @@ const Details = () => {
                           <td className='min-w-16'>{index + 1}</td>
                           <td><span className=' px-3 py-2 rounded-3xl font-medium text-xs'
                             style={{
-                              backgroundColor: color.find((color) => color.type === item.status).bgcolor,
-                              color: color.find((color) => color.type === item.status).color
+                              backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
+                              color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status).value}</span></td>
+                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
                           <td>{item.investorName}</td>
                           <td>{item.transactionFor}</td>
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
+                          <td>{formatDate(item.createdAt)}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
                           <td>{formatDate(item.transactionPreference)}</td>
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
+                          <td>
+                            <select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
+                              const value = e.target.value
+                              if (!value) return
+
+                              setSwps(prevState => prevState.map((transaction, i) => {
+                                if (i === index) {
+                                  return { ...transaction, approvalStatus: value }
+                                }
+                                return transaction
+                              }))
+                              updateApprovalStatus(item._id, value)
+                            }}>
+                              {approvalStatusOptions.map((statusOption) => (
+                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                              ))}
+                            </select>
+                          </td>
                           <td>{['generated', 'locked'].includes(item.linkStatus) ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
@@ -983,11 +1194,12 @@ const Details = () => {
                                 <th>Scheme Name</th>
                                 <th>Scheme Option</th>
                                 <th>Folio</th>
-                                <th>Tenure of SIP</th>
+                                <th>Tenure of SWP</th>
                                 <th className='min-w-32'>First Traxn Amount</th>
-                                <th>SIP Date</th>
+                                <th>SWP Date</th>
                                 <th className='min-w-36'>First Installment Payment Mode</th>
-                                <th>SIP Amount</th>
+                                <th>SWP Amount</th>
+                                <th>Approval Status</th>
                                 <th>Link</th>
                                 <th>Actions</th>
                               </tr>
@@ -1000,16 +1212,41 @@ const Details = () => {
                                     <td className='min-w-16'>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium '
                                       style={{
-                                        backgroundColor: color.find((color) => color.type === fractionItem.status).bgcolor,
-                                        color: color.find((color) => color.type === fractionItem.status).color
+                                        backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
+                                        color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                       }}
-                                    >{color.find((color) => color.type === fractionItem.status).value}</span></td>
+                                    >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
                                     <td>{item.investorName}</td>
                                     <td>{item.transactionFor}</td>
                                     <td>{item.amcName}</td>
                                     <td>{item.schemeName}</td>
                                     <td>{item.schemeOption}</td>
-                                    <td>{item.folioNumber}</td>
+                                    <td>
+                                      <input
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                        value={fractionItem.folioNumber}
+                                        type='text'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        onChange={(e) => {
+                                          const { value } = e.target;
+                                          setSwps(prevState => {
+                                            return prevState.map((transaction, i) => {
+                                              if (i === index) {
+                                                return {
+                                                  ...transaction,
+                                                  transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                    if (j === fracIndex) {
+                                                      return { ...fraction, folioNumber: value };
+                                                    }
+                                                    return fraction;
+                                                  })
+                                                };
+                                              }
+                                              return transaction;
+                                            });
+                                          });
+                                        }} />
+                                    </td>
                                     <td>{item.tenure}</td>
                                     <td className='min-w-32'>{item.firstTransactionAmount}</td>
                                     <td>{
@@ -1017,7 +1254,7 @@ const Details = () => {
                                         type="date"
                                         name="transactionDate"
                                         min={currentDate}
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -1046,7 +1283,7 @@ const Details = () => {
                                     <td className='min-w-36'>{item.paymentMode}</td>
                                     <td>
                                       <input
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={fractionItem.fractionAmount}
                                         type='number'
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -1069,6 +1306,38 @@ const Details = () => {
                                             });
                                           });
                                         }} />
+                                    </td>
+                                    <td>
+                                      <select 
+                                        name="approval-status" 
+                                        className='disabled:bg-blue-50 py-2'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        value={fractionItem.approvalStatus} 
+                                        onChange={(e) => {
+                                        const value = e.target.value
+                                        if (!value) return
+
+                                        setSwps(prevState => {
+                                          return prevState.map((transaction, i) => {
+                                            if (i === index) {
+                                              return {
+                                                ...transaction,
+                                                transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                  if (j === fracIndex) {
+                                                    return { ...fraction, approvalStatus: value };
+                                                  }
+                                                  return fraction;
+                                                })
+                                              };
+                                            }
+                                            return transaction;
+                                          });
+                                        });
+                                      }}>
+                                        {approvalStatusOptions.map(statusOption => (
+                                          <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                        ))}
+                                      </select>
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
@@ -1116,11 +1385,13 @@ const Details = () => {
                   <th>AMC Name</th>
                   <th>Scheme Name</th>
                   <th>Scheme Option</th>
+                  <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Traxn Units/Amount</th>
                   <th>Purchase Date</th>
                   <th>Payment Mode</th>
                   <th>Transaction Amount</th>
+                  <th>Approval Status</th>
                   <th>Action</th>
                   <th>Links</th>
                 </tr>
@@ -1139,20 +1410,38 @@ const Details = () => {
                           <td className=''>{index + 1}</td>
                           <td><span className=' px-3 py-2 rounded-3xl font-medium'
                             style={{
-                              backgroundColor: color.find((color) => color.type === item.status).bgcolor,
-                              color: color.find((color) => color.type === item.status).color
+                              backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
+                              color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status).value}</span></td>
+                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
                           <td>{item.investorName}</td>
-                          {/* <td>{item.transactionType}</td> */}
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
+                          <td>{formatDate(item.createdAt)}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.transactionUnits}</td>
                           <td>{formatDate(item.transactionPreference)}</td>
                           <td>{item.paymentMode}</td>
                           <td>{item.amount}</td>
+                          <td>
+                            <select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
+                              const value = e.target.value
+                              if (!value) return
+
+                              setPurchases(prevState => prevState.map((transaction, i) => {
+                                if (i === index) {
+                                  return { ...transaction, approvalStatus: value }
+                                }
+                                return transaction
+                              }))
+                              updateApprovalStatus(item._id, value)
+                            }}>
+                              {approvalStatusOptions.map((statusOption) => (
+                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                              ))}
+                            </select>
+                          </td>
                           <td>{['generated', 'locked'].includes(item.linkStatus) ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
@@ -1171,7 +1460,7 @@ const Details = () => {
                           </td>
                         </tr>
                         {rowId === item._id && item.transactionFractions?.length !== 0 && <td colSpan="20" className=' '>
-                          <table className='relative '>
+                          <table className='relative w-full'>
                             <thead className=' rounded-full   '>
                               <tr className=' whitespace-nowrap  '>
                                 <th></th>
@@ -1186,6 +1475,7 @@ const Details = () => {
                                 <th>Purchase Date</th>
                                 <th>Payment Mode</th>
                                 <th>Transaction Amount</th>
+                                <th>Approval Status</th>
                                 <th>Link</th>
                                 <th>Actions</th>
                               </tr>
@@ -1198,22 +1488,47 @@ const Details = () => {
                                     <td className=''>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium'
                                       style={{
-                                        backgroundColor: color.find((color) => color.type === fractionItem.status).bgcolor,
-                                        color: color.find((color) => color.type === fractionItem.status).color
+                                        backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
+                                        color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                       }}
-                                    >{color.find((color) => color.type === fractionItem.status).value}</span></td>
+                                    >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
                                     <td>{item.investorName}</td>
                                     <td>{item.amcName}</td>
                                     <td>{item.schemeName}</td>
                                     <td>{item.schemeOption}</td>
-                                    <td>{item.folioNumber}</td>
+                                    <td>
+                                      <input
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                        value={fractionItem.folioNumber}
+                                        type='text'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        onChange={(e) => {
+                                          const { value } = e.target;
+                                          setPurchases(prevState => {
+                                            return prevState.map((transaction, i) => {
+                                              if (i === index) {
+                                                return {
+                                                  ...transaction,
+                                                  transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                    if (j === fracIndex) {
+                                                      return { ...fraction, folioNumber: value };
+                                                    }
+                                                    return fraction;
+                                                  })
+                                                };
+                                              }
+                                              return transaction;
+                                            });
+                                          });
+                                        }} />
+                                    </td>
                                     <td>{item.transactionUnits}</td>
                                     <td>{
                                       <input
                                         type="date"
                                         name="transactionDate"
                                         min={currentDate}
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -1242,7 +1557,7 @@ const Details = () => {
                                     <td>{item.paymentMode}</td>
                                     <td>
                                       <input
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={fractionItem.fractionAmount}
                                         type='number'
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -1265,6 +1580,38 @@ const Details = () => {
                                             });
                                           });
                                         }} />
+                                    </td>
+                                    <td>
+                                      <select
+                                        name="approval-status"
+                                        className='disabled:bg-blue-50 py-2'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        value={fractionItem.approvalStatus}
+                                        onChange={(e) => {
+                                          const value = e.target.value
+                                          if (!value) return
+
+                                          setPurchases(prevState => {
+                                            return prevState.map((transaction, i) => {
+                                              if (i === index) {
+                                                return {
+                                                  ...transaction,
+                                                  transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                    if (j === fracIndex) {
+                                                      return { ...fraction, approvalStatus: value };
+                                                    }
+                                                    return fraction;
+                                                  })
+                                                };
+                                              }
+                                              return transaction;
+                                            });
+                                          });
+                                        }}>
+                                        {approvalStatusOptions.map(statusOption => (
+                                          <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                        ))}
+                                      </select>
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
@@ -1312,11 +1659,13 @@ const Details = () => {
                   <th>AMC Name</th>
                   <th>Scheme Name</th>
                   <th>Scheme Option</th>
+                  <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Traxn Units/Amount</th>
                   <th>Redemption Date</th>
                   <th>Payment Mode</th>
                   <th>Transaction Amount</th>
+                  <th>Approval Status</th>
                   <th>Action</th>
                   <th>Links</th>
                 </tr>
@@ -1335,20 +1684,38 @@ const Details = () => {
                           <td className=''>{index + 1}</td>
                           <td><span className=' px-3 py-2 rounded-3xl font-medium'
                             style={{
-                              backgroundColor: color.find((color) => color.type === item.status).bgcolor,
-                              color: color.find((color) => color.type === item.status).color
+                              backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
+                              color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status).value}</span></td>
+                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
                           <td>{item.investorName}</td>
-                          {/* <td>{item.transactionType}</td> */}
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
+                          <td>{formatDate(item.createdAt)}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.transactionUnits}</td>
                           <td>{formatDate(item.transactionPreference)}</td>
                           <td>{item.paymentMode}</td>
                           <td>{item.amount}</td>
+                          <td>
+                            <select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
+                              const value = e.target.value
+                              if (!value) return
+
+                              setRedemptions(prevState => prevState.map((transaction, i) => {
+                                if (i === index) {
+                                  return { ...transaction, approvalStatus: value }
+                                }
+                                return transaction
+                              }))
+                              updateApprovalStatus(item._id, value)
+                            }}>
+                              {approvalStatusOptions.map((statusOption) => (
+                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                              ))}
+                            </select>
+                          </td>
                           <td>{['generated', 'locked'].includes(item.linkStatus) ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
@@ -1366,8 +1733,8 @@ const Details = () => {
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                         </tr>
-                        {rowId === item._id && item.transactionFractions?.length !== 0 && <td colSpan="20" className=' '>
-                          <table className='relative '>
+                        {rowId === item._id && item.transactionFractions?.length !== 0 && <td colSpan="18" className=' '>
+                          <table className='relative w-full'>
                             <thead className=' rounded-full   '>
                               <tr className=' whitespace-nowrap  '>
                                 <th></th>
@@ -1382,6 +1749,7 @@ const Details = () => {
                                 <th>Redemption Date</th>
                                 <th>Payment Mode</th>
                                 <th>Transaction Amount</th>
+                                <th>Approval Status</th>
                                 <th>Link</th>
                                 <th>Actions</th>
                               </tr>
@@ -1394,22 +1762,47 @@ const Details = () => {
                                     <td className=''>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium'
                                       style={{
-                                        backgroundColor: color.find((color) => color.type === fractionItem.status).bgcolor,
-                                        color: color.find((color) => color.type === fractionItem.status).color
+                                        backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
+                                        color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                       }}
-                                    >{color.find((color) => color.type === fractionItem.status).value}</span></td>
+                                    >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
                                     <td>{item.investorName}</td>
                                     <td>{item.amcName}</td>
                                     <td>{item.schemeName}</td>
                                     <td>{item.schemeOption}</td>
-                                    <td>{item.folioNumber}</td>
+                                    <td>
+                                      <input
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                        value={fractionItem.folioNumber}
+                                        type='text'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        onChange={(e) => {
+                                          const { value } = e.target;
+                                          setRedemptions(prevState => {
+                                            return prevState.map((transaction, i) => {
+                                              if (i === index) {
+                                                return {
+                                                  ...transaction,
+                                                  transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                    if (j === fracIndex) {
+                                                      return { ...fraction, folioNumber: value };
+                                                    }
+                                                    return fraction;
+                                                  })
+                                                };
+                                              }
+                                              return transaction;
+                                            });
+                                          });
+                                        }} />
+                                    </td>
                                     <td>{item.transactionUnits}</td>
                                     <td>{
                                       <input
                                         type="date"
                                         name="transactionDate"
                                         min={currentDate}
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -1438,7 +1831,7 @@ const Details = () => {
                                     <td>{item.paymentMode}</td>
                                     <td>
                                       <input
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={fractionItem.fractionAmount}
                                         type='number'
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -1461,6 +1854,38 @@ const Details = () => {
                                             });
                                           });
                                         }} />
+                                    </td>
+                                    <td>
+                                      <select
+                                        name="approval-status"
+                                        className='disabled:bg-blue-50 py-2'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        value={fractionItem.approvalStatus}
+                                        onChange={(e) => {
+                                          const value = e.target.value
+                                          if (!value) return
+
+                                          setRedemptions(prevState => {
+                                            return prevState.map((transaction, i) => {
+                                              if (i === index) {
+                                                return {
+                                                  ...transaction,
+                                                  transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                    if (j === fracIndex) {
+                                                      return { ...fraction, approvalStatus: value };
+                                                    }
+                                                    return fraction;
+                                                  })
+                                                };
+                                              }
+                                              return transaction;
+                                            });
+                                          });
+                                        }}>
+                                        {approvalStatusOptions.map(statusOption => (
+                                          <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                        ))}
+                                      </select>
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
@@ -1510,10 +1935,12 @@ const Details = () => {
                   <th>From Scheme option</th>
                   <th>To Scheme</th>
                   <th>To Scheme option</th>
+                  <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Traxn Units/Amount</th>
                   <th>Switch Date</th>
                   <th>Transaction Amount</th>
+                  <th>Approval Status</th>
                   <th>Action</th>
                   <th>Links</th>
                 </tr>
@@ -1532,20 +1959,34 @@ const Details = () => {
                           <td className=''>{index + 1}</td>
                           <td><span className=' px-3 py-2 rounded-3xl font-medium'
                             style={{
-                              backgroundColor: color.find((color) => color.type === item.status).bgcolor,
-                              color: color.find((color) => color.type === item.status).color
+                              backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
+                              color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status).value}</span></td>
+                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
                           <td>{item.investorName}</td>
                           <td>{item.amcName}</td>
                           <td>{item.fromSchemeName}</td>
                           <td>{item.fromSchemeOption}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
+                          <td>{formatDate(item.createdAt)}</td>
                           <td>{item.folioNumber}</td>
                           <td>{item.transactionUnits}</td>
                           <td>{formatDate(item.transactionPreference)}</td>
                           <td>{item.amount}</td>
+                          <td>
+                            <select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
+                              const value = e.target.value
+                              if (!value) return
+
+                              dispatch(updateSwitchApprovalStatus({index, approvalStatus: value}))
+                              updateApprovalStatus(item._id, value)
+                            }}>
+                              {approvalStatusOptions.map((statusOption) => (
+                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                              ))}
+                            </select>
+                          </td>
                           <td>{['generated', 'locked'].includes(item.linkStatus) ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
@@ -1580,6 +2021,7 @@ const Details = () => {
                                 <th>Transaction Units/Amount</th>
                                 <th>Switch Date</th>
                                 <th>Transaction Amount</th>
+                                <th>Approval Status</th>
                                 <th>Links</th>
                                 <th>Action</th>
                               </tr>
@@ -1593,24 +2035,31 @@ const Details = () => {
                                     <td className=''>{index + 1}.{fracIndex + 1}</td>
                                     <td><span className=' px-3 py-2 rounded-3xl font-medium'
                                       style={{
-                                        backgroundColor: color.find((color) => color.type === fractionItem.status).bgcolor,
-                                        color: color.find((color) => color.type === fractionItem.status).color
+                                        backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
+                                        color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                       }}
-                                    >{color.find((color) => color.type === fractionItem.status).value}</span></td>
+                                    >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
                                     <td>{item.investorName}</td>
                                     <td>{item.amcName}</td>
                                     <td>{item.fromSchemeName}</td>
                                     <td>{item.fromSchemeOption}</td>
                                     <td>{item.schemeName}</td>
                                     <td>{item.schemeOption}</td>
-                                    <td>{item.folioNumber}</td>
+                                    <td>
+                                      <input
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                        value={fractionItem.folioNumber}
+                                        type='text'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        onChange={(e) => dispatch(updateSwitchFractionFolio({index, fracIndex, folioNumber: e.target.value}))} />
+                                    </td>
                                     <td>{item.transactionUnits}</td>
                                     <td>
                                       <input
                                         type="date"
                                         name="transactionDate"
                                         min={currentDate}
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                         required
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -1619,11 +2068,27 @@ const Details = () => {
                                     </td>
                                     <td>
                                       <input
-                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded'
+                                        className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                         value={fractionItem.fractionAmount}
                                         type='text'
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
                                         onChange={(e) => handleSwitchAmountChange(e, index, fracIndex)} placeholder='Enter amount....' />
+                                    </td>
+                                    <td>
+                                      <select
+                                        name="approval-status"
+                                        className='disabled:bg-blue-50 py-2'
+                                        disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                        value={fractionItem.approvalStatus}
+                                        onChange={(e) => {
+                                          const value = e.target.value
+                                          if (!value) return
+                                          dispatch(updateSwitchFractionApprovalStatus({index, fracIndex, approvalStatus: value}))
+                                        }}>
+                                        {approvalStatusOptions.map(statusOption => (
+                                          <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                        ))}
+                                      </select>
                                     </td>
                                     <td>
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
@@ -1631,10 +2096,10 @@ const Details = () => {
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                     </td>
                                     <td>
-                                      {fractionItem.linkStatus === 'generated' ? 
-                                        <button 
-                                          disabled={item.linkStatus === 'locked'} 
-                                          onClick={() => handleCancelSwitchFraction(index, fracIndex)} 
+                                      {fractionItem.linkStatus === 'generated' ?
+                                        <button
+                                          disabled={item.linkStatus === 'locked'}
+                                          onClick={() => handleCancelSwitchFraction(index, fracIndex)}
                                           className=' tracking-wide bg-orange-400 text-white px-4 py-2 rounded-3xl disabled:cursor-not-allowed disabled:bg-orange-300'
                                         >Delete</button> :
                                         fractionItem.linkStatus === 'deleted' ?
@@ -1669,9 +2134,9 @@ const Details = () => {
           <button onClick={() => setErrorAlert(false)}><MdClose /></button>
         </span>
       </div>
-      <GenerateLinkModal 
-        isOpen={isModalOpen} 
-        title={"Generate Transaction Link"} 
+      <GenerateLinkModal
+        isOpen={isModalOpen}
+        title={"Generate Transaction Link"}
         handleProceed={handleProceed}
         handleCancel={handleCancelModal}
       />

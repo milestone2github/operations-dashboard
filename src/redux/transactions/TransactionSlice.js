@@ -14,85 +14,16 @@ const transactionSlice = createSlice({
   name: 'sessionalTransactions',
   initialState,
   reducers: {
-    // systematicAddFraction: (state, action) => {
-    //   const { index, amount, status } = action.payload
-    //   if (index <= state.systematicTransactions.length - 1 && index >= 0) {
-    //     let updated = state.systematicTransactions
-    //     updated[index].transactionFractions.push({ fractionAmount: amount, status })
-    //     state.systematicTransactions = updated
-    //   }
-    // },
-    // removeSystematicFraction: (state, action) => {
-    //   const { id, fractionId } = action.payload
-    //   let updated = state.systematicTransactions
-
-    //   for (let i = 0; i < updated.length; i++) {
-    //     const element = updated[i];
-    //     if(element._id === id) {
-    //       for (let j = 0; j < element.transactionFractions.length; j++) {
-    //         let fraction = element.transactionFractions[j]
-    //         if(fraction._id === fractionId){
-    //           updated[i].transactionFractions.splice(j, 1)
-    //           state.systematicTransactions = updated
-    //           break
-    //         }
-    //       }
-    //       break
-    //     }
-    //   }
-    // },
-    // updateSystematicFractionAmount: (state, action) => {
-    //   const { index, fracIndex, amount } = action.payload
-    //   if (index <= state.systematicTransactions.length - 1 && index >= 0) {
-    //     let updated = state.systematicTransactions
-    //     updated[index].transactionFractions[fracIndex].fractionAmount = amount
-    //     state.systematicTransactions = updated
-    //   }
-    // },
-
-    // purchRedAddFraction: (state, action) => {
-    //   const { index, amount, status } = action.payload
-    //   if (index <= state.purchRedempTransactions.length - 1 && index >= 0) {
-    //     let updated = state.purchRedempTransactions
-    //     updated[index].transactionFractions.push({ fractionAmount: amount, status })
-    //     state.purchRedempTransactions = updated
-    //   }
-    // },
-
-    // removePurchRedFraction: (state, action) => {
-    //   const { id, fractionId } = action.payload
-    //   let updated = state.purchRedempTransactions
-
-    //   for (let i = 0; i < updated.length; i++) {
-    //     const element = updated[i];
-    //     if(element._id === id) {
-    //       for (let j = 0; j < element.transactionFractions.length; j++) {
-    //         let fraction = element.transactionFractions[j]
-    //         if(fraction._id === fractionId){
-    //           updated[i].transactionFractions.splice(j, 1)
-    //           state.purchRedempTransactions = updated
-    //           break
-    //         }
-    //       }
-    //       break
-    //     }
-    //   }
-    // },
-
-    // updatePurchRedFractionAmount: (state, action) => {
-    //   const { index, fracIndex, amount } = action.payload
-    //   if (index <= state.purchRedempTransactions.length - 1 && index >= 0) {
-    //     let updated = state.purchRedempTransactions
-    //     updated[index].transactionFractions[fracIndex].fractionAmount = amount
-    //     state.purchRedempTransactions = updated
-    //   }
-    // },
 
     switchAddFraction: (state, action) => {
       const { index, amount, status } = action.payload
       if (index <= state.switchTransactions.length - 1 && index >= 0) {
         let updated = state.switchTransactions
-        updated[index].transactionFractions.push({ fractionAmount: amount, status })
+        updated[index].transactionFractions.push({ 
+          fractionAmount: amount,
+          status,
+          folioNumber: updated[index].folioNumber
+        })
         state.switchTransactions = updated
       }
     },
@@ -104,11 +35,35 @@ const transactionSlice = createSlice({
         state.switchTransactions = updated
       }
     },
+    updateSwitchApprovalStatus: (state, action) => {
+      const { index, approvalStatus } = action.payload
+      if (index <= state.switchTransactions.length - 1 && index >= 0) {
+        let updated = state.switchTransactions
+        updated[index].approvalStatus = approvalStatus
+        state.switchTransactions = updated
+      }
+    },
     updateSwitchFractionAmount: (state, action) => {
       const { index, fracIndex, amount } = action.payload
       if (index <= state.switchTransactions.length - 1 && index >= 0) {
         let updated = state.switchTransactions
         updated[index].transactionFractions[fracIndex].fractionAmount = amount
+        state.switchTransactions = updated
+      }
+    },
+    updateSwitchFractionFolio: (state, action) => {
+      const { index, fracIndex, folioNumber } = action.payload
+      if (index <= state.switchTransactions.length - 1 && index >= 0) {
+        let updated = state.switchTransactions
+        updated[index].transactionFractions[fracIndex].folioNumber = folioNumber
+        state.switchTransactions = updated
+      }
+    },
+    updateSwitchFractionApprovalStatus: (state, action) => {
+      const { index, fracIndex, approvalStatus } = action.payload
+      if (index <= state.switchTransactions.length - 1 && index >= 0) {
+        let updated = state.switchTransactions
+        updated[index].transactionFractions[fracIndex].approvalStatus = approvalStatus
         state.switchTransactions = updated
       }
     },
@@ -195,65 +150,6 @@ const transactionSlice = createSlice({
       });
     })
 
-
-    // builder.addCase(addFraction.pending, (state) => {
-    //   state.error = null
-    //   state.isLoading = true
-    // })
-    // builder.addCase(addFraction.rejected, (state, action) => {
-    //   state.error = action.payload
-    //   state.isLoading = false
-    // })
-    // builder.addCase(addFraction.fulfilled, (state, action) => {
-    //   state.isLoading = false
-    //   let transaction = action.payload
-    //   if (transaction.category === 'systematic') {
-    //     state.systematicTransactions = state.systematicTransactions.map(item =>
-    //       item._id === transaction._id ? transaction : item
-    //     )
-    //   }
-    //   else if (transaction.category === 'purchredemp') {
-    //     state.purchRedempTransactions = state.purchRedempTransactions.map(item =>
-    //       item._id === transaction._id ? transaction : item
-    //     )
-    //   }
-    //   else if (transaction.category === 'switch') {
-    //     state.switchTransactions = state.switchTransactions.map(item =>
-    //       item._id === transaction._id ? transaction : item
-    //     )
-    //   }
-    // })
-
-
-    // builder.addCase(removeFraction.pending, (state) => {
-    //   state.error = null
-    //   state.isLoading = true
-    // })
-    // builder.addCase(removeFraction.rejected, (state, action) => {
-    //   state.error = action.payload
-    //   state.isLoading = false
-    // })
-    // builder.addCase(removeFraction.fulfilled, (state, action) => {
-    //   state.isLoading = false
-    //   let transaction = action.payload
-    //   if (transaction.category === 'systematic') {
-    //     state.systematicTransactions = state.systematicTransactions.map(item =>
-    //       item._id === transaction._id ? transaction : item
-    //     )
-    //   }
-    //   else if (transaction.category === 'purchredemp') {
-    //     state.purchRedempTransactions = state.purchRedempTransactions.map(item =>
-    //       item._id === transaction._id ? transaction : item
-    //     )
-    //   }
-    //   else if (transaction.category === 'switch') {
-    //     state.switchTransactions = state.switchTransactions.map(item =>
-    //       item._id === transaction._id ? transaction : item
-    //     )
-    //   }
-    // })
-
-
     builder.addCase(saveFractions.pending, (state) => {
       state.error = null
       state.isLoading = true
@@ -313,18 +209,15 @@ const transactionSlice = createSlice({
 })
 
 export const {
-  systematicAddFraction,
-  removeSystematicFraction,
-  updateSystematicFractionAmount,
-  purchRedAddFraction,
-  removePurchRedFraction,
-  updatePurchRedFractionAmount,
   switchAddFraction,
   removeSwitchFraction,
   updateSwitchFractionAmount,
   updateSwitchTransactionDate,
   cancelSwitchFraction,
-  unlockTransaction
+  unlockTransaction,
+  updateSwitchFractionFolio,
+  updateSwitchApprovalStatus,
+  updateSwitchFractionApprovalStatus
 } = transactionSlice.actions
 
 export default transactionSlice.reducer

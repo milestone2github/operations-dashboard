@@ -3,11 +3,11 @@ import { CiLock } from "react-icons/ci";
 import { useDispatch, useSelector } from 'react-redux';
 import { color } from '../Statuscolor/color';
 import { IoIosArrowForward, IoMdClose } from "react-icons/io";
-import { MdClose } from "react-icons/md";
+import { MdClose, MdUpdate } from "react-icons/md";
 import toast, { Toaster } from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import Loader from '../components/Loader';
-import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions } from '../redux/transactions/TransactionsAction';
+import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions, updateOrderId } from '../redux/transactions/TransactionsAction';
 import {
   switchAddFraction,
   removeSwitchFraction,
@@ -24,6 +24,9 @@ import { formatDate, formatDateToYYYYMMDD } from '../utils/formatDate';
 import { countPending, extractCommonData } from '../utils/extractCommonData';
 import GenerateLinkModal from '../components/GenerateLinkModal';
 import Header from '../components/Header';
+import UpdateOrderIdModal from '../components/UpdateOrderIdModal';
+import Dropdown from '../components/Dropdown';
+import { IoEllipsisVerticalSharp } from 'react-icons/io5';
 
 const initialCommonData = {
   investorName: '',
@@ -59,7 +62,9 @@ const Details = () => {
   const [rowId, setRowId] = useState(null)
   const [commonData, setCommonData] = useState(initialCommonData)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isOrderIdModalOpen, setIsOrderIdModalOpen] = useState(false)
   const [transactionForLink, setTransactionForLink] = useState({ id: '', fractionId: '' })
+  const [transactionForOrderId, setTransactionForOrderId] = useState({ id: '', fractionId: '', orderId: '' })
 
   const dispatch = useDispatch()
   const {
@@ -68,7 +73,8 @@ const Details = () => {
     switchTransactions,
     isLoading,
     error,
-    linkGenerated
+    linkGenerateStatus,
+    orderIdStatus
   } = useSelector((state) => state.sessionalTransactions)
 
   const [sips, setSips] = useState([])
@@ -403,15 +409,11 @@ const Details = () => {
   const handleGenerateLink = (id) => {
     setIsModalOpen(true)
     setTransactionForLink({ id })
-    // dispatch(generateLink({ id }))
-    console.log('link generated...') //todo
   }
 
   const handleGenerateLinkOfFraction = (id, fractionId) => {
     setIsModalOpen(true)
     setTransactionForLink({ id, fractionId })
-    // dispatch(generateLink({ id, fractionId }))
-    console.log('link generated...') //todo
   }
 
   const handleProceed = (platform, orderId) => {
@@ -423,12 +425,28 @@ const Details = () => {
     setTransactionForLink({ id: '', fractionId: '' })
   }
 
+  const handleUpdateOrderId = (orderId) => {
+    dispatch(updateOrderId({ ...transactionForOrderId, orderId }))
+  }
+
+  const handleCancelOrderIdModal = () => {
+    setIsOrderIdModalOpen(false)
+    setTransactionForOrderId({ id: '', fractionId: '', orderId: '' })
+  }
+
   useEffect(() => {
-    if (linkGenerated === 'completed') {
+    if (linkGenerateStatus === 'completed') {
       handleCancelModal()
       toast.success('Generated')
     }
-  }, [linkGenerated])
+  }, [linkGenerateStatus])
+
+  useEffect(() => {
+    if (orderIdStatus === 'completed') {
+      handleCancelOrderIdModal()
+      toast.success('Updated')
+    }
+  }, [orderIdStatus])
 
   // const handleRemoveFraction = (id, fractionId) => {
   //   dispatch(removeFraction({ id, fractionId }))
@@ -604,11 +622,17 @@ const Details = () => {
                               <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
                             ))}
                           </select></td>
-                          <td>{['generated', 'locked'].includes(item.linkStatus) ?
+                          <td>{item.linkStatus === 'locked' ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
-                            </button>
-                            : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { setRowId(item._id); handleAddSipsFraction(index) }}>+</button>}</td>
+                            </button> : item.linkStatus === 'generated' ?
+                              <button
+                                title='update order ID'
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+                                <MdUpdate />
+                              </button> :
+                             <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { setRowId(item._id); handleAddSipsFraction(index) }}>+</button>}</td>
                           <td>
                             {!item.transactionFractions?.length ? <button
                               disabled={item.linkStatus === 'generated'}
@@ -779,13 +803,30 @@ const Details = () => {
                                         ))}
                                       </select>
                                     </td>
-                                    <td>
+                                    <td>{fractionItem.linkStatus === 'generated' ?
+                                      <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
-                                    </td>
+                                    }</td>
                                     <td>
-                                      {fractionItem.linkStatus === 'generated' ? <button disabled={item.linkStatus === 'locked'} onClick={() => handleCancelSipsFraction(index, fracIndex)} className=' tracking-wide bg-orange-400 text-white px-4 py-2 rounded-3xl disabled:cursor-not-allowed disabled:bg-orange-300'>Delete</button> :
+                                      {fractionItem.linkStatus === 'generated' ?
+                                        <Dropdown
+                                          toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
+                                          <div className='flex flex-col py-2'>
+                                            <button
+                                              disabled={item.linkStatus === 'locked'}
+                                              onClick={() => handleCancelSipsFraction(index, fracIndex)}
+                                              className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Delete
+                                            </button>
+                                            <button
+                                              disabled={item.linkStatus === 'locked'}
+                                              onClick={() => { setTransactionForOrderId({id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId}); setIsOrderIdModalOpen(true) }}
+                                              className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
+                                            </button>
+
+                                          </div>
+                                        </Dropdown> :
                                         fractionItem.linkStatus === 'deleted' ?
                                           <span title='Cancelled' className='text-gray-800 bg-gray-300 rounded-3xl px-4 py-2 line-through'>Cancelled</span> :
                                           <button
@@ -883,10 +924,16 @@ const Details = () => {
                               <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
                             ))}
                           </select></td>
-                          <td>{['generated', 'locked'].includes(item.linkStatus) ?
+                          <td>{item.linkStatus === 'locked' ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
-                            </button>
+                            </button> : item.linkStatus === 'generated' ?
+                              <button
+                                title='update order ID'
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+                                <MdUpdate />
+                              </button>
                             : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { setRowId(item._id); handleAddStpsFraction(index) }}>+</button>}</td>
                           <td>
                             {!item.transactionFractions?.length ? <button
@@ -1027,44 +1074,61 @@ const Details = () => {
                                         }} />
                                     </td>
                                     <td>
-                                      <select 
-                                        name="approval-status" 
+                                      <select
+                                        name="approval-status"
                                         className='disabled:bg-blue-50 py-2'
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
-                                        value={fractionItem.approvalStatus} 
+                                        value={fractionItem.approvalStatus}
                                         onChange={(e) => {
-                                        const value = e.target.value
-                                        if (!value) return
+                                          const value = e.target.value
+                                          if (!value) return
 
-                                        setStps(prevState => {
-                                          return prevState.map((transaction, i) => {
-                                            if (i === index) {
-                                              return {
-                                                ...transaction,
-                                                transactionFractions: transaction.transactionFractions.map((fraction, j) => {
-                                                  if (j === fracIndex) {
-                                                    return { ...fraction, approvalStatus: value };
-                                                  }
-                                                  return fraction;
-                                                })
-                                              };
-                                            }
-                                            return transaction;
+                                          setStps(prevState => {
+                                            return prevState.map((transaction, i) => {
+                                              if (i === index) {
+                                                return {
+                                                  ...transaction,
+                                                  transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                    if (j === fracIndex) {
+                                                      return { ...fraction, approvalStatus: value };
+                                                    }
+                                                    return fraction;
+                                                  })
+                                                };
+                                              }
+                                              return transaction;
+                                            });
                                           });
-                                        });
-                                      }}>
+                                        }}>
                                         {approvalStatusOptions.map(statusOption => (
                                           <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
                                         ))}
                                       </select>
                                     </td>
-                                    <td>
+                                    <td>{fractionItem.linkStatus === 'generated' ?
+                                      <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
-                                    </td>
+                                    }</td>
                                     <td>
-                                      {fractionItem.linkStatus === 'generated' ? <button disabled={item.linkStatus === 'locked'} onClick={() => handleCancelStpsFraction(index, fracIndex)} className=' tracking-wide bg-orange-400 text-white px-4 py-2 rounded-3xl disabled:cursor-not-allowed disabled:bg-orange-300'>Delete</button> :
+                                      {fractionItem.linkStatus === 'generated' ?
+                                        <Dropdown
+                                          toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
+                                          <div className='flex flex-col py-2'>
+                                            <button
+                                              disabled={item.linkStatus === 'locked'}
+                                              onClick={() => handleCancelStpsFraction(index, fracIndex)}
+                                              className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Delete
+                                            </button>
+                                            <button
+                                              disabled={item.linkStatus === 'locked'}
+                                              onClick={() => { setTransactionForOrderId({id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId}); setIsOrderIdModalOpen(true) }}
+                                              className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
+                                            </button>
+
+                                          </div>
+                                        </Dropdown> :
                                         fractionItem.linkStatus === 'deleted' ?
                                           <span title='Cancelled' className='text-gray-800 bg-gray-300 rounded-3xl px-4 py-2 line-through'>Cancelled</span> :
                                           <button
@@ -1097,7 +1161,7 @@ const Details = () => {
               <thead className=' rounded-full'>
                 <tr className=''>
                   <th></th>
-                  <th className='min-w-16'>S No.</th>
+                  <th>S No.</th>
                   <th>Status</th>
                   <th>Investor Name</th>
                   <th>Transaction For</th>
@@ -1107,9 +1171,9 @@ const Details = () => {
                   <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Tenure of SWP</th>
-                  <th className='min-w-32'>First Traxn Amount</th>
+                  <th>First Traxn Amount</th>
                   <th>SWP Date</th>
-                  <th className='min-w-36'>First Installment Payment Mode</th>
+                  <th>First Installment Payment Mode</th>
                   <th>SWP Amount</th>
                   <th>Approval Status</th>
                   <th>Action</th>
@@ -1122,7 +1186,7 @@ const Details = () => {
                     <tr><td></td><td colSpan={18} className='p-6  text-orange-500 text-lg text-left'>No SWP Transactions Found</td></tr> :
                     swps.map((item, index) =>
                       <Fragment key={item._id}>
-                        <tr className='border-b-[2px] border-solid border-[#E3EAF4]'>
+                        <tr className='whitespace-nowrap border-b-[2px] border-solid border-[#E3EAF4]'>
                           <td><button onClick={rowId === item._id ? () => setRowId(null) : () => setRowId(item._id)}>
                             <IoIosArrowForward style={rowId === item._id ? { transform: "rotate(90deg)", transition: "0.2s" } : { transform: " rotate(0deg)", transition: "0.2s" }} className=' text-lg' />
 
@@ -1164,10 +1228,16 @@ const Details = () => {
                               ))}
                             </select>
                           </td>
-                          <td>{['generated', 'locked'].includes(item.linkStatus) ?
+                          <td>{item.linkStatus === 'locked' ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
-                            </button>
+                            </button> : item.linkStatus === 'generated' ?
+                              <button
+                                title='update order ID'
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+                                <MdUpdate />
+                              </button>
                             : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { setRowId(item._id); handleAddSwpsFraction(index) }}>+</button>}</td>
                           <td>
                             {!item.transactionFractions?.length ? <button
@@ -1308,44 +1378,61 @@ const Details = () => {
                                         }} />
                                     </td>
                                     <td>
-                                      <select 
-                                        name="approval-status" 
+                                      <select
+                                        name="approval-status"
                                         className='disabled:bg-blue-50 py-2'
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
-                                        value={fractionItem.approvalStatus} 
+                                        value={fractionItem.approvalStatus}
                                         onChange={(e) => {
-                                        const value = e.target.value
-                                        if (!value) return
+                                          const value = e.target.value
+                                          if (!value) return
 
-                                        setSwps(prevState => {
-                                          return prevState.map((transaction, i) => {
-                                            if (i === index) {
-                                              return {
-                                                ...transaction,
-                                                transactionFractions: transaction.transactionFractions.map((fraction, j) => {
-                                                  if (j === fracIndex) {
-                                                    return { ...fraction, approvalStatus: value };
-                                                  }
-                                                  return fraction;
-                                                })
-                                              };
-                                            }
-                                            return transaction;
+                                          setSwps(prevState => {
+                                            return prevState.map((transaction, i) => {
+                                              if (i === index) {
+                                                return {
+                                                  ...transaction,
+                                                  transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                    if (j === fracIndex) {
+                                                      return { ...fraction, approvalStatus: value };
+                                                    }
+                                                    return fraction;
+                                                  })
+                                                };
+                                              }
+                                              return transaction;
+                                            });
                                           });
-                                        });
-                                      }}>
+                                        }}>
                                         {approvalStatusOptions.map(statusOption => (
                                           <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
                                         ))}
                                       </select>
                                     </td>
-                                    <td>
+                                    <td>{fractionItem.linkStatus === 'generated' ?
+                                      <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
-                                    </td>
+                                    }</td>
                                     <td>
-                                      {fractionItem.linkStatus === 'generated' ? <button disabled={item.linkStatus === 'locked'} onClick={() => handleCancelSwpsFraction(index, fracIndex)} className=' tracking-wide bg-orange-400 text-white px-4 py-2 rounded-3xl disabled:cursor-not-allowed disabled:bg-orange-300'>Delete</button> :
+                                    {fractionItem.linkStatus === 'generated' ?
+                                        <Dropdown
+                                          toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
+                                          <div className='flex flex-col py-2'>
+                                            <button
+                                              disabled={item.linkStatus === 'locked'}
+                                              onClick={() => handleCancelSwpsFraction(index, fracIndex)}
+                                              className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Delete
+                                            </button>
+                                            <button
+                                              disabled={item.linkStatus === 'locked'}
+                                              onClick={() => { setTransactionForOrderId({id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId}); setIsOrderIdModalOpen(true) }}
+                                              className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
+                                            </button>
+
+                                          </div>
+                                        </Dropdown> :
                                         fractionItem.linkStatus === 'deleted' ?
                                           <span title='Cancelled' className='text-gray-800 bg-gray-300 rounded-3xl px-4 py-2 line-through'>Cancelled</span> :
                                           <button
@@ -1442,11 +1529,17 @@ const Details = () => {
                               ))}
                             </select>
                           </td>
-                          <td>{['generated', 'locked'].includes(item.linkStatus) ?
+                          <td>{item.linkStatus === 'locked' ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
-                            </button>
-                            : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { setRowId(item._id); handleAddPurchasesFraction(index) }}>+</button>}</td>
+                            </button> : item.linkStatus === 'generated' ?
+                              <button
+                                title='update order ID'
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+                                <MdUpdate />
+                              </button> :
+                              <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { setRowId(item._id); handleAddPurchasesFraction(index) }}>+</button>}</td>
                           <td>
                             {!item.transactionFractions?.length ? <button
                               disabled={item.linkStatus === 'generated'}
@@ -1613,13 +1706,30 @@ const Details = () => {
                                         ))}
                                       </select>
                                     </td>
-                                    <td>
+                                    <td>{fractionItem.linkStatus === 'generated' ?
+                                      <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
-                                    </td>
+                                    }</td>
                                     <td>
-                                      {fractionItem.linkStatus === 'generated' ? <button disabled={item.linkStatus === 'locked'} onClick={() => handleCancelPurchasesFraction(index, fracIndex)} className=' tracking-wide bg-orange-400 text-white px-4 py-2 rounded-3xl disabled:cursor-not-allowed disabled:bg-orange-300'>Delete</button> :
+                                      {fractionItem.linkStatus === 'generated' ?
+                                        <Dropdown
+                                          toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
+                                          <div className='flex flex-col py-2'>
+                                            <button
+                                              disabled={item.linkStatus === 'locked'}
+                                              onClick={() => handleCancelPurchasesFraction(index, fracIndex)}
+                                              className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Delete
+                                            </button>
+                                            <button
+                                              disabled={item.linkStatus === 'locked'}
+                                              onClick={() => { setTransactionForOrderId({id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId}); setIsOrderIdModalOpen(true) }}
+                                              className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
+                                            </button>
+
+                                          </div>
+                                        </Dropdown> :
                                         fractionItem.linkStatus === 'deleted' ?
                                           <span title='Cancelled' className='text-gray-800 bg-gray-300 rounded-3xl px-4 py-2 line-through'>Cancelled</span> :
                                           <button
@@ -1716,10 +1826,16 @@ const Details = () => {
                               ))}
                             </select>
                           </td>
-                          <td>{['generated', 'locked'].includes(item.linkStatus) ?
+                          <td>{item.linkStatus === 'locked' ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
-                            </button>
+                            </button> : item.linkStatus === 'generated' ?
+                              <button
+                                title='update order ID'
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+                                <MdUpdate />
+                              </button>
                             : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { setRowId(item._id); handleAddRedemptionsFraction(index) }}>+</button>}</td>
                           <td>
                             {!item.transactionFractions?.length ? <button
@@ -1887,13 +2003,30 @@ const Details = () => {
                                         ))}
                                       </select>
                                     </td>
-                                    <td>
+                                    <td>{fractionItem.linkStatus === 'generated' ?
+                                      <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
-                                    </td>
+                                    }</td>
                                     <td>
-                                      {fractionItem.linkStatus === 'generated' ? <button disabled={item.linkStatus === 'locked'} onClick={() => handleCancelRedemptionsFraction(index, fracIndex)} className=' tracking-wide bg-orange-400 text-white px-4 py-2 rounded-3xl disabled:cursor-not-allowed disabled:bg-orange-300'>Delete</button> :
+                                      {fractionItem.linkStatus === 'generated' ? 
+                                      <Dropdown
+                                      toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
+                                      <div className='flex flex-col py-2'>
+                                        <button
+                                          disabled={item.linkStatus === 'locked'}
+                                          onClick={() => handleCancelRedemptionsFraction(index, fracIndex)}
+                                          className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Delete
+                                        </button>
+                                        <button
+                                          disabled={item.linkStatus === 'locked'}
+                                          onClick={() => { setTransactionForOrderId({id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId}); setIsOrderIdModalOpen(true) }}
+                                          className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
+                                        </button>
+
+                                      </div>
+                                    </Dropdown> :
                                         fractionItem.linkStatus === 'deleted' ?
                                           <span title='Cancelled' className='text-gray-800 bg-gray-300 rounded-3xl px-4 py-2 line-through'>Cancelled</span> :
                                           <button
@@ -1979,7 +2112,7 @@ const Details = () => {
                               const value = e.target.value
                               if (!value) return
 
-                              dispatch(updateSwitchApprovalStatus({index, approvalStatus: value}))
+                              dispatch(updateSwitchApprovalStatus({ index, approvalStatus: value }))
                               updateApprovalStatus(item._id, value)
                             }}>
                               {approvalStatusOptions.map((statusOption) => (
@@ -1987,11 +2120,17 @@ const Details = () => {
                               ))}
                             </select>
                           </td>
-                          <td>{['generated', 'locked'].includes(item.linkStatus) ?
+                          <td>{item.linkStatus === 'locked' ?
                             <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
-                            </button>
-                            : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { setRowId(item._id); handleSwitchAdd(index) }}>+</button>}</td>
+                            </button> : item.linkStatus === 'generated' ?
+                            <button
+                              title='update order ID'
+                              onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                              className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+                              <MdUpdate />
+                            </button> :
+                            <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { setRowId(item._id); handleSwitchAdd(index) }}>+</button>}</td>
                           <td>
                             {!item.transactionFractions?.length ? <button
                               disabled={item.linkStatus === 'generated'}
@@ -2051,7 +2190,7 @@ const Details = () => {
                                         value={fractionItem.folioNumber}
                                         type='text'
                                         disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
-                                        onChange={(e) => dispatch(updateSwitchFractionFolio({index, fracIndex, folioNumber: e.target.value}))} />
+                                        onChange={(e) => dispatch(updateSwitchFractionFolio({ index, fracIndex, folioNumber: e.target.value }))} />
                                     </td>
                                     <td>{item.transactionUnits}</td>
                                     <td>
@@ -2083,25 +2222,37 @@ const Details = () => {
                                         onChange={(e) => {
                                           const value = e.target.value
                                           if (!value) return
-                                          dispatch(updateSwitchFractionApprovalStatus({index, fracIndex, approvalStatus: value}))
+                                          dispatch(updateSwitchFractionApprovalStatus({ index, fracIndex, approvalStatus: value }))
                                         }}>
                                         {approvalStatusOptions.map(statusOption => (
                                           <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
                                         ))}
                                       </select>
                                     </td>
-                                    <td>
+                                    <td>{fractionItem.linkStatus === 'generated' ?
+                                      <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
                                       <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                        className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                        className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                         onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
-                                    </td>
+                                    }</td>
                                     <td>
                                       {fractionItem.linkStatus === 'generated' ?
-                                        <button
-                                          disabled={item.linkStatus === 'locked'}
-                                          onClick={() => handleCancelSwitchFraction(index, fracIndex)}
-                                          className=' tracking-wide bg-orange-400 text-white px-4 py-2 rounded-3xl disabled:cursor-not-allowed disabled:bg-orange-300'
-                                        >Delete</button> :
+                                        <Dropdown
+                                          toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
+                                          <div className='flex flex-col py-2'>
+                                            <button
+                                              disabled={item.linkStatus === 'locked'}
+                                              onClick={() => handleCancelSwitchFraction(index, fracIndex)}
+                                              className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Delete
+                                            </button>
+                                            <button
+                                              disabled={item.linkStatus === 'locked'}
+                                              onClick={() => { setTransactionForOrderId({id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId}); setIsOrderIdModalOpen(true) }}
+                                              className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
+                                            </button>
+
+                                          </div>
+                                        </Dropdown> :
                                         fractionItem.linkStatus === 'deleted' ?
                                           <span title='Cancelled' className='text-gray-800 bg-gray-300 rounded-3xl px-4 py-2 line-through'>Cancelled</span> :
                                           <button
@@ -2139,6 +2290,14 @@ const Details = () => {
         title={"Generate Transaction Link"}
         handleProceed={handleProceed}
         handleCancel={handleCancelModal}
+        status={linkGenerateStatus}
+      />
+      <UpdateOrderIdModal
+        isOpen={isOrderIdModalOpen}
+        handleProceed={handleUpdateOrderId}
+        handleCancel={handleCancelOrderIdModal}
+        existingOrderId={transactionForOrderId.orderId}
+        status={orderIdStatus}
       />
       <Toaster />
     </div>

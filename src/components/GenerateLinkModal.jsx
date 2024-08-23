@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 
 const platformOptions = ["", "BSESTARMF", "NSENMF", "CAMS EDGE", "KARVY", "OFFLINE"]
 
-function GenerateLinkModal({ isOpen, title, handleCancel, handleProceed, error }) {
+function GenerateLinkModal({ isOpen, title, handleCancel, handleProceed, status, error }) {
   const [orderId, setOrderId] = useState('')
   const [platform, setPlatform] = useState('')
 
@@ -56,7 +56,7 @@ function GenerateLinkModal({ isOpen, title, handleCancel, handleProceed, error }
         </div>
         <div className='flex gap-x-3 mt-7 justify-end'>
           <button onClick={handleCancel} type='button' className='border rounded-lg py-2 px-6 text-gray-800 hover:bg-gray-200'>Cancel</button>
-          <button type='submit' className='border rounded-lg py-2 px-6 bg-green-800 hover:bg-green-900 text-white'>Generate</button>
+          <button type='submit' disabled={status === 'pending'} className='border rounded-lg py-2 px-6 bg-green-800 hover:bg-green-900 text-white'>{status === 'pending'? 'Processing...' : 'Generate'}</button>
         </div>
       </form>
     </div>

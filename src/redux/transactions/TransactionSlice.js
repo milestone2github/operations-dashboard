@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
-import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions } from "./TransactionsAction"
+import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions, updateOrderId } from "./TransactionsAction"
 
 const initialState = {
   systematicTransactions: [],
@@ -7,7 +7,8 @@ const initialState = {
   switchTransactions: [],
   isLoading: false,
   error: null,
-  linkGenerated: 'idle' // pending | failed | completed
+  linkGenerateStatus: 'idle', // pending | failed | completed
+  orderIdStatus: 'idle' // pending | failed | completed
 }
 
 const transactionSlice = createSlice({
@@ -180,11 +181,11 @@ const transactionSlice = createSlice({
 
     builder.addCase(generateLink.pending, (state) => {
       state.error = null
-      state.linkGenerated = 'pending'
+      state.linkGenerateStatus = 'pending'
     })
     builder.addCase(generateLink.rejected, (state, action) => {
       state.error = action.payload
-      state.linkGenerated = 'failed'
+      state.linkGenerateStatus = 'failed'
     })
     builder.addCase(generateLink.fulfilled, (state, action) => {
       let transaction = action.payload
@@ -203,7 +204,35 @@ const transactionSlice = createSlice({
           item._id === transaction._id ? transaction : item
         )
       }
-      state.linkGenerated = 'completed'
+      state.linkGenerateStatus = 'completed'
+    })
+
+    builder.addCase(updateOrderId.pending, (state) => {
+      state.error = null
+      state.orderIdStatus = 'pending'
+    })
+    builder.addCase(updateOrderId.rejected, (state, action) => {
+      state.error = action.payload
+      state.orderIdStatus = 'failed'
+    })
+    builder.addCase(updateOrderId.fulfilled, (state, action) => {
+      let transaction = action.payload
+      if (transaction.category === 'systematic') {
+        state.systematicTransactions = state.systematicTransactions.map(item =>
+          item._id === transaction._id ? transaction : item
+        )
+      }
+      else if (transaction.category === 'purchredemp') {
+        state.purchRedempTransactions = state.purchRedempTransactions.map(item =>
+          item._id === transaction._id ? transaction : item
+        )
+      }
+      else if (transaction.category === 'switch') {
+        state.switchTransactions = state.switchTransactions.map(item =>
+          item._id === transaction._id ? transaction : item
+        )
+      }
+      state.orderIdStatus = 'completed'
     })
   }
 })

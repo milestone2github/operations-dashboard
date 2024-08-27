@@ -659,7 +659,7 @@ const Details = () => {
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
-                            <div className={`transition-all duration-300 overflow-hidden ${openRows[item._id] ? "max-h-0" : "max-h-screen"}`}>
+                            <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative w-full'>
                                 <thead className=' rounded-full   '>
                                   <tr className=''>
@@ -969,7 +969,7 @@ const Details = () => {
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
-                            <div className={`transition-all duration-300 overflow-hidden ${openRows[item._id] ? "max-h-0" : "max-h-screen"}`}>
+                            <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative '>
                                 <thead className=' rounded-full   '>
                                   <tr className=' whitespace-nowrap  '>
@@ -1281,7 +1281,7 @@ const Details = () => {
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
-                            <div className={`transition-all duration-300 overflow-hidden ${openRows[item._id] ? "max-h-0" : "max-h-screen"}`}>
+                            <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative w-full'>
                                 <thead className=' rounded-full   '>
                                   <tr className=''>
@@ -1590,7 +1590,7 @@ const Details = () => {
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
-                            <div className={`transition-all duration-300 overflow-hidden ${openRows[item._id] ? "max-h-0" : "max-h-screen"}`}>
+                            <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative w-full'>
                                 <thead className=' rounded-full   '>
                                   <tr className=' whitespace-nowrap  '>
@@ -1895,7 +1895,7 @@ const Details = () => {
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
-                            <div className={`transition-all duration-300 overflow-hidden ${openRows[item._id] ? "max-h-0" : "max-h-screen"}`}>
+                            <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative w-full'>
                                 <thead className=' rounded-full   '>
                                   <tr className=' whitespace-nowrap  '>
@@ -2197,7 +2197,7 @@ const Details = () => {
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
-                            <div className={`transition-all duration-300 overflow-hidden ${openRows[item._id] ? "max-h-0" : "max-h-screen"}`}>
+                            <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative w-full'>
                                 <thead className=' rounded-full   '>
                                   <tr className=' whitespace-nowrap  '>

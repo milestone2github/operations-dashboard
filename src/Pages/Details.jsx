@@ -17,22 +17,24 @@ import {
   cancelSwitchFraction,
   updateSwitchFractionFolio,
   updateSwitchApprovalStatus,
-  updateSwitchFractionApprovalStatus
+  updateSwitchFractionApprovalStatus,
+  updateSwitchExecutionDate
 } from '../redux/transactions/TransactionSlice';
 
 import { formatDate, formatDateToYYYYMMDD } from '../utils/formatDate';
-import { countPending, extractCommonData } from '../utils/extractCommonData';
+import { countAll, countPending, extractCommonData } from '../utils/extractCommonData';
 import GenerateLinkModal from '../components/GenerateLinkModal';
 import Header from '../components/Header';
 import UpdateOrderIdModal from '../components/UpdateOrderIdModal';
 import Dropdown from '../components/Dropdown';
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
+import { transactionTypeColorMap } from '../utils/map';
 
 const initialCommonData = {
   investorName: '',
   familyHead: '',
   panNumber: '',
-  registrantName: '',
+  relationshipManager: '',
   createdAt: '',
   pendingTrxCount: '',
   transactionCount: ''
@@ -57,7 +59,6 @@ const currentDate = formatDateToYYYYMMDD(new Date)
 
 const Details = () => {
   const [searchParams, setSearchParams] = useSearchParams()
-  // const { sessionId } = useParams()
   const [errorAlert, setErrorAlert] = useState(false)
   const [commonData, setCommonData] = useState(initialCommonData)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -82,6 +83,11 @@ const Details = () => {
   const [swps, setSwps] = useState([])
   const [purchases, setPurchases] = useState([])
   const [redemptions, setRedemptions] = useState([])
+  const { role } = useSelector(state => state.user.userData?.role)
+
+  // Permissions
+  const canModifyExecutionDate = ['mutual funds senior', 'mutual funds'].includes(role.toLowerCase())
+  const canModifyTransactions = ['operations senior', 'operations', 'management', 'Administrator'].includes(role.toLowerCase())
 
   useEffect(() => {
     setSips(systematicTransactions.filter(item => item.transactionType === 'SIP'))
@@ -100,7 +106,8 @@ const Details = () => {
   useEffect(() => {
     let fh = searchParams.get('fh');
     let rm = searchParams.get('rm');
-    dispatch(getTransactionsBySession({ fh, rm }))
+    let smFilter = searchParams.get('smFilter');
+    dispatch(getTransactionsBySession({ fh, rm, smFilter }))
   }, [])
 
   // side effects to handle fetch errors 
@@ -122,7 +129,11 @@ const Details = () => {
 
     setCommonData(prevState => ({
       ...prevState,
-      transactionCount: systematicTransactions.length + purchRedempTransactions.length + switchTransactions.length,
+      transactionCount: countAll(
+        systematicTransactions,
+        purchRedempTransactions,
+        switchTransactions
+      ),
       pendingTrxCount: countPending(
         systematicTransactions,
         purchRedempTransactions,
@@ -130,17 +141,8 @@ const Details = () => {
       )
     }))
 
-    // return () => {setCommonData(initialCommonData)}
+    return () => {setCommonData(initialCommonData)}
   }, [systematicTransactions, purchRedempTransactions, switchTransactions])
-
-  // amount change handlers 
-  // const handleSysAmountChange = (e, index, fracIndex) => {
-  //   dispatch(updateSystematicFractionAmount({ index, fracIndex, amount: Number(e.target.value) }))
-  // }
-
-  // const handlePurchRedAmountChange = (e, index, fracIndex) => {
-  //   dispatch(updatePurchRedFractionAmount({ index, fracIndex, amount: Number(e.target.value) }))
-  // }
 
   const toggelRows = (id) => {
     setOpenRows(prevRows => ({ ...prevRows, [id]: !prevRows[id] }))
@@ -505,9 +507,28 @@ const Details = () => {
     }
   }
 
-  const showLoading = <tr>
-    <td colSpan={7} className='p-[11px]'><Loader /></td>
-  </tr>
+  const updateExecutionDate = async (id, transactionPreference) => {
+    const data = { transactionPreference }
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/preference-date/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      })
+      const jsonData = await response.json()
+      if (!response.ok) {
+        throw new Error(jsonData.error || response.statusText)
+      }
+    } catch (error) {
+      console.error('Error updating execution date: ', error.message)
+      toast.error('Unable to update execution date')
+    }
+  }
+
+  const showLoading = (<div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
+    <Loader />
+  </div>)
 
   return (
     <div className='home-section w-full h-[100vh] relative'>
@@ -515,7 +536,7 @@ const Details = () => {
 
         <Header title='Transaction Details' />
       </div>
-      <div className="table-section  bg-[#F8FAFC] p-3 flex flex-col items-center gap-4 overflow-y-auto h-[88vh]">
+      {isLoading? showLoading : <div className="table-section  bg-[#F8FAFC] p-3 flex flex-col items-center gap-4 overflow-y-auto h-[88vh]">
         <div className='card text-[#000000] client-data w-[90vw] md:w-[87vw]  lg:w-[90vw] grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-6'>
           <div className=' bg-blue-50 w-full rounded-md border-2 border-solid border-[#EDEDED] flex  flex-col gap-4 p-4 tracking-wide'>
             {/* <div>
@@ -535,7 +556,7 @@ const Details = () => {
           <div className=' bg-[#FEFBE8] w-full rounded-md border-2 border-solid border-[#EDEDED] flex flex-col gap-4 p-4 tracking-wide'>
             <div>
               <h2 className=' text-xs font-semibold'>RM Name</h2>
-              <p className=' text-lg'>{commonData.registrantName}</p>
+              <p className=' text-lg'>{commonData.relationshipManager}</p>
             </div>
 
             <div>
@@ -579,7 +600,7 @@ const Details = () => {
                   <th>First Installment Payment Mode</th>
                   <th>SIP Amount</th>
                   <th>Approval Status</th>
-                  <th>Action</th>
+                  {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
                 </tr>
               </thead>
@@ -590,6 +611,7 @@ const Details = () => {
                     sips.map((item, index) => {
                       let hasChild = item.transactionFractions?.length !== 0
                       let childLength = item.transactionFractions?.length
+                      let transTypeBgColor = transactionTypeColorMap[item.transactionFor]
 
                       return <Fragment key={item._id}>
                         <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
@@ -606,36 +628,69 @@ const Details = () => {
                             }}
                           >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
                           <td>{item.investorName}</td>
-                          {/* <td>{item.transactionType}</td> */}
-                          <td>{item.transactionFor}</td>
+                          <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
-                          <td>{formatDate(item.createdAt)}</td>
+                          <td className='relative'>
+                            <label
+                              htmlFor={`execution-date-${item._id}`}
+                              className={`focus-within:bg-gray-100 p-1 px-2 border rounded-md text-center ${canModifyExecutionDate || canModifyTransactions ? 'hover:bg-gray-100' : ''}`}>
+                              {formatDate(item.transactionPreference)}
+                            </label>
+                            <input
+                              type="date"
+                              id={`execution-date-${item._id}`}
+                              min={currentDate}
+                              className='text-xs absolute left-0 -z-10'
+                              value={formatDateToYYYYMMDD(item.transactionPreference)}
+                              required
+                              disabled={!(canModifyExecutionDate || canModifyTransactions)}
+                              onFocus={(e) => e.target.showPicker()}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setSips(prevState => {
+                                  return prevState.map((transaction, i) => {
+                                    if (i === index) {
+                                      return {
+                                        ...transaction,
+                                        transactionPreference: value
+                                      };
+                                    }
+                                    return transaction;
+                                  });
+                                });
+                                updateExecutionDate(item._id, value)
+                              }}
+                            />
+                          </td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
-                          <td>{formatDate(item.transactionPreference)}</td>
+                          <td>{formatDate(item.sipSwpStpDate)}</td>
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
-                          <td><select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
-                            const value = e.target.value
-                            if (!value) return
+                          <td>
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
+                              const value = e.target.value
+                              if (!value) return
 
-                            let updatedSips = [...sips].map(sip => ({
-                              ...sip,
-                              transactionFractions: [...sip.transactionFractions]
-                            }));
-                            updatedSips[index].approvalStatus = value;
-                            setSips(updatedSips);
-                            updateApprovalStatus(item._id, value)
-                          }}>
-                            {approvalStatusOptions.map(statusOption => (
-                              <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
-                            ))}
-                          </select></td>
-                          <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+                              let updatedSips = [...sips].map(sip => ({
+                                ...sip,
+                                transactionFractions: [...sip.transactionFractions]
+                              }));
+                              updatedSips[index].approvalStatus = value;
+                              setSips(updatedSips);
+                              updateApprovalStatus(item._id, value)
+                            }}>
+                              {approvalStatusOptions.map(statusOption => (
+                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                              ))}
+                            </select>
+                          </td>
+
+                          {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
                             </button> : item.linkStatus === 'generated' ?
                               <button
@@ -644,13 +699,17 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button> :
-                              <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddSipsFraction(index) }}>+</button>}</td>
+                              <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddSipsFraction(index) }}>+</button>}
+                          </td>}
+
                           <td>
-                            {!hasChild ? <button
-                              disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
-                              onClick={() => handleGenerateLink(item._id)}
-                            >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
+                            {!hasChild ? item.linkStatus === 'generated' ?
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <button
+                                disabled={!canModifyTransactions || item.linkStatus === 'generated'}
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                onClick={() => handleGenerateLink(item._id)}
+                              >Generate Link</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -658,7 +717,7 @@ const Details = () => {
                           </td>
                         </tr>
                         {hasChild && <tr>
-                          <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
+                          <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
                             <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative w-full'>
                                 <thead className=' rounded-full   '>
@@ -679,7 +738,7 @@ const Details = () => {
                                     <th>SIP Amount</th>
                                     <th>Approval Status</th>
                                     <th>Link</th>
-                                    <th>Actions</th>
+                                    {canModifyTransactions && <th>Actions</th>}
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -695,7 +754,7 @@ const Details = () => {
                                           }}
                                         >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
                                         <td>{item.investorName}</td>
-                                        <td>{item.transactionFor}</td>
+                                        <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
                                         <td>{item.amcName}</td>
                                         <td>{item.schemeName}</td>
                                         <td>{item.schemeOption}</td>
@@ -727,15 +786,22 @@ const Details = () => {
                                         </td>
                                         <td>{item.tenure}</td>
                                         <td className='min-w-32'>{item.firstTransactionAmount}</td>
-                                        <td>{
+
+                                        <td className='relative'>
+                                          <label
+                                            htmlFor={`transactionDate-${item._id}-${fracIndex}`}
+                                            className={`focus-within:bg-blue-100 p-1 px-2 border rounded-md text-center ${['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked' ? '' : 'hover:bg-blue-100'}`}>
+                                            {formatDate(fractionItem.transactionDate)}
+                                          </label>
                                           <input
                                             type="date"
-                                            name="transactionDate"
+                                            id={`transactionDate-${item._id}-${fracIndex}`}
                                             min={currentDate}
-                                            className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                            className='text-xs absolute left-0 -z-10'
                                             value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                             required
                                             disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            onFocus={(e) => e.target.showPicker()}
                                             onChange={(e) => {
                                               const { value } = e.target;
                                               setSips(prevState => {
@@ -756,8 +822,8 @@ const Details = () => {
                                               });
                                             }}
                                           />
+                                        </td>
 
-                                        }</td>
                                         <td className='min-w-36'>{item.paymentMode}</td>
                                         <td>
                                           <input
@@ -789,7 +855,7 @@ const Details = () => {
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -817,13 +883,15 @@ const Details = () => {
                                             ))}
                                           </select>
                                         </td>
+
                                         <td>{fractionItem.linkStatus === 'generated' ?
                                           <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
-                                          <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
+                                          <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
                                             className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                         }</td>
-                                        <td>
+
+                                        {canModifyTransactions && <td>
                                           {fractionItem.linkStatus === 'generated' ?
                                             <Dropdown
                                               toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
@@ -850,7 +918,7 @@ const Details = () => {
                                                 className=' tracking-wide text-gray-600 text-xl border border-gray-300 px-2 py-2 rounded-lg hover:text-gray-700 hover:border-gray-400 disabled:hover:border-gray-300 disabled:cursor-not-allowed '
                                               ><IoMdClose /></button>
                                           }
-                                        </td>
+                                        </td>}
                                       </tr>)
                                   }
                                 </tbody>
@@ -890,7 +958,7 @@ const Details = () => {
                   <th className='min-w-36'>First Installment Payment Mode</th>
                   <th>STP Amount</th>
                   <th>Approval Status</th>
-                  <th>Action</th>
+                  {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
                 </tr>
               </thead>
@@ -901,6 +969,7 @@ const Details = () => {
                     stps.map((item, index) => {
                       let hasChild = item.transactionFractions?.length !== 0
                       let childLength = item.transactionFractions?.length
+                      let transTypeBgColor = transactionTypeColorMap[item.transactionFor]
 
                       return <Fragment key={item._id}>
                         <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
@@ -917,35 +986,70 @@ const Details = () => {
                             }}
                           >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
                           <td>{item.investorName}</td>
-                          <td>{item.transactionFor}</td>
+                          <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
-                          <td>{formatDate(item.createdAt)}</td>
+                          <td className='relative'>
+                            <label
+                              htmlFor={`execution-date-${item._id}`}
+                              className={`focus-within:bg-gray-100 p-1 px-2 border rounded-md text-center ${canModifyExecutionDate || canModifyTransactions ? 'hover:bg-gray-100' : ''}`}>
+                              {formatDate(item.transactionPreference)}
+                            </label>
+                            <input
+                              type="date"
+                              id={`execution-date-${item._id}`}
+                              min={currentDate}
+                              className='text-xs absolute left-0 -z-10'
+                              value={formatDateToYYYYMMDD(item.transactionPreference)}
+                              required
+                              disabled={!(canModifyExecutionDate || canModifyTransactions)}
+                              onFocus={(e) => e.target.showPicker()}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setStps(prevState => {
+                                  return prevState.map((transaction, i) => {
+                                    if (i === index) {
+                                      return {
+                                        ...transaction,
+                                        transactionPreference: value
+                                      };
+                                    }
+                                    return transaction;
+                                  });
+                                });
+                                updateExecutionDate(item._id, value)
+                              }}
+                            />
+                          </td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
-                          <td>{formatDate(item.transactionPreference)}</td>
+                          <td>{formatDate(item.sipSwpStpDate)}</td>
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
-                          <td><select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
-                            const value = e.target.value
-                            if (!value) return
 
-                            let updatedStps = [...stps].map(stp => ({
-                              ...stp,
-                              transactionFractions: [...stp.transactionFractions]
-                            }));
-                            updatedStps[index].approvalStatus = value;
-                            setStps(updatedStps);
-                            updateApprovalStatus(item._id, value)
-                          }}>
-                            {approvalStatusOptions.map(statusOption => (
-                              <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
-                            ))}
-                          </select></td>
-                          <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+                          <td>
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
+                              const value = e.target.value
+                              if (!value) return
+
+                              let updatedStps = [...stps].map(stp => ({
+                                ...stp,
+                                transactionFractions: [...stp.transactionFractions]
+                              }));
+                              updatedStps[index].approvalStatus = value;
+                              setStps(updatedStps);
+                              updateApprovalStatus(item._id, value)
+                            }}>
+                              {approvalStatusOptions.map(statusOption => (
+                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                              ))}
+                            </select>
+                          </td>
+
+                          {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
                             </button> : item.linkStatus === 'generated' ?
                               <button
@@ -954,13 +1058,17 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button>
-                              : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddStpsFraction(index) }}>+</button>}</td>
+                              : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddStpsFraction(index) }}>+</button>}
+                          </td>}
+
                           <td>
-                            {!hasChild ? <button
-                              disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
-                              onClick={() => handleGenerateLink(item._id)}
-                            >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
+                            {!hasChild ? item.linkStatus === 'generated' ?
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <button
+                                disabled={!canModifyTransactions || item.linkStatus === 'generated'}
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                onClick={() => handleGenerateLink(item._id)}
+                              >Generate Link</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -968,7 +1076,7 @@ const Details = () => {
                           </td>
                         </tr>
                         {hasChild && <tr>
-                          <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
+                          <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
                             <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative '>
                                 <thead className=' rounded-full   '>
@@ -989,7 +1097,7 @@ const Details = () => {
                                     <th>STP Amount</th>
                                     <th>Approval Status</th>
                                     <th>Link</th>
-                                    <th>Actions</th>
+                                    {canModifyTransactions && <th>Actions</th>}
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -1005,7 +1113,7 @@ const Details = () => {
                                           }}
                                         >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
                                         <td>{item.investorName}</td>
-                                        <td>{item.transactionFor}</td>
+                                        <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
                                         <td>{item.amcName}</td>
                                         <td>{item.schemeName}</td>
                                         <td>{item.schemeOption}</td>
@@ -1037,15 +1145,21 @@ const Details = () => {
                                         </td>
                                         <td>{item.tenure}</td>
                                         <td className='min-w-32'>{item.firstTransactionAmount}</td>
-                                        <td>{
+                                        <td className='relative'>
+                                          <label
+                                            htmlFor={`transactionDate-${item._id}-${fracIndex}`}
+                                            className={`focus-within:bg-blue-100 p-1 px-2 border rounded-md text-center ${['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked' ? '' : 'hover:bg-blue-100'}`}>
+                                            {formatDate(fractionItem.transactionDate)}
+                                          </label>
                                           <input
                                             type="date"
-                                            name="transactionDate"
+                                            id={`transactionDate-${item._id}-${fracIndex}`}
                                             min={currentDate}
-                                            className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                            className='text-xs absolute left-0 -z-10'
                                             value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                             required
                                             disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            onFocus={(e) => e.target.showPicker()}
                                             onChange={(e) => {
                                               const { value } = e.target;
                                               setStps(prevState => {
@@ -1066,8 +1180,8 @@ const Details = () => {
                                               });
                                             }}
                                           />
+                                        </td>
 
-                                        }</td>
                                         <td className='min-w-36'>{item.paymentMode}</td>
                                         <td>
                                           <input
@@ -1095,11 +1209,12 @@ const Details = () => {
                                               });
                                             }} />
                                         </td>
+
                                         <td>
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -1127,13 +1242,15 @@ const Details = () => {
                                             ))}
                                           </select>
                                         </td>
+
                                         <td>{fractionItem.linkStatus === 'generated' ?
                                           <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
-                                          <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                          <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
+                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                         }</td>
-                                        <td>
+
+                                        {canModifyTransactions && <td>
                                           {fractionItem.linkStatus === 'generated' ?
                                             <Dropdown
                                               toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
@@ -1160,7 +1277,7 @@ const Details = () => {
                                                 className=' tracking-wide text-gray-600 text-xl border border-gray-300 px-2 py-2 rounded-lg hover:text-gray-700 hover:border-gray-400 disabled:hover:border-gray-300 disabled:cursor-not-allowed '
                                               ><IoMdClose /></button>
                                           }
-                                        </td>
+                                        </td>}
                                       </tr>)
                                   }
                                 </tbody>
@@ -1200,7 +1317,7 @@ const Details = () => {
                   <th>First Installment Payment Mode</th>
                   <th>SWP Amount</th>
                   <th>Approval Status</th>
-                  <th>Action</th>
+                  {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
                 </tr>
               </thead>
@@ -1211,6 +1328,7 @@ const Details = () => {
                     swps.map((item, index) => {
                       let hasChild = item.transactionFractions?.length !== 0
                       let childLength = item.transactionFractions?.length
+                      let transTypeBgColor = transactionTypeColorMap[item.transactionFor]
 
                       return <Fragment key={item._id}>
                         <tr className='whitespace-nowrap border-b-[2px] border-solid border-[#E3EAF4]'>
@@ -1227,19 +1345,50 @@ const Details = () => {
                             }}
                           >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
                           <td>{item.investorName}</td>
-                          <td>{item.transactionFor}</td>
+                          <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
-                          <td>{formatDate(item.createdAt)}</td>
+                          <td className='relative'>
+                            <label
+                              htmlFor={`execution-date-${item._id}`}
+                              className={`focus-within:bg-gray-100 p-1 px-2 border rounded-md text-center ${canModifyExecutionDate || canModifyTransactions ? 'hover:bg-gray-100' : ''}`}>
+                              {formatDate(item.transactionPreference)}
+                            </label>
+                            <input
+                              type="date"
+                              id={`execution-date-${item._id}`}
+                              min={currentDate}
+                              className='text-xs absolute left-0 -z-10'
+                              value={formatDateToYYYYMMDD(item.transactionPreference)}
+                              required
+                              disabled={!(canModifyExecutionDate || canModifyTransactions)}
+                              onFocus={(e) => e.target.showPicker()}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setSwps(prevState => {
+                                  return prevState.map((transaction, i) => {
+                                    if (i === index) {
+                                      return {
+                                        ...transaction,
+                                        transactionPreference: value
+                                      };
+                                    }
+                                    return transaction;
+                                  });
+                                });
+                                updateExecutionDate(item._id, value)
+                              }}
+                            />
+                          </td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
-                          <td>{formatDate(item.transactionPreference)}</td>
+                          <td>{formatDate(item.sipSwpStpDate)}</td>
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>
-                            <select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
                               if (!value) return
 
@@ -1256,8 +1405,9 @@ const Details = () => {
                               ))}
                             </select>
                           </td>
-                          <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+
+                          {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
                             </button> : item.linkStatus === 'generated' ?
                               <button
@@ -1266,13 +1416,17 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button>
-                              : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddSwpsFraction(index) }}>+</button>}</td>
+                              : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddSwpsFraction(index) }}>+</button>}
+                          </td>}
+
                           <td>
-                            {!hasChild ? <button
-                              disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
-                              onClick={() => handleGenerateLink(item._id)}
-                            >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
+                            {!hasChild ? item.linkStatus === 'generated' ?
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <button
+                                disabled={!canModifyTransactions || item.linkStatus === 'generated'}
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                onClick={() => handleGenerateLink(item._id)}
+                              >Generate Link</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -1280,7 +1434,7 @@ const Details = () => {
                           </td>
                         </tr>
                         {hasChild && <tr>
-                          <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
+                          <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
                             <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative w-full'>
                                 <thead className=' rounded-full   '>
@@ -1301,13 +1455,13 @@ const Details = () => {
                                     <th>SWP Amount</th>
                                     <th>Approval Status</th>
                                     <th>Link</th>
-                                    <th>Actions</th>
+                                    {canModifyTransactions && <th>Actions</th>}
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
                                   {
                                     item.transactionFractions?.map((fractionItem, fracIndex) =>
-                                      <tr className=' border-b-[2px] border-solid border-[#E3EAF4]'>
+                                      <tr key={fracIndex} className='whitespace-nowrap border-b-[2px] border-solid border-[#E3EAF4]'>
                                         <td></td>
                                         <td className='min-w-16'>{index + 1}.{fracIndex + 1}</td>
                                         <td><span className=' px-3 py-2 rounded-3xl font-medium '
@@ -1317,7 +1471,7 @@ const Details = () => {
                                           }}
                                         >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
                                         <td>{item.investorName}</td>
-                                        <td>{item.transactionFor}</td>
+                                        <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
                                         <td>{item.amcName}</td>
                                         <td>{item.schemeName}</td>
                                         <td>{item.schemeOption}</td>
@@ -1349,15 +1503,21 @@ const Details = () => {
                                         </td>
                                         <td>{item.tenure}</td>
                                         <td className='min-w-32'>{item.firstTransactionAmount}</td>
-                                        <td>{
+                                        <td className='relative'>
+                                          <label
+                                            htmlFor={`transactionDate-${item._id}-${fracIndex}`}
+                                            className={`focus-within:bg-blue-100 p-1 px-2 border rounded-md text-center ${['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked' ? '' : 'hover:bg-blue-100'}`}>
+                                            {formatDate(fractionItem.transactionDate)}
+                                          </label>
                                           <input
                                             type="date"
-                                            name="transactionDate"
+                                            id={`transactionDate-${item._id}-${fracIndex}`}
                                             min={currentDate}
-                                            className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                            className='text-xs absolute left-0 -z-10'
                                             value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                             required
                                             disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            onFocus={(e) => e.target.showPicker()}
                                             onChange={(e) => {
                                               const { value } = e.target;
                                               setSwps(prevState => {
@@ -1378,8 +1538,8 @@ const Details = () => {
                                               });
                                             }}
                                           />
+                                        </td>
 
-                                        }</td>
                                         <td className='min-w-36'>{item.paymentMode}</td>
                                         <td>
                                           <input
@@ -1407,11 +1567,12 @@ const Details = () => {
                                               });
                                             }} />
                                         </td>
+
                                         <td>
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -1439,13 +1600,15 @@ const Details = () => {
                                             ))}
                                           </select>
                                         </td>
+
                                         <td>{fractionItem.linkStatus === 'generated' ?
                                           <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
-                                          <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                          <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
+                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                         }</td>
-                                        <td>
+
+                                        {canModifyTransactions && <td>
                                           {fractionItem.linkStatus === 'generated' ?
                                             <Dropdown
                                               toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
@@ -1472,7 +1635,7 @@ const Details = () => {
                                                 className=' tracking-wide text-gray-600 text-xl border border-gray-300 px-2 py-2 rounded-lg hover:text-gray-700 hover:border-gray-400 disabled:hover:border-gray-300 disabled:cursor-not-allowed '
                                               ><IoMdClose /></button>
                                           }
-                                        </td>
+                                        </td>}
                                       </tr>)
                                   }
                                 </tbody>
@@ -1507,11 +1670,11 @@ const Details = () => {
                   <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Traxn Units/Amount</th>
-                  <th>Purchase Date</th>
+                  {/* <th>Purchase Date</th> */}
                   <th>Payment Mode</th>
                   <th>Transaction Amount</th>
                   <th>Approval Status</th>
-                  <th>Action</th>
+                  {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
                 </tr>
               </thead>
@@ -1541,14 +1704,45 @@ const Details = () => {
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
-                          <td>{formatDate(item.createdAt)}</td>
+                          <td className='relative'>
+                            <label
+                              htmlFor={`execution-date-${item._id}`}
+                              className={`focus-within:bg-gray-100 p-1 px-2 border rounded-md text-center ${canModifyExecutionDate || canModifyTransactions ? 'hover:bg-gray-100' : ''}`}>
+                              {formatDate(item.transactionPreference)}
+                            </label>
+                            <input
+                              type="date"
+                              id={`execution-date-${item._id}`}
+                              min={currentDate}
+                              className='text-xs absolute left-0 -z-10'
+                              value={formatDateToYYYYMMDD(item.transactionPreference)}
+                              required
+                              disabled={!(canModifyExecutionDate || canModifyTransactions)}
+                              onFocus={(e) => e.target.showPicker()}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setPurchases(prevState => {
+                                  return prevState.map((transaction, i) => {
+                                    if (i === index) {
+                                      return {
+                                        ...transaction,
+                                        transactionPreference: value
+                                      };
+                                    }
+                                    return transaction;
+                                  });
+                                });
+                                updateExecutionDate(item._id, value)
+                              }}
+                            />
+                          </td>
                           <td>{item.folioNumber}</td>
                           <td>{item.transactionUnits}</td>
-                          <td>{formatDate(item.transactionPreference)}</td>
+                          {/* <td>{formatDate(item.createdAt)}</td> */}
                           <td>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>
-                            <select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
                               if (!value) return
 
@@ -1565,8 +1759,9 @@ const Details = () => {
                               ))}
                             </select>
                           </td>
-                          <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+
+                          {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
                             </button> : item.linkStatus === 'generated' ?
                               <button
@@ -1575,13 +1770,17 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button> :
-                              <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddPurchasesFraction(index) }}>+</button>}</td>
+                              <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddPurchasesFraction(index) }}>+</button>}
+                          </td>}
+
                           <td>
-                            {!hasChild ? <button
-                              disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
-                              onClick={() => handleGenerateLink(item._id)}
-                            >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
+                            {!hasChild ? item.linkStatus === 'generated' ?
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <button
+                                disabled={!canModifyTransactions || item.linkStatus === 'generated'}
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                onClick={() => handleGenerateLink(item._id)}
+                              >Generate Link</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -1589,7 +1788,7 @@ const Details = () => {
                           </td>
                         </tr>
                         {hasChild && <tr>
-                          <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
+                          <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
                             <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative w-full'>
                                 <thead className=' rounded-full   '>
@@ -1603,12 +1802,12 @@ const Details = () => {
                                     <th>Scheme Option</th>
                                     <th>Folio</th>
                                     <th>Traxn Units/Amount</th>
-                                    <th>Purchase Date</th>
+                                    <th>Execution Date</th>
                                     <th>Payment Mode</th>
                                     <th>Transaction Amount</th>
                                     <th>Approval Status</th>
                                     <th>Link</th>
-                                    <th>Actions</th>
+                                    {canModifyTransactions && <th>Actions</th>}
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -1653,16 +1852,24 @@ const Details = () => {
                                               });
                                             }} />
                                         </td>
+
                                         <td>{item.transactionUnits}</td>
-                                        <td>{
+
+                                        <td className='relative'>
+                                          <label
+                                            htmlFor={`transactionDate-${item._id}-${fracIndex}`}
+                                            className={`focus-within:bg-blue-100 p-1 px-2 border rounded-md text-center ${['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked' ? '' : 'hover:bg-blue-100'}`}>
+                                            {formatDate(fractionItem.transactionDate)}
+                                          </label>
                                           <input
                                             type="date"
-                                            name="transactionDate"
+                                            id={`transactionDate-${item._id}-${fracIndex}`}
                                             min={currentDate}
-                                            className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                            className='text-xs absolute left-0 -z-10'
                                             value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                             required
                                             disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            onFocus={(e) => e.target.showPicker()}
                                             onChange={(e) => {
                                               const { value } = e.target;
                                               setPurchases(prevState => {
@@ -1683,8 +1890,8 @@ const Details = () => {
                                               });
                                             }}
                                           />
+                                        </td>
 
-                                        }</td>
                                         <td>{item.paymentMode}</td>
                                         <td>
                                           <input
@@ -1716,7 +1923,7 @@ const Details = () => {
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -1744,13 +1951,15 @@ const Details = () => {
                                             ))}
                                           </select>
                                         </td>
+
                                         <td>{fractionItem.linkStatus === 'generated' ?
                                           <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
-                                          <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                          <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
+                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                         }</td>
-                                        <td>
+
+                                        {canModifyTransactions && <td>
                                           {fractionItem.linkStatus === 'generated' ?
                                             <Dropdown
                                               toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
@@ -1777,7 +1986,7 @@ const Details = () => {
                                                 className=' tracking-wide text-gray-600 text-xl border border-gray-300 px-2 py-2 rounded-lg hover:text-gray-700 hover:border-gray-400 disabled:hover:border-gray-300 disabled:cursor-not-allowed '
                                               ><IoMdClose /></button>
                                           }
-                                        </td>
+                                        </td>}
                                       </tr>)
                                   }
                                 </tbody>
@@ -1812,11 +2021,11 @@ const Details = () => {
                   <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Traxn Units/Amount</th>
-                  <th>Redemption Date</th>
+                  {/* <th>Redemption Date</th> */}
                   <th>Payment Mode</th>
                   <th>Transaction Amount</th>
                   <th>Approval Status</th>
-                  <th>Action</th>
+                  {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
                 </tr>
               </thead>
@@ -1846,14 +2055,45 @@ const Details = () => {
                           <td>{item.amcName}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
-                          <td>{formatDate(item.createdAt)}</td>
+                          <td className='relative'>
+                            <label
+                              htmlFor={`execution-date-${item._id}`}
+                              className={`focus-within:bg-gray-100 p-1 px-2 border rounded-md text-center ${canModifyExecutionDate || canModifyTransactions ? 'hover:bg-gray-100' : ''}`}>
+                              {formatDate(item.transactionPreference)}
+                            </label>
+                            <input
+                              type="date"
+                              id={`execution-date-${item._id}`}
+                              min={currentDate}
+                              className='text-xs absolute left-0 -z-10'
+                              value={formatDateToYYYYMMDD(item.transactionPreference)}
+                              required
+                              disabled={!(canModifyExecutionDate || canModifyTransactions)}
+                              onFocus={(e) => e.target.showPicker()}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setRedemptions(prevState => {
+                                  return prevState.map((transaction, i) => {
+                                    if (i === index) {
+                                      return {
+                                        ...transaction,
+                                        transactionPreference: value
+                                      };
+                                    }
+                                    return transaction;
+                                  });
+                                });
+                                updateExecutionDate(item._id, value)
+                              }}
+                            />
+                          </td>
                           <td>{item.folioNumber}</td>
                           <td>{item.transactionUnits}</td>
-                          <td>{formatDate(item.transactionPreference)}</td>
+                          {/* <td>{formatDate(item.transactionPreference)}</td> */}
                           <td>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>
-                            <select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
                               if (!value) return
 
@@ -1870,8 +2110,9 @@ const Details = () => {
                               ))}
                             </select>
                           </td>
-                          <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+
+                          {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
                             </button> : item.linkStatus === 'generated' ?
                               <button
@@ -1880,13 +2121,17 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button>
-                              : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddRedemptionsFraction(index) }}>+</button>}</td>
+                              : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddRedemptionsFraction(index) }}>+</button>}
+                          </td>}
+
                           <td>
-                            {!hasChild ? <button
-                              disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
-                              onClick={() => handleGenerateLink(item._id)}
-                            >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
+                            {!hasChild ? item.linkStatus === 'generated' ?
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <button
+                                disabled={!canModifyTransactions || item.linkStatus === 'generated'}
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                onClick={() => handleGenerateLink(item._id)}
+                              >Generate Link</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -1894,7 +2139,7 @@ const Details = () => {
                           </td>
                         </tr>
                         {hasChild && <tr>
-                          <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
+                          <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
                             <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative w-full'>
                                 <thead className=' rounded-full   '>
@@ -1908,12 +2153,12 @@ const Details = () => {
                                     <th>Scheme Option</th>
                                     <th>Folio</th>
                                     <th>Traxn Units/Amount</th>
-                                    <th>Redemption Date</th>
+                                    <th>Execution Date</th>
                                     <th>Payment Mode</th>
                                     <th>Transaction Amount</th>
                                     <th>Approval Status</th>
                                     <th>Link</th>
-                                    <th>Actions</th>
+                                    {canModifyTransactions && <th>Actions</th>}
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -1958,16 +2203,24 @@ const Details = () => {
                                               });
                                             }} />
                                         </td>
+
                                         <td>{item.transactionUnits}</td>
-                                        <td>{
+
+                                        <td className='relative'>
+                                          <label
+                                            htmlFor={`transactionDate-${item._id}-${fracIndex}`}
+                                            className={`focus-within:bg-blue-100 p-1 px-2 border rounded-md text-center ${['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked' ? '' : 'hover:bg-blue-100'}`}>
+                                            {formatDate(fractionItem.transactionDate)}
+                                          </label>
                                           <input
                                             type="date"
-                                            name="transactionDate"
+                                            id={`transactionDate-${item._id}-${fracIndex}`}
                                             min={currentDate}
-                                            className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                            className='text-xs absolute left-0 -z-10'
                                             value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                             required
                                             disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            onFocus={(e) => e.target.showPicker()}
                                             onChange={(e) => {
                                               const { value } = e.target;
                                               setRedemptions(prevState => {
@@ -1988,8 +2241,8 @@ const Details = () => {
                                               });
                                             }}
                                           />
+                                        </td>
 
-                                        }</td>
                                         <td>{item.paymentMode}</td>
                                         <td>
                                           <input
@@ -2021,7 +2274,7 @@ const Details = () => {
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -2049,13 +2302,15 @@ const Details = () => {
                                             ))}
                                           </select>
                                         </td>
+
                                         <td>{fractionItem.linkStatus === 'generated' ?
                                           <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
-                                          <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                          <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
+                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                         }</td>
-                                        <td>
+
+                                        {canModifyTransactions && <td>
                                           {fractionItem.linkStatus === 'generated' ?
                                             <Dropdown
                                               toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
@@ -2082,7 +2337,7 @@ const Details = () => {
                                                 className=' tracking-wide text-gray-600 text-xl border border-gray-300 px-2 py-2 rounded-lg hover:text-gray-700 hover:border-gray-400 disabled:hover:border-gray-300 disabled:cursor-not-allowed '
                                               ><IoMdClose /></button>
                                           }
-                                        </td>
+                                        </td>}
                                       </tr>)
                                   }
                                 </tbody>
@@ -2119,10 +2374,10 @@ const Details = () => {
                   <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Traxn Units/Amount</th>
-                  <th>Switch Date</th>
+                  {/* <th>Switch Date</th> */}
                   <th>Transaction Amount</th>
                   <th>Approval Status</th>
-                  <th>Action</th>
+                  {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
                 </tr>
               </thead>
@@ -2154,13 +2409,38 @@ const Details = () => {
                           <td>{item.fromSchemeOption}</td>
                           <td>{item.schemeName}</td>
                           <td>{item.schemeOption}</td>
-                          <td>{formatDate(item.createdAt)}</td>
+                          <td className='relative'>
+                            <label
+                              htmlFor={`execution-date-${item._id}`}
+                              className={`focus-within:bg-gray-100 p-1 px-2 border rounded-md text-center ${canModifyExecutionDate || canModifyTransactions ? 'hover:bg-gray-100' : ''}`}>
+                              {formatDate(item.transactionPreference)}
+                            </label>
+                            <input
+                              type="date"
+                              id={`execution-date-${item._id}`}
+                              min={currentDate}
+                              className='text-xs absolute left-0 -z-10'
+                              value={formatDateToYYYYMMDD(item.transactionPreference)}
+                              required
+                              disabled={!(canModifyExecutionDate || canModifyTransactions)}
+                              onFocus={(e) => e.target.showPicker()}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                dispatch(updateSwitchExecutionDate({
+                                  index,
+                                  transactionPreference: value
+                                }))
+                                updateExecutionDate(item._id, value)
+                              }}
+                            />
+                          </td>
                           <td>{item.folioNumber}</td>
                           <td>{item.transactionUnits}</td>
-                          <td>{formatDate(item.transactionPreference)}</td>
+                          {/* <td>{formatDate(item.transactionPreference)}</td> */}
                           <td>{item.amount}</td>
+
                           <td>
-                            <select name="approval-status" className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
                               if (!value) return
 
@@ -2172,8 +2452,9 @@ const Details = () => {
                               ))}
                             </select>
                           </td>
-                          <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
+
+                          {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                               <CiLock />
                             </button> : item.linkStatus === 'generated' ?
                               <button
@@ -2182,13 +2463,17 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button> :
-                              <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleSwitchAdd(index) }}>+</button>}</td>
+                              <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleSwitchAdd(index) }}>+</button>}
+                          </td>}
+
                           <td>
-                            {!hasChild ? <button
-                              disabled={item.linkStatus === 'generated'}
-                              className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-green-500 disabled:cursor-not-allowed'
-                              onClick={() => handleGenerateLink(item._id)}
-                            >{item.linkStatus === 'generated' ? 'Generated' : 'Generate Link'}</button>
+                            {!hasChild ? item.linkStatus === 'generated' ?
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <button
+                                disabled={!canModifyTransactions || item.linkStatus === 'generated'}
+                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                onClick={() => handleGenerateLink(item._id)}
+                              >Generate Link</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -2196,7 +2481,7 @@ const Details = () => {
                           </td>
                         </tr>
                         {hasChild && <tr>
-                          <td colSpan="20" style={{paddingBlock: openRows[item._id]? '0' : '1rem'}} className='transition-all duration-300'>
+                          <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
                             <div className={`transition-all duration-300 ${openRows[item._id] ? "max-h-0 overflow-hidden" : "max-h-screen"}`}>
                               <table className='relative w-full'>
                                 <thead className=' rounded-full   '>
@@ -2212,11 +2497,11 @@ const Details = () => {
                                     <th>To Scheme option</th>
                                     <th>Folio</th>
                                     <th>Transaction Units/Amount</th>
-                                    <th>Switch Date</th>
+                                    <th>Execution Date</th>
                                     <th>Transaction Amount</th>
                                     <th>Approval Status</th>
                                     <th>Links</th>
-                                    <th>Action</th>
+                                    {canModifyTransactions && <th>Actions</th>}
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -2246,19 +2531,28 @@ const Details = () => {
                                             disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
                                             onChange={(e) => dispatch(updateSwitchFractionFolio({ index, fracIndex, folioNumber: e.target.value }))} />
                                         </td>
+
                                         <td>{item.transactionUnits}</td>
-                                        <td>
+
+                                        <td className='relative'>
+                                          <label
+                                            htmlFor={`transactionDate-${item._id}-${fracIndex}`}
+                                            className={`focus-within:bg-blue-100 p-1 px-2 border rounded-md text-center ${['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked' ? '' : 'hover:bg-blue-100'}`}>
+                                            {formatDate(fractionItem.transactionDate)}
+                                          </label>
                                           <input
                                             type="date"
-                                            name="transactionDate"
+                                            id={`transactionDate-${item._id}-${fracIndex}`}
                                             min={currentDate}
-                                            className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                            className='text-xs absolute left-0 -z-10'
                                             value={formatDateToYYYYMMDD(fractionItem.transactionDate)}
                                             required
                                             disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            onFocus={(e) => e.target.showPicker()}
                                             onChange={(e) => { dispatch(updateSwitchTransactionDate({ index, fracIndex, value: e.target.value })) }}
                                           />
                                         </td>
+
                                         <td>
                                           <input
                                             className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
@@ -2271,7 +2565,7 @@ const Details = () => {
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -2283,13 +2577,15 @@ const Details = () => {
                                             ))}
                                           </select>
                                         </td>
+
                                         <td>{fractionItem.linkStatus === 'generated' ?
                                           <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
-                                          <button disabled={!fractionItem.fractionAmount || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                          <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
+                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
                                         }</td>
-                                        <td>
+
+                                        {canModifyTransactions && <td>
                                           {fractionItem.linkStatus === 'generated' ?
                                             <Dropdown
                                               toggleButton={<span className='p-2 rounded-full ms-2 hover:ring-2 focus:ring-2'><IoEllipsisVerticalSharp /></span>}>
@@ -2316,7 +2612,7 @@ const Details = () => {
                                                 className=' tracking-wide text-gray-600 text-xl border border-gray-300 px-2 py-2 rounded-lg hover:text-gray-700 hover:border-gray-400 disabled:hover:border-gray-300 disabled:cursor-not-allowed '
                                               ><IoMdClose /></button>
                                           }
-                                        </td>
+                                        </td>}
                                       </tr>)
                                   }
                                 </tbody>
@@ -2333,7 +2629,7 @@ const Details = () => {
           </div>
         </div>}
 
-      </div>
+      </div>}
 
       <div style={errorAlert ? { top: "0", transition: "0.6s" } : { top: "-100vw", transition: "0.6s" }} className=' w-full  absolute top-0 z-50 flex justify-center py-5 '  >
         <span className=' flex items-center gap-5 text-[#E33225] rounded-md py-3 px-4 bg-[#FCEDEB] border-2 border-solid border-[#E33225] '>

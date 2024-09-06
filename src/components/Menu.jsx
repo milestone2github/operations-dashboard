@@ -42,7 +42,7 @@ const Menu = ({ menu, func }) => {
       icon: <MdOutlinePendingActions className=' text-xl' />,
       sname: "PT",
       lname: "Pending Transactions",
-      path: "/pending-transaction"
+      path: "/pending-transaction?tab=my"
     },
     {
       id: 4,

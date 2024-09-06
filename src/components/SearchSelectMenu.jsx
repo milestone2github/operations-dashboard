@@ -90,7 +90,7 @@ function SearchSelectMenu({ list, selectedValue, updateSelected, width='260px', 
         <span className='absolute right-1 top-1/2 -translate-y-1/2'><IoIosArrowDown /></span>
       </div>
 
-      {isActive && <div className="absolute bg-white p-2 top-[calc(100%+4px)] left-0 w-full flex flex-col items-center rounded-md shadow-md">
+      {isActive && <div className="absolute z-10 bg-white p-2 top-[calc(100%+4px)] left-0 w-full flex flex-col items-center rounded-md shadow-md">
 
         <div className='flex items-center w-full rounded-md px-1 border focus-within:outline focus-within:outline-blue-400'>
           <span className='text-xl'><CiSearch /></span>

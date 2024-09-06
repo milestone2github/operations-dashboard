@@ -44,6 +44,15 @@ const transactionSlice = createSlice({
         state.switchTransactions = updated
       }
     },
+    updateSwitchExecutionDate: (state, action) => {
+      const { index, transactionPreference } = action.payload
+      if (index <= state.switchTransactions.length - 1 && index >= 0) {
+        let updated = state.switchTransactions
+        updated[index].transactionPreference = transactionPreference
+        state.switchTransactions = updated
+      }
+    },
+
     updateSwitchFractionAmount: (state, action) => {
       const { index, fracIndex, amount } = action.payload
       if (index <= state.switchTransactions.length - 1 && index >= 0) {
@@ -127,6 +136,9 @@ const transactionSlice = createSlice({
     builder.addCase(getTransactionsBySession.pending, (state) => {
       state.isLoading = true
       state.error = null
+      state.systematicTransactions = []
+      state.purchRedempTransactions = []
+      state.switchTransactions = []
     })
     builder.addCase(getTransactionsBySession.rejected, (state, action) => {
       state.isLoading = false
@@ -246,6 +258,7 @@ export const {
   unlockTransaction,
   updateSwitchFractionFolio,
   updateSwitchApprovalStatus,
+  updateSwitchExecutionDate,
   updateSwitchFractionApprovalStatus
 } = transactionSlice.actions
 

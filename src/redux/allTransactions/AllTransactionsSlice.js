@@ -4,6 +4,8 @@ import { getFilteredTransactions } from "./AllTransactionsAction"
 const initialState = {
   transactions: [],
   page: 0,
+  totalCount: 0,
+  totalAmount: 0,
   status: 'idle', // pending | failed | completed
   error: null
 }
@@ -24,6 +26,8 @@ const allTransactionsSlice = createSlice({
       state.status = 'completed'
       state.transactions = action.payload.transactions
       state.page = action.payload.page
+      state.totalCount = action.payload.totalCount
+      state.totalAmount = action.payload.totalAmount
     })
   }
 })

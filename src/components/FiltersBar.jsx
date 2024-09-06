@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import SearchSelectMenu from './SearchSelectMenu'
 import { useDispatch, useSelector } from 'react-redux'
-import { getAllAmc, getAllSchemes, getRMNames } from '../redux/allFilterOptions/FilterOptionsAction'
+import { getAllAmc, getAllSchemes, getRMNames, getSMNames } from '../redux/allFilterOptions/FilterOptionsAction'
 import toast from 'react-hot-toast'
 import { CiCalendarDate } from 'react-icons/ci'
 import { formatDateDDShortMonthNameYY } from '../utils/formatDate'
@@ -16,11 +16,12 @@ sortMap.set('Oldest', 'trxdate-asc')
 sortMap.set('Amount: low to high', 'amount-asc')
 sortMap.set('Amount: high to low', 'amount-desc')
 
-function FiltersBar({ filters, updateFilters }) {
+function FiltersBar({ filters, updateFilters, results, aum }) {
+  const { amcList, typeList, schemesList, rmNameList, smNameList, statusList, approvalStatusList, transactionForList, error } = useSelector(state => state.allFilterOptions)
   const [filteredAmcs, setFilteredAmcs] = useState([''])
   const [filteredSchemes, setFilteredSchemes] = useState([''])
+  const [filteredStatus, setFilteredStatus] = useState(statusList)
   const [sortBy, setSortBy] = useState('Latest')
-  const { amcList, typeList, schemesList, rmNameList, error } = useSelector(state => state.allFilterOptions)
   const dispatch = useDispatch()
   const minAmountRef = useRef(null)
   const maxAmountRef = useRef(null)
@@ -28,6 +29,7 @@ function FiltersBar({ filters, updateFilters }) {
   useEffect(() => {
     dispatch(getAllAmc())
     dispatch(getRMNames())
+    dispatch(getSMNames())
   }, [])
 
   useEffect(() => {
@@ -88,6 +90,10 @@ function FiltersBar({ filters, updateFilters }) {
     setFilteredSchemes(schemesList.filter(item => item.toLowerCase().includes(key.toLowerCase())))
   }
 
+  const handleFilterStatus = (key) => {
+    setFilteredStatus(statusList.filter(item => item.toLowerCase().includes(key.toLowerCase())))
+  }
+
   const handleClearAll = () => {
     updateFilters({
       minDate: '',
@@ -95,10 +101,14 @@ function FiltersBar({ filters, updateFilters }) {
       amcName: '',
       schemeName: '',
       rmName: '',
+      smName: '',
       type: '',
       sort: 'trxdate-desc',
       minAmount: '',
-      maxAmount: ''
+      maxAmount: '',
+      transactionFor: '',
+      status: '',
+      approvalStatus: ''
     })
     setSortBy('Latest')
     minAmountRef.current.value = ''
@@ -108,7 +118,19 @@ function FiltersBar({ filters, updateFilters }) {
   return (
     <div className="flex flex-col text-sm text-gray-700">
       <div className="flex justify-start gap-2">
-        <p className='text-gray-700 font-medium text-lg me-auto'>Filters</p>
+        <p className='text-gray-700 font-medium text-lg'>Filters</p>
+
+        <div className='flex items-center bg-blue-100 p-1 px-2 gap-2 rounded-md'>
+          <span className='text-[10px] leading-tight text-gray-500 '>Results</span>
+          <span className='font-medium text-blue-800'>{results}</span>
+        </div>
+        <div className='flex items-center bg-green-100 p-1 px-2 gap-2 rounded-md me-auto'>
+          <span className='text-[10px] leading-tight text-gray-500 '>Amount</span>
+          <span className='font-medium text-green-800'>₹ {Number(aum).toLocaleString('en-IN', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+          })}</span>
+        </div>
 
         <div title='Amount' className="flex bg-white items-center rounded-md border">
           <span className='text-base text-gray-500 px-1'><MdCurrencyRupee /></span>
@@ -214,6 +236,50 @@ function FiltersBar({ filters, updateFilters }) {
         >
           {rmNameList?.map(item => (
             <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`} selected={item === filters.rmName}>{item || "RM Name"}</option>
+          ))}
+        </select>
+
+        <select
+          name="smName"
+          id="sm-name"
+          value={filters.smName}
+          onChange={handleFilterChange}
+          className={`px-2 py-1 text-sm rounded-md border focus:outline-blue-500 ${!filters.smName ? 'text-gray-500' : 'text-blue-600'}`}
+        >
+          {smNameList?.map(item => (
+            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`} selected={item === filters.smName}>{item || "SM Name"}</option>
+          ))}
+        </select>
+
+        <SearchSelectMenu
+          selectedValue={filters.status}
+          updateSelected={(item) => { handleFilterChange({ target: { name: 'status', value: item } }) }}
+          list={filteredStatus}
+          handleSearchAction={handleFilterStatus}
+          defaultEmptyName='Status'
+        />
+
+        <select
+          name="transactionFor"
+          id="transactionFor"
+          value={filters.transactionFor}
+          onChange={handleFilterChange}
+          className={`px-2 py-1 text-sm rounded-md border focus:outline-blue-500 ${!filters.transactionFor ? 'text-gray-500' : 'text-blue-600'}`}
+        >
+          {transactionForList?.map(item => (
+            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`} selected={item === filters.transactionFor}>{item || "Transaction For"}</option>
+          ))}
+        </select>
+
+        <select
+          name="approvalStatus"
+          id="approvalStatus"
+          value={filters.approvalStatus}
+          onChange={handleFilterChange}
+          className={`px-2 py-1 text-sm rounded-md border focus:outline-blue-500 ${!filters.approvalStatus ? 'text-gray-500' : 'text-blue-600'}`}
+        >
+          {approvalStatusList?.map(item => (
+            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`} selected={item === filters.approvalStatus}>{item || "Approval List"}</option>
           ))}
         </select>
 

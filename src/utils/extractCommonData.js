@@ -6,7 +6,7 @@ export const extractCommonData = (data) => {
     investorName : data.investorName,
     familyHead: data.familyHead,
     panNumber: data.panNumber,
-    registrantName: data.registrantName,
+    relationshipManager: data.relationshipManager,
     createdAt: formatDate(data.createdAt),
     pendingTrxCount: '',
     transactionCount: ''
@@ -14,9 +14,31 @@ export const extractCommonData = (data) => {
 }
 
 let filterPending = (item) => (item.status === 'PENDING')
+
+function sumTransactions(sum, item) {
+  if(item.transactionFractions.length) {
+    return sum + item.transactionFractions.length
+  }
+  return sum + 1
+}
+
+function sumPending(sum, item) {
+  if(item.transactionFractions.length) {
+    return sum + item.transactionFractions.filter(filterPending).length
+  }
+  return sum + Number(filterPending(item))
+}
+
+export const countAll = (systematic, purchRedemp, switchData) => {
+  let sysCount = systematic.reduce(sumTransactions, 0)
+  let purredCount = purchRedemp.reduce(sumTransactions, 0)
+  let switchCount = switchData.reduce(sumTransactions, 0)
+  return sysCount + purredCount + switchCount;
+}
+
 export const countPending = (systematic, purchRedemp, switchData) => {
-  let count = systematic.filter(filterPending).length
-  count += purchRedemp.filter(filterPending).length
-  count += switchData.filter(filterPending).length
-  return count;
+  let sysCount = systematic.reduce(sumPending, 0)
+  let purredCount = purchRedemp.reduce(sumPending, 0)
+  let switchCount = switchData.reduce(sumPending, 0)
+  return sysCount + purredCount + switchCount;
 }

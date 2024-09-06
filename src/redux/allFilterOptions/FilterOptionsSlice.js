@@ -1,10 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit"
-import { getAllAmc, getAllSchemes, getRMNames } from "./FilterOptionsAction"
+import { getAllAmc, getAllSchemes, getRMNames, getSMNames } from "./FilterOptionsAction"
+import { approvalStatusList, transactionStatusList } from "../../utils/lists"
 
 const initialState = {
   amcList: [''],
   schemesList: [''],
   rmNameList: [''],
+  smNameList: [''],
   typeList: [
     "",
     "SIP",
@@ -14,6 +16,9 @@ const initialState = {
     "Redemption",
     "Switch"
   ],
+  statusList: transactionStatusList,
+  approvalStatusList,
+  transactionForList: ["", 'Registration', 'Pause', 'Cancellation'],
   status: 'idle', // pending | failed | completed
   error: null
 }
@@ -66,6 +71,19 @@ const filterOptionsSlice = createSlice({
     builder.addCase(getRMNames.fulfilled, (state, action) => {
       state.status = 'completed'
       state.rmNameList = ["", ...action.payload]
+    })
+
+    builder.addCase(getSMNames.pending, (state) => {
+      state.status = 'pending'
+      state.error = null
+    })
+    builder.addCase(getSMNames.rejected, (state, action) => {
+      state.status = 'failed'
+      state.error = action.payload
+    })
+    builder.addCase(getSMNames.fulfilled, (state, action) => {
+      state.status = 'completed'
+      state.smNameList = ["", ...action.payload]
     })
   }
 })

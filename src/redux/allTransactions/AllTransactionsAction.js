@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const getFilteredTransactions = createAsyncThunk('allTransactions/getFilteredTransactions', 
   async ({filters, page, items}, {rejectWithValue}) => {
-    const { minDate, maxDate, amcName, schemeName, rmName, type, sort, minAmount, maxAmount } = filters
+    const { minDate, maxDate, amcName, schemeName, rmName, smName, type, sort, minAmount, maxAmount, transactionFor, status, approvalStatus } = filters
     
     let query = new URLSearchParams()
     query.append('page', page || 1)
@@ -16,6 +16,10 @@ export const getFilteredTransactions = createAsyncThunk('allTransactions/getFilt
     if(schemeName) {query.append('schemeName', schemeName)}
     if(rmName) {query.append('rmName', rmName)}
     if(type) {query.append('type', type)}
+    if(smName) {query.append('smName', smName)}
+    if(transactionFor) {query.append('transactionFor', transactionFor)}
+    if(status) {query.append('status', status)}
+    if(approvalStatus) {query.append('approvalStatus', approvalStatus)}
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/filtered-transactions?${query}`)

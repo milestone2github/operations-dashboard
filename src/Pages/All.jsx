@@ -17,16 +17,20 @@ const initialFilters = {
   amcName: '',
   schemeName: '',
   rmName: '',
+  smName: '',
   type: '',
   sort: 'trxdate-desc',
   minAmount: '',
-  maxAmount: ''
+  maxAmount: '',
+  transactionFor: '',
+  status: '',
+  approvalStatus: ''
 }
 
 const All = () => {
   const [filters, setFilters] = useState(initialFilters)
   // const [currentPage, setCurrentPage] = useState(0)
-  const { transactions, page, status, error } = useSelector(state => state.allTransactions)
+  const { transactions, page, totalCount, totalAmount, status, error } = useSelector(state => state.allTransactions)
   const dispatch = useDispatch()
 
   const updateFilters = (value) => {
@@ -79,7 +83,7 @@ const All = () => {
         <Header title='Transactions' />
         <hr className='border-b border-slate-100 w-full' />
         <div className='py-2'>
-          <FiltersBar filters={filters} updateFilters={updateFilters} />
+          <FiltersBar filters={filters} updateFilters={updateFilters} results={totalCount} aum={totalAmount}/>
         </div>
       </div>
 
@@ -94,12 +98,14 @@ const All = () => {
                 <th className='text-sm'>Pan number</th>
                 <th className='text-sm'>Investor name</th>
                 <th className='text-sm'>Family head</th>
-                <th className='text-sm'>Registrant</th>
+                <th className='text-sm'>RM Name</th>
                 <th className='text-sm'>AMC name</th>
                 <th className='text-sm'>Scheme name</th>
                 <th className='text-sm'>Amount</th>
                 <th className='text-sm'>Units</th>
                 <th className='text-sm'>Status</th>
+                <th className='text-sm'>SM Name</th>
+                <th className='text-sm'>Registrant</th>
                 <th className='text-sm'>Folio No.</th>
                 <th className='text-sm'>Scheme Option</th>
                 <th className='text-sm'>From scheme</th>
@@ -128,7 +134,7 @@ const All = () => {
                       <td>{item.panNumber}</td>
                       <td><span className='w-44 two-line-ellipsis'>{item.investorName}</span></td>
                       <td><span className='w-44 two-line-ellipsis'>{item.familyHead}</span></td>
-                      <td><span className='w-44 two-line-ellipsis'>{item.registrantName}</span></td>
+                      <td><span className='w-44 two-line-ellipsis'>{item.relationshipManager}</span></td>
                       <td><span className='w-44 two-line-ellipsis'>{item.amcName}</span></td>
                       <td><span className='w-44 two-line-ellipsis'>{item.schemeName}</span></td>
                       <td>{item.amount}</td>
@@ -140,6 +146,8 @@ const All = () => {
                         >{statusColor.value}
                         </span>
                       </td>
+                      <td><span className='w-44 two-line-ellipsis'>{item.serviceManager || 'N/A'}</span></td>
+                      <td><span className='w-44 two-line-ellipsis'>{item.registrantName}</span></td>
                       <td>{item.folioNumber}</td>
                       <td>{item.schemeOption}</td>
                       <td><span className='w-44 two-line-ellipsis'>{item.fromSchemeName}</span></td>
@@ -173,7 +181,7 @@ const All = () => {
           <button
             title='Next'
             onClick={handleNext}
-            disabled={transactions.length < items}
+            disabled={totalCount <= (page * items)}
             className='px-4 py-1 rounded-md border flex gap-2 items-center text-gray-600 border-gray-200 focus:outline-2 focus:outline-blue-400 enabled:hover:bg-blue-50 enabled:hover:text-blue-700 enabled:hover:border-blue-200 disabled:text-gray-400'
           >Next<BsArrowRight /></button>
         </div>

@@ -102,6 +102,33 @@ export const updateOrderId = createAsyncThunk('transactions/updateOrderId',
   }
 )
 
+export const updateNote = createAsyncThunk('transactions/updateNote', 
+  async ({id, fractionId, note}, {rejectWithValue}) => {
+    let body = {note}
+    if(fractionId) {body.fractionId = fractionId}
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/note/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body)
+      })
+  
+      const resData = await response.json()
+  
+      if(!response.ok) {
+        throw new Error(resData.Error || "Internal server error while updating note")
+      }
+  
+      return resData.data
+    } catch (error) {
+      console.error("Error updating note: ", error.message)
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 // ********  NOT REQUIRED ********** 
 export const addFraction = createAsyncThunk('transactions/addFraction', 
   async ({id, fractionAmount, status}, {rejectWithValue}) => {

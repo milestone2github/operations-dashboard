@@ -7,7 +7,7 @@ import { MdClose, MdUpdate } from "react-icons/md";
 import toast, { Toaster } from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import Loader from '../components/Loader';
-import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions, updateOrderId } from '../redux/transactions/TransactionsAction';
+import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions, updateNote, updateOrderId } from '../redux/transactions/TransactionsAction';
 import {
   switchAddFraction,
   removeSwitchFraction,
@@ -29,6 +29,7 @@ import UpdateOrderIdModal from '../components/UpdateOrderIdModal';
 import Dropdown from '../components/Dropdown';
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
 import { transactionTypeColorMap } from '../utils/map';
+import NoteDropdown from '../components/NoteDropdown';
 
 const initialCommonData = {
   investorName: '',
@@ -63,6 +64,7 @@ const Details = () => {
   const [commonData, setCommonData] = useState(initialCommonData)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isOrderIdModalOpen, setIsOrderIdModalOpen] = useState(false)
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(true)
   const [transactionForLink, setTransactionForLink] = useState({ id: '', fractionId: '' })
   const [transactionForOrderId, setTransactionForOrderId] = useState({ id: '', fractionId: '', orderId: '' })
   const [openRows, setOpenRows] = useState({})
@@ -75,7 +77,8 @@ const Details = () => {
     isLoading,
     error,
     linkGenerateStatus,
-    orderIdStatus
+    orderIdStatus,
+    noteUpdateStatus
   } = useSelector((state) => state.sessionalTransactions)
 
   const [sips, setSips] = useState([])
@@ -141,7 +144,7 @@ const Details = () => {
       )
     }))
 
-    return () => {setCommonData(initialCommonData)}
+    return () => { setCommonData(initialCommonData) }
   }, [systematicTransactions, purchRedempTransactions, switchTransactions])
 
   const toggelRows = (id) => {
@@ -456,7 +459,10 @@ const Details = () => {
       handleCancelOrderIdModal()
       toast.success('Updated')
     }
-  }, [orderIdStatus])
+    if (noteUpdateStatus === 'completed') {
+      toast.success('Note updated')
+    }
+  }, [orderIdStatus, noteUpdateStatus])
 
   // const handleRemoveFraction = (id, fractionId) => {
   //   dispatch(removeFraction({ id, fractionId }))
@@ -526,6 +532,10 @@ const Details = () => {
     }
   }
 
+  const handleNoteUpdate = (id, note, fractionId) => {
+    dispatch(updateNote({ id, note, fractionId }))
+  }
+
   const showLoading = (<div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
     <Loader />
   </div>)
@@ -536,7 +546,7 @@ const Details = () => {
 
         <Header title='Transaction Details' />
       </div>
-      {isLoading? showLoading : <div className="table-section  bg-[#F8FAFC] p-3 flex flex-col items-center gap-4 overflow-y-auto h-[88vh]">
+      {isLoading ? showLoading : <div className="table-section  bg-[#F8FAFC] p-3 flex flex-col items-center gap-4 overflow-y-auto h-[88vh]">
         <div className='card text-[#000000] client-data w-[90vw] md:w-[87vw]  lg:w-[90vw] grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-6'>
           <div className=' bg-blue-50 w-full rounded-md border-2 border-solid border-[#EDEDED] flex  flex-col gap-4 p-4 tracking-wide'>
             {/* <div>
@@ -580,7 +590,7 @@ const Details = () => {
         {/* ******* SIP TRANSACTIONS TABLE ******* */}
         {!!sips?.length && <div className='inner-section my-4 bg-white rounded-md w-[90vw] md:w-[87vw]  lg:w-[90vw]  flex flex-col items-end '>
           <h2 className=' text-left sm:text-2xl top-0 p-4 bg-white w-full'>SIP</h2>
-          <div className=' w-full overflow-auto p-2'>
+          <div className=' w-full overflow-x-auto p-2'>
             <table className=''>
               <thead className=' rounded-full'>
                 <tr className=''>
@@ -602,6 +612,7 @@ const Details = () => {
                   <th>Approval Status</th>
                   {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
+                  <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -715,6 +726,9 @@ const Details = () => {
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
+                          <td>
+                            <NoteDropdown existingNote={item.note} handleProceed={(note) => handleNoteUpdate(item._id, note)} status={noteUpdateStatus} />
+                          </td>
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
@@ -739,6 +753,7 @@ const Details = () => {
                                     <th>Approval Status</th>
                                     <th>Link</th>
                                     {canModifyTransactions && <th>Actions</th>}
+                                    <th>Notes</th>
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -919,6 +934,9 @@ const Details = () => {
                                               ><IoMdClose /></button>
                                           }
                                         </td>}
+                                        <td>
+                                          <NoteDropdown existingNote={fractionItem.note} handleProceed={(note) => handleNoteUpdate(item._id, note, fractionItem._id)} status={noteUpdateStatus} />
+                                        </td>
                                       </tr>)
                                   }
                                 </tbody>
@@ -960,6 +978,7 @@ const Details = () => {
                   <th>Approval Status</th>
                   {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
+                  <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -1074,6 +1093,9 @@ const Details = () => {
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
+                          <td>
+                            <NoteDropdown existingNote={item.note} handleProceed={(note) => handleNoteUpdate(item._id, note)} status={noteUpdateStatus} />
+                          </td>
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
@@ -1098,6 +1120,7 @@ const Details = () => {
                                     <th>Approval Status</th>
                                     <th>Link</th>
                                     {canModifyTransactions && <th>Actions</th>}
+                                    <th>Notes</th>
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -1278,6 +1301,9 @@ const Details = () => {
                                               ><IoMdClose /></button>
                                           }
                                         </td>}
+                                        <td>
+                                          <NoteDropdown existingNote={fractionItem.note} handleProceed={(note) => handleNoteUpdate(item._id, note, fractionItem._id)} status={noteUpdateStatus} />
+                                        </td>
                                       </tr>)
                                   }
                                 </tbody>
@@ -1319,6 +1345,7 @@ const Details = () => {
                   <th>Approval Status</th>
                   {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
+                  <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -1432,6 +1459,9 @@ const Details = () => {
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
+                          <td>
+                            <NoteDropdown existingNote={item.note} handleProceed={(note) => handleNoteUpdate(item._id, note)} status={noteUpdateStatus} />
+                          </td>
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
@@ -1456,6 +1486,7 @@ const Details = () => {
                                     <th>Approval Status</th>
                                     <th>Link</th>
                                     {canModifyTransactions && <th>Actions</th>}
+                                    <th>Notes</th>
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -1636,6 +1667,9 @@ const Details = () => {
                                               ><IoMdClose /></button>
                                           }
                                         </td>}
+                                        <td>
+                                          <NoteDropdown existingNote={fractionItem.note} handleProceed={(note) => handleNoteUpdate(item._id, note, fractionItem._id)} status={noteUpdateStatus} />
+                                        </td>
                                       </tr>)
                                   }
                                 </tbody>
@@ -1676,6 +1710,7 @@ const Details = () => {
                   <th>Approval Status</th>
                   {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
+                  <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -1786,6 +1821,9 @@ const Details = () => {
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
+                          <td>
+                            <NoteDropdown existingNote={item.note} handleProceed={(note) => handleNoteUpdate(item._id, note)} status={noteUpdateStatus} />
+                          </td>
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
@@ -1808,6 +1846,7 @@ const Details = () => {
                                     <th>Approval Status</th>
                                     <th>Link</th>
                                     {canModifyTransactions && <th>Actions</th>}
+                                    <th>Notes</th>
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -1987,6 +2026,9 @@ const Details = () => {
                                               ><IoMdClose /></button>
                                           }
                                         </td>}
+                                        <td>
+                                          <NoteDropdown existingNote={fractionItem.note} handleProceed={(note) => handleNoteUpdate(item._id, note, fractionItem._id)} status={noteUpdateStatus} />
+                                        </td>
                                       </tr>)
                                   }
                                 </tbody>
@@ -2027,6 +2069,7 @@ const Details = () => {
                   <th>Approval Status</th>
                   {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
+                  <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -2137,6 +2180,9 @@ const Details = () => {
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
+                          <td>
+                            <NoteDropdown existingNote={item.note} handleProceed={(note) => handleNoteUpdate(item._id, note)} status={noteUpdateStatus} />
+                          </td>
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
@@ -2159,6 +2205,7 @@ const Details = () => {
                                     <th>Approval Status</th>
                                     <th>Link</th>
                                     {canModifyTransactions && <th>Actions</th>}
+                                    <th>Notes</th>
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -2338,6 +2385,9 @@ const Details = () => {
                                               ><IoMdClose /></button>
                                           }
                                         </td>}
+                                        <td>
+                                          <NoteDropdown existingNote={fractionItem.note} handleProceed={(note) => handleNoteUpdate(item._id, note, fractionItem._id)} status={noteUpdateStatus} />
+                                        </td>
                                       </tr>)
                                   }
                                 </tbody>
@@ -2379,6 +2429,7 @@ const Details = () => {
                   <th>Approval Status</th>
                   {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
+                  <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -2479,6 +2530,9 @@ const Details = () => {
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
+                          <td>
+                            <NoteDropdown existingNote={item.note} handleProceed={(note) => handleNoteUpdate(item._id, note)} status={noteUpdateStatus} />
+                          </td>
                         </tr>
                         {hasChild && <tr>
                           <td colSpan="20" style={{ paddingBlock: openRows[item._id] ? '0' : '1rem' }} className='transition-all duration-300'>
@@ -2502,6 +2556,7 @@ const Details = () => {
                                     <th>Approval Status</th>
                                     <th>Links</th>
                                     {canModifyTransactions && <th>Actions</th>}
+                                    <th>Notes</th>
                                   </tr>
                                 </thead>
                                 <tbody className=' bg-[#ECF9FF] text-black '>
@@ -2613,6 +2668,9 @@ const Details = () => {
                                               ><IoMdClose /></button>
                                           }
                                         </td>}
+                                        <td>
+                                          <NoteDropdown existingNote={fractionItem.note} handleProceed={(note) => handleNoteUpdate(item._id, note, fractionItem._id)} status={noteUpdateStatus} />
+                                        </td>
                                       </tr>)
                                   }
                                 </tbody>

@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
-import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions, updateOrderId } from "./TransactionsAction"
+import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions, updateNote, updateOrderId } from "./TransactionsAction"
 
 const initialState = {
   systematicTransactions: [],
@@ -8,7 +8,8 @@ const initialState = {
   isLoading: false,
   error: null,
   linkGenerateStatus: 'idle', // pending | failed | completed
-  orderIdStatus: 'idle' // pending | failed | completed
+  orderIdStatus: 'idle', // pending | failed | completed
+  noteUpdateStatus: 'idle' // pending | failed | completed
 }
 
 const transactionSlice = createSlice({
@@ -245,6 +246,34 @@ const transactionSlice = createSlice({
         )
       }
       state.orderIdStatus = 'completed'
+    })
+
+    builder.addCase(updateNote.pending, (state) => {
+      state.error = null
+      state.noteUpdateStatus = 'pending'
+    })
+    builder.addCase(updateNote.rejected, (state, action) => {
+      state.error = action.payload
+      state.noteUpdateStatus = 'failed'
+    })
+    builder.addCase(updateNote.fulfilled, (state, action) => {
+      let transaction = action.payload
+      if (transaction.category === 'systematic') {
+        state.systematicTransactions = state.systematicTransactions.map(item =>
+          item._id === transaction._id ? transaction : item
+        )
+      }
+      else if (transaction.category === 'purchredemp') {
+        state.purchRedempTransactions = state.purchRedempTransactions.map(item =>
+          item._id === transaction._id ? transaction : item
+        )
+      }
+      else if (transaction.category === 'switch') {
+        state.switchTransactions = state.switchTransactions.map(item =>
+          item._id === transaction._id ? transaction : item
+        )
+      }
+      state.noteUpdateStatus = 'completed'
     })
   }
 })

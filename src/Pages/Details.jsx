@@ -7,7 +7,7 @@ import { MdClose, MdUpdate } from "react-icons/md";
 import toast, { Toaster } from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import Loader from '../components/Loader';
-import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions, updateNote, updateOrderId } from '../redux/transactions/TransactionsAction';
+import { addFraction, generateLink, getTransactionsFilterByFh, removeFraction, saveFractions, updateNote, updateOrderId } from '../redux/transactions/TransactionsAction';
 import {
   switchAddFraction,
   removeSwitchFraction,
@@ -108,9 +108,9 @@ const Details = () => {
   // side effect to make api calls to get data 
   useEffect(() => {
     let fh = searchParams.get('fh');
-    let rm = searchParams.get('rm');
+    // let rm = searchParams.get('rm');
     let smFilter = searchParams.get('smFilter');
-    dispatch(getTransactionsBySession({ fh, rm, smFilter }))
+    dispatch(getTransactionsFilterByFh({ fh, smFilter }))
   }, [])
 
   // side effects to handle fetch errors 

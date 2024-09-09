@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
-import { addFraction, generateLink, getTransactionsBySession, removeFraction, saveFractions, updateNote, updateOrderId } from "./TransactionsAction"
+import { addFraction, generateLink, getTransactionsFilterByFh, removeFraction, saveFractions, updateNote, updateOrderId } from "./TransactionsAction"
 
 const initialState = {
   systematicTransactions: [],
@@ -134,18 +134,18 @@ const transactionSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder.addCase(getTransactionsBySession.pending, (state) => {
+    builder.addCase(getTransactionsFilterByFh.pending, (state) => {
       state.isLoading = true
       state.error = null
       state.systematicTransactions = []
       state.purchRedempTransactions = []
       state.switchTransactions = []
     })
-    builder.addCase(getTransactionsBySession.rejected, (state, action) => {
+    builder.addCase(getTransactionsFilterByFh.rejected, (state, action) => {
       state.isLoading = false
       state.error = action.payload
     })
-    builder.addCase(getTransactionsBySession.fulfilled, (state, action) => {
+    builder.addCase(getTransactionsFilterByFh.fulfilled, (state, action) => {
       state.isLoading = false
       state.error = null
       state.systematicTransactions = []

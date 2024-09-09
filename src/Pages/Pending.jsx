@@ -166,7 +166,6 @@ const Pending = () => {
         let params = new URLSearchParams() 
         params.append('smFilter', activeTab)
         if(row.familyHead) {params.append('fh', row.familyHead)}
-        if(row.relationshipManager) {params.append('rm', row.relationshipManager)}
         navigate(`details?${params.toString()}`)
     }
 

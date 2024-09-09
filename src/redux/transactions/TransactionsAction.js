@@ -1,11 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
-export const getTransactionsBySession = createAsyncThunk('transactions/sessional', 
-  async ({fh, rm, smFilter}, {rejectWithValue}) => {
+export const getTransactionsFilterByFh = createAsyncThunk('transactions/filterByFh', 
+  async ({fh, smFilter}, {rejectWithValue}) => {
     let params = new URLSearchParams() 
     params.append('smFilter', smFilter)
     if(fh) {params.append('fh', fh)}
-    if(rm) {params.append('rm', rm)}
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/transactions-of-fhrm?${params.toString()}`, {
@@ -16,12 +15,12 @@ export const getTransactionsBySession = createAsyncThunk('transactions/sessional
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.error || "Internal server error while getting transactions of a family head and RM")
+        throw new Error(resData.error || "Internal server error while getting transactions of a family head")
       }
   
       return resData.data
     } catch (error) {
-      console.error("Error getting transactions of a family head and RM: ", error.message)
+      console.error("Error getting transactions of a family head: ", error.message)
       return rejectWithValue(error.message)
     }
   }

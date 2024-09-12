@@ -419,14 +419,14 @@ const Details = () => {
     dispatch(cancelSwitchFraction({ index, fracIndex }))
   }
 
-  const handleGenerateLink = (id) => {
+  const handleGenerateLink = (id, approvalStatus) => {
     setIsModalOpen(true)
-    setTransactionForLink({ id })
+    setTransactionForLink({ id, approvalStatus })
   }
 
-  const handleGenerateLinkOfFraction = (id, fractionId) => {
+  const handleGenerateLinkOfFraction = (id, fractionId, approvalStatus) => {
     setIsModalOpen(true)
-    setTransactionForLink({ id, fractionId })
+    setTransactionForLink({ id, fractionId, approvalStatus })
   }
 
   const handleProceed = (platform, orderId) => {
@@ -682,7 +682,7 @@ const Details = () => {
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>
-                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild } className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
                               if (!value) return
 
@@ -715,12 +715,12 @@ const Details = () => {
 
                           <td>
                             {!hasChild ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || item.linkStatus === 'generated'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                onClick={() => handleGenerateLink(item._id)}
-                              >Generate Link</button>
+                                onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
+                              >Approve</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -870,7 +870,7 @@ const Details = () => {
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -900,10 +900,10 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
                                             className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
-                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
+                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
                                         {canModifyTransactions && <td>
@@ -1049,7 +1049,7 @@ const Details = () => {
                           <td>{item.amount}</td>
 
                           <td>
-                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild } className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
                               if (!value) return
 
@@ -1082,12 +1082,12 @@ const Details = () => {
 
                           <td>
                             {!hasChild ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || item.linkStatus === 'generated'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                onClick={() => handleGenerateLink(item._id)}
-                              >Generate Link</button>
+                                onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
+                              >Approve</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -1237,7 +1237,7 @@ const Details = () => {
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -1267,10 +1267,10 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
                                             className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
+                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
                                         {canModifyTransactions && <td>
@@ -1415,7 +1415,7 @@ const Details = () => {
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>
-                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild } className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
                               if (!value) return
 
@@ -1448,12 +1448,12 @@ const Details = () => {
 
                           <td>
                             {!hasChild ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || item.linkStatus === 'generated'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                onClick={() => handleGenerateLink(item._id)}
-                              >Generate Link</button>
+                                onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
+                              >Approve</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -1603,7 +1603,7 @@ const Details = () => {
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -1633,10 +1633,10 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
                                             className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
+                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
                                         {canModifyTransactions && <td>
@@ -1777,7 +1777,7 @@ const Details = () => {
                           <td>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>
-                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild } className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
                               if (!value) return
 
@@ -1810,12 +1810,12 @@ const Details = () => {
 
                           <td>
                             {!hasChild ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || item.linkStatus === 'generated'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                onClick={() => handleGenerateLink(item._id)}
-                              >Generate Link</button>
+                                onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
+                              >Approve</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -1962,7 +1962,7 @@ const Details = () => {
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -1992,10 +1992,10 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
                                             className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
+                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
                                         {canModifyTransactions && <td>
@@ -2136,7 +2136,7 @@ const Details = () => {
                           <td>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>
-                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild } className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
                               if (!value) return
 
@@ -2169,12 +2169,12 @@ const Details = () => {
 
                           <td>
                             {!hasChild ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || item.linkStatus === 'generated'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                onClick={() => handleGenerateLink(item._id)}
-                              >Generate Link</button>
+                                onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
+                              >Approve</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -2321,7 +2321,7 @@ const Details = () => {
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -2351,10 +2351,10 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
                                             className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
+                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
                                         {canModifyTransactions && <td>
@@ -2491,7 +2491,7 @@ const Details = () => {
                           <td>{item.amount}</td>
 
                           <td>
-                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild || item.linkStatus !== 'generated'} className='py-2' value={item.approvalStatus} onChange={(e) => {
+                            <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild } className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
                               if (!value) return
 
@@ -2519,12 +2519,12 @@ const Details = () => {
 
                           <td>
                             {!hasChild ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || item.linkStatus === 'generated'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                onClick={() => handleGenerateLink(item._id)}
-                              >Generate Link</button>
+                                onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
+                              >Approve</button>
                               : <button
                                 disabled={childLength < 2 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
@@ -2620,7 +2620,7 @@ const Details = () => {
                                           <select
                                             name="approval-status"
                                             className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['generated', 'deleted'].includes(fractionItem.linkStatus)}
+                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
                                             value={fractionItem.approvalStatus}
                                             onChange={(e) => {
                                               const value = e.target.value
@@ -2634,10 +2634,10 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Generated</div> :
+                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked'}
                                             className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
-                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id) }}>Generate Link</button>
+                                            onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
                                         {canModifyTransactions && <td>

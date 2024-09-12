@@ -52,14 +52,14 @@ export const saveFractions = createAsyncThunk('transactions/saveFractions',
 )
 
 export const generateLink = createAsyncThunk('transactions/generateLink', 
-  async ({id, fractionId, platform, orderId}, {rejectWithValue}) => {
+  async ({id, fractionId, platform, orderId, approvalStatus}, {rejectWithValue}) => {
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/generate-link/${id}`, {
         method: 'PATCH',
         credentials: 'include',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({fractionId, platform, orderId})
+        body: JSON.stringify({fractionId, platform, orderId, approvalStatus})
       })
   
       const resData = await response.json()

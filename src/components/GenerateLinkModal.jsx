@@ -42,7 +42,6 @@ function GenerateLinkModal({ isOpen, title, handleCancel, handleProceed, status,
         <div className="flex flex-col gap-y-px">
           <label htmlFor="orderid" className='text-sm text-gray-600'>Order Id</label>
           <input
-            onPaste={(e)=>{e.preventDefault()}}
             type="text"
             name="orderid"
             id="orderid"

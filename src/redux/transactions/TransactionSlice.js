@@ -26,6 +26,7 @@ const transactionSlice = createSlice({
           status,
           folioNumber: updated[index].folioNumber
         })
+        updated[index].hasFractions = true
         state.switchTransactions = updated
       }
     },

@@ -175,7 +175,8 @@ const Details = () => {
 
       updatedSips[index] = {
         ...updatedSips[index],
-        transactionFractions: updatedTransactionFractions
+        transactionFractions: updatedTransactionFractions,
+        hasFractions: true
       };
 
       return updatedSips;
@@ -196,7 +197,8 @@ const Details = () => {
 
       updatedStps[index] = {
         ...updatedStps[index],
-        transactionFractions: updatedTransactionFractions
+        transactionFractions: updatedTransactionFractions,
+        hasFractions: true
       };
 
       return updatedStps;
@@ -217,7 +219,8 @@ const Details = () => {
 
       updatedSwps[index] = {
         ...updatedSwps[index],
-        transactionFractions: updatedTransactionFractions
+        transactionFractions: updatedTransactionFractions,
+        hasFractions: true
       };
 
       return updatedSwps;
@@ -236,7 +239,8 @@ const Details = () => {
       }];
       updatedPurchases[index] = {
         ...updatedPurchases[index],
-        transactionFractions: updatedTransactionFractions
+        transactionFractions: updatedTransactionFractions,
+        hasFractions: true
       };
       return updatedPurchases;
     });
@@ -254,7 +258,8 @@ const Details = () => {
       }];
       updatedRedemptions[index] = {
         ...updatedRedemptions[index],
-        transactionFractions: updatedTransactionFractions
+        transactionFractions: updatedTransactionFractions,
+        hasFractions: true
       };
       return updatedRedemptions;
     });
@@ -469,6 +474,11 @@ const Details = () => {
   // }
 
   const handleSaveFractions = (item) => {
+    if(!item.transactionFractions?.length) {
+      dispatch(saveFractions({ id: item._id, fractions: [] }))
+      return
+    }
+
     let amount = item.amount
     let sum = item.transactionFractions.reduce((acc, fraction) => {
       if (fraction.linkStatus !== 'deleted') {
@@ -714,7 +724,7 @@ const Details = () => {
                           </td>}
 
                           <td>
-                            {!hasChild ? item.linkStatus === 'generated' ?
+                            {!item.hasFractions ? item.linkStatus === 'generated' ?
                               <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
@@ -722,7 +732,7 @@ const Details = () => {
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
-                                disabled={childLength < 2 || item.linkStatus === 'locked'}
+                                disabled={childLength === 1 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
@@ -1081,7 +1091,7 @@ const Details = () => {
                           </td>}
 
                           <td>
-                            {!hasChild ? item.linkStatus === 'generated' ?
+                            {!item?.hasFractions ? item.linkStatus === 'generated' ?
                               <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
@@ -1089,7 +1099,7 @@ const Details = () => {
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
-                                disabled={childLength < 2 || item.linkStatus === 'locked'}
+                                disabled={childLength === 1 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
@@ -1447,7 +1457,7 @@ const Details = () => {
                           </td>}
 
                           <td>
-                            {!hasChild ? item.linkStatus === 'generated' ?
+                            {!item?.hasFractions ? item.linkStatus === 'generated' ?
                               <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
@@ -1455,7 +1465,7 @@ const Details = () => {
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
-                                disabled={childLength < 2 || item.linkStatus === 'locked'}
+                                disabled={childLength === 1 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
@@ -1809,7 +1819,7 @@ const Details = () => {
                           </td>}
 
                           <td>
-                            {!hasChild ? item.linkStatus === 'generated' ?
+                            {!item?.hasFractions ? item.linkStatus === 'generated' ?
                               <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
@@ -1817,7 +1827,7 @@ const Details = () => {
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
-                                disabled={childLength < 2 || item.linkStatus === 'locked'}
+                                disabled={childLength === 1 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
@@ -2168,7 +2178,7 @@ const Details = () => {
                           </td>}
 
                           <td>
-                            {!hasChild ? item.linkStatus === 'generated' ?
+                            {!item?.hasFractions ? item.linkStatus === 'generated' ?
                               <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
@@ -2176,7 +2186,7 @@ const Details = () => {
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
-                                disabled={childLength < 2 || item.linkStatus === 'locked'}
+                                disabled={childLength === 1 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
@@ -2517,7 +2527,7 @@ const Details = () => {
                           </td>}
 
                           <td>
-                            {!hasChild ? item.linkStatus === 'generated' ?
+                            {!item.hasFractions ? item.linkStatus === 'generated' ?
                               <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
@@ -2525,7 +2535,7 @@ const Details = () => {
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
-                                disabled={childLength < 2 || item.linkStatus === 'locked'}
+                                disabled={childLength === 1 || item.linkStatus === 'locked'}
                                 className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>

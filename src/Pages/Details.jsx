@@ -1343,7 +1343,7 @@ const Details = () => {
                   <th>Investor Name</th>
                   <th>Transaction For</th>
                   <th>AMC Name</th>
-                  <th>Scheme Name</th>
+                  <th>Source Scheme</th>
                   <th>Scheme Option</th>
                   <th>Execution Date</th>
                   <th>Folio</th>
@@ -1384,7 +1384,7 @@ const Details = () => {
                           <td>{item.investorName}</td>
                           <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
                           <td>{item.amcName}</td>
-                          <td>{item.schemeName}</td>
+                          <td>{item.fromSchemeName}</td>
                           <td>{item.schemeOption}</td>
                           <td className='relative'>
                             <label
@@ -1485,7 +1485,7 @@ const Details = () => {
                                     <th>Investor Name</th>
                                     <th>Transaction For</th>
                                     <th>AMC Name</th>
-                                    <th>Scheme Name</th>
+                                    <th>Source Scheme</th>
                                     <th>Scheme Option</th>
                                     <th>Folio</th>
                                     <th>Tenure of SWP</th>
@@ -1514,7 +1514,7 @@ const Details = () => {
                                         <td>{item.investorName}</td>
                                         <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
                                         <td>{item.amcName}</td>
-                                        <td>{item.schemeName}</td>
+                                        <td>{item.fromSchemeName}</td>
                                         <td>{item.schemeOption}</td>
                                         <td>
                                           <input

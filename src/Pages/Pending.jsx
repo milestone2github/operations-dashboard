@@ -102,7 +102,7 @@ const Pending = () => {
     const columns = [
         {
             name: "S No.",
-            selector: row => <div>{data.indexOf(row) + 1}</div>,
+            selector: (row, index) => <div>{index + 1}</div>,
             center: "true",
             maxWidth: "60px",
         },

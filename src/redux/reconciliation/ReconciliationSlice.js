@@ -4,7 +4,10 @@ import { getRecoTransactions } from "./ReconciliationAction"
 const initialState = {
   transactions : [],
   status: 'idle', // pending | failed | completed 
-  error: null
+  error: null,
+  totalCount: 0,
+  totalAmount: 0,
+  page: 0,
 }
 
 const reconciliationSlice = createSlice({
@@ -22,7 +25,10 @@ const reconciliationSlice = createSlice({
     })
     builder.addCase(getRecoTransactions.fulfilled, (state, action) => {
       state.status = 'completed'
-      state.transactions = action.payload
+      state.transactions = action.payload.transactions
+      state.totalCount = action.payload.totalCount
+      state.totalAmount = action.payload.totalAmount
+      state.page = action.payload.page
     })
   }
 })

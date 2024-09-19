@@ -1,27 +1,54 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
-export const getRecoTransactions = createAsyncThunk('reconciliation/getTransactions',
-  async (data, {rejectWithValue}) => {
-    let params = new URLSearchParams() 
-    // params.append('smFilter', smFilter)
-    // if(fh) {params.append('fh', fh)}
+export const getRecoTransactions = createAsyncThunk(
+  'reconciliation/getTransactions',
+  async ({ filters, page = 1, items = 10 }, { rejectWithValue }) => {
+    const {
+      minAmount,
+      maxAmount,
+      schemeName,
+      amcName,
+      rmName,
+      type,
+      sort
+    } = filters;
+
+    let query = new URLSearchParams();
+    
+    // Add pagination params
+    query.append('page', page);
+    query.append('items', items);
+    
+    // Add sorting if provided
+    if (sort) query.append('sort', sort);
+
+    // Add filters to the query string if provided
+    if (minAmount) query.append('minAmount', minAmount);
+    if (maxAmount) query.append('maxAmount', maxAmount);
+    if (schemeName) query.append('schemeName', schemeName);
+    if (amcName) query.append('amcName', amcName);
+    if (rmName) query.append('rmName', rmName);
+    if (type) query.append('type', type);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/reconciliation?${params.toString()}`, {
-        method: 'GET',
-        credentials: 'include'
-      })
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/ops-dash/reconciliation?${query.toString()}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        }
+      );
   
-      const resData = await response.json()
+      const resData = await response.json();
   
-      if(!response.ok) {
-        throw new Error(resData.error || "Internal server error while getting reconciliation transactions")
+      if (!response.ok) {
+        throw new Error(resData.error || "Internal server error while getting reconciliation transactions");
       }
   
-      return resData.data
+      return resData.data;
     } catch (error) {
-      console.error("Error getting reconciliation transactions: ", error.message)
-      return rejectWithValue(error.message)
+      console.error("Error getting reconciliation transactions: ", error.message);
+      return rejectWithValue(error.message);
     }
   }
-)
+);

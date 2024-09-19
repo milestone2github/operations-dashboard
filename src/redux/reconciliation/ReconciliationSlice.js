@@ -24,11 +24,12 @@ const reconciliationSlice = createSlice({
       state.error = action.payload
     })
     builder.addCase(getRecoTransactions.fulfilled, (state, action) => {
+      const { transactions, totalAmount, totalCount, page } = action.payload
       state.status = 'completed'
-      state.transactions = action.payload.transactions
-      state.totalCount = action.payload.totalCount
-      state.totalAmount = action.payload.totalAmount
-      state.page = action.payload.page
+      state.transactions = transactions
+      state.totalCount = totalCount
+      state.totalAmount = totalAmount
+      state.page = page
     })
   }
 })

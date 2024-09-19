@@ -4,6 +4,8 @@ export const getRecoTransactions = createAsyncThunk(
   'reconciliation/getTransactions',
   async ({ filters, page = 1, items = 10 }, { rejectWithValue }) => {
     const {
+      minDate,
+      maxDate,
       minAmount,
       maxAmount,
       schemeName,
@@ -29,6 +31,8 @@ export const getRecoTransactions = createAsyncThunk(
     if (amcName) query.append('amcName', amcName);
     if (rmName) query.append('rmName', rmName);
     if (type) query.append('type', type);
+    if (minDate) query.append('minDate', minDate);
+    if (maxDate) query.append('maxDate', maxDate);
 
     try {
       const response = await fetch(

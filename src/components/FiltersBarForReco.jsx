@@ -160,7 +160,7 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
 
           <label
             htmlFor="min-date"
-            className={`relative focus-within:bg-gray-100 text-sm w-[80px] p-1 text-center hover:bg-gray-100 ${!filters.minDate ? 'text-gray-500' : 'text-blue-600'}`}
+            className={`relative focus-within:bg-gray-100 text-sm w-[84px] p-1 text-center hover:bg-gray-100 ${!filters.minDate ? 'text-gray-500' : 'text-blue-600'}`}
           >{filters.minDate ? formatDateDDShortMonthNameYY(filters.minDate) : 'Min'}
             <input
               type="date"
@@ -175,7 +175,7 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
           <div className='h-7 border-s'></div>
           <label
             htmlFor="max-date"
-            className={`relative focus-within:bg-gray-100 text-sm w-[80px] p-1 text-center rounded-e-md hover:bg-gray-100 ${!filters.maxDate ? 'text-gray-500' : 'text-blue-600'}`}
+            className={`relative focus-within:bg-gray-100 text-sm w-[84px] p-1 text-center rounded-e-md hover:bg-gray-100 ${!filters.maxDate ? 'text-gray-500' : 'text-blue-600'}`}
           >{filters.maxDate ? formatDateDDShortMonthNameYY(filters.maxDate) : 'Max'}
             <input
               type="date"

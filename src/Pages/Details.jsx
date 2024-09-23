@@ -56,7 +56,7 @@ const approvalStatusOptions = [
   "Onboarding Pending"
 ]
 
-const currentDate = formatDateToYYYYMMDD(new Date)
+const currentDate = formatDateToYYYYMMDD(new Date('1 jan 1990')) //Temporary
 
 const Details = () => {
   const [searchParams, setSearchParams] = useSearchParams()

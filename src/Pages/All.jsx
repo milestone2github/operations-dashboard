@@ -88,9 +88,9 @@ const All = () => {
       </div>
 
       <section className='px-2 md:px-6 w-full'>
-        <article className='border bg-gray-50 rounded-md overflow-x-scroll w-full md:w-[calc(100vw-152px)] min-h-[75vh] relative custom-scrollbar'>
+        <article className='border max-h-[60vh] bg-gray-50 rounded-md overflow-x-scroll w-full md:w-[calc(100vw-152px)] min-h-[75vh] relative custom-scrollbar'>
           <table className='filtered-trx'>
-            <thead className='bg-blue-50'>
+            <thead className='bg-blue-50 sticky top-0'>
               <tr className='font-medium text-nowrap py-3  text-gray-800'>
                 <th className='text-sm'>S. No.</th>
                 <th className='text-sm'>Transaction date</th>

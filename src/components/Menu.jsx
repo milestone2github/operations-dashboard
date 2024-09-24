@@ -5,7 +5,7 @@ import { CiBank } from "react-icons/ci";
 import { GoHistory, GoHome } from "react-icons/go";
 import { IoExitOutline } from "react-icons/io5";
 import { IoPersonCircleSharp } from "react-icons/io5";
-import { FaListCheck } from "react-icons/fa6";
+import { FaListCheck, FaWpforms } from "react-icons/fa6";
 import { IoCloseSharp } from "react-icons/io5";
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDispatch, useSelector } from 'react-redux';
@@ -71,6 +71,13 @@ const Menu = ({ menu, func }) => {
       sname: "NFO",
       lname: "NFO Transactions",
       path: "/nfo-transactions"
+    },
+    {
+      id: 8,
+      icon: <FaWpforms className=' text-xl' />,
+      sname: "Schemes",
+      lname: "NFO Schemes",
+      path: "/nfo-schemes"
     },
   ]
 

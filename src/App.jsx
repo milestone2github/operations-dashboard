@@ -12,6 +12,7 @@ import History from './Pages/History'
 import Piechart from './Pages/Piechart'
 import Protected from './components/Protected'
 import NfoTransactions from './Pages/NfoTransactions'
+import NfoSchemes from './Pages/NfoSchemes'
 
 function App() {
 
@@ -29,6 +30,7 @@ function App() {
               <Route path="/transactions-reco" element={<Protected><Reco /></Protected>} />
               <Route path="/transaction-history" element={<Protected><History /></Protected>} />
               <Route path="/nfo-transactions" element={<Protected><NfoTransactions /></Protected>} />
+              <Route path="/nfo-schemes" element={<Protected><NfoSchemes /></Protected>} />
               
             <Route path='/login' element={<Login />} />
             <Route path='/piechart' element={<Piechart />} />

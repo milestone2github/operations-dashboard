@@ -7,6 +7,7 @@ import FilterOptionsSlice from "./allFilterOptions/FilterOptionsSlice";
 import AllTransactionsSlice from "./allTransactions/AllTransactionsSlice";
 import NfoSlice from "./nfoTransaction/NfoSlice";
 import ReconciliationSlice from "./reconciliation/ReconciliationSlice";
+import SavedFiltersSlice from "./savedFilters/SavedFiltersSlice";
 
 export const store = configureStore({
     reducer:{
@@ -17,6 +18,7 @@ export const store = configureStore({
         allFilterOptions: FilterOptionsSlice,
         allTransactions: AllTransactionsSlice,
         nfoTransactions: NfoSlice,
-        reconciliation: ReconciliationSlice
+        reconciliation: ReconciliationSlice,
+        savedFilters: SavedFiltersSlice
     }
 })

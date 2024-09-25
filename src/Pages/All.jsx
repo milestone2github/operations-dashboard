@@ -4,11 +4,12 @@ import FiltersBar from '../components/FiltersBar'
 import { useDispatch, useSelector } from 'react-redux'
 import { getFilteredTransactions } from '../redux/allTransactions/AllTransactionsAction'
 import { BsArrowRight } from "react-icons/bs";
-import toast from 'react-hot-toast'
+import toast, { Toaster } from 'react-hot-toast'
 import { formatDateDDShortMonthNameYY } from '../utils/formatDate'
 import { color } from '../Statuscolor/color'
 import Loader from '../components/Loader'
 import { FaSadTear } from 'react-icons/fa'
+import { getSavedFilters } from '../redux/savedFilters/SavedFiltersAction'
 const items = 25
 
 const initialFilters = {
@@ -29,8 +30,9 @@ const initialFilters = {
 
 const All = () => {
   const [filters, setFilters] = useState(initialFilters)
-  // const [currentPage, setCurrentPage] = useState(0)
+  const [abortController, setAbortController] = useState(null)
   const { transactions, page, totalCount, totalAmount, status, error } = useSelector(state => state.allTransactions)
+  const {all} = useSelector(state => state.savedFilters)
   const dispatch = useDispatch()
 
   const updateFilters = (value) => {
@@ -38,8 +40,32 @@ const All = () => {
   }
 
   useEffect(() => {
-    dispatch(getFilteredTransactions({ filters, items }))
-  }, [filters])
+    dispatch(getSavedFilters())
+  }, [])
+
+  useEffect(() => {
+    if (all?.filters.length && all?.active >= 0) {
+      let params = new URLSearchParams(all.filters[all.active])
+      let paramObj = {}
+      for (const [key, value] of params.entries()) {
+        paramObj[key] = value
+      }
+      setFilters({ ...initialFilters, ...paramObj });
+    }
+  }, [all?.active])
+
+  useEffect(() => {
+    if(abortController) {
+      abortController.abort()
+    }
+    let newController = new AbortController()
+    setAbortController(newController)
+    dispatch(getFilteredTransactions({ filters, items, signal: newController.signal }))
+    
+    return () => {
+      if(newController) {newController.abort()}
+    }
+  }, [filters, items, dispatch])
 
   useEffect(() => {
     if (status === 'failed' && error) {
@@ -187,6 +213,7 @@ const All = () => {
         </div>
 
       </section>
+      <Toaster/>
     </main>
   )
 }

@@ -8,6 +8,7 @@ import Loader from "../components/Loader";
 import { useSelector, useDispatch } from "react-redux";
 import { getRecoTransactions } from "../redux/reconciliation/ReconciliationAction";
 import { BsArrowRight } from "react-icons/bs";
+import toast, { Toaster } from "react-hot-toast";
 
 const itemsPerPage = 25; // Number of items to display per page
 
@@ -378,6 +379,7 @@ const Reco = () => {
           >Next<BsArrowRight /></button>
         </div>
       </section>
+      <Toaster/>
     </main>
   );
 };

@@ -106,7 +106,7 @@ const Menu = ({ menu, func }) => {
                 className='w-full'
                 to={tab.path}
                 ><motion.li
-                  style={'/' + location.pathname.split('/')[1] === tab.path ? { backgroundColor: "#6AA0F3" } : {}}
+                  style={'/' + location.pathname.split('/')[1].split('?')[0] === tab.path.split('?')[0] ? { backgroundColor: "#6AA0F3" } : {}}
                   key={index}
                   onMouseOver={() => setId(tab.id)}
                   onMouseOut={() => setId(null)}

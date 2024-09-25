@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Header from '../components/Header';
+import { Toaster } from 'react-hot-toast'; // Add the Toaster import
 import toast from 'react-hot-toast';
 import Loader from '../components/Loader';
 
@@ -91,6 +92,7 @@ const NfoSchemes = () => {
           </div>
         </form>
       </section>
+      <Toaster />
     </main>
   );
 };

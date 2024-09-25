@@ -13,7 +13,6 @@ import Piechart from './Pages/Piechart';
 import Protected from './components/Protected';
 import NfoTransactions from './Pages/NfoTransactions';
 import NfoSchemes from './Pages/NfoSchemes';
-import { Toaster } from 'react-hot-toast'; // Add the Toaster import
 
 function App() {
 
@@ -36,7 +35,6 @@ function App() {
           </Routes>
         </div>
       </Router>
-      <Toaster /> {/* Add the Toaster component here */}
     </>
   );
 }

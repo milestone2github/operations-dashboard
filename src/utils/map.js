@@ -4,6 +4,12 @@ export const  transactionTypeColorMap = {
   'Cancellation': 'bg-red-300',
 }
 
+export const  transactionTypeTextMap = {
+  'Registration': 'Reg',
+  'Pause': 'Pause',
+  'Cancellation': 'Canc',
+}
+
 export const filterKeyMap = {
   'minDate': 'Min Date',
   'maxDate': 'Max Date',

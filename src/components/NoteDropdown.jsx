@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import PortalDropdown from "./PortalDropdown";
 import { CiStickyNote } from "react-icons/ci";
+import { IoIosAddCircle, IoIosAddCircleOutline } from "react-icons/io";
+import { BiSolidPencil } from "react-icons/bi";
 
 const NoteDropdown = ({ handleProceed, existingNote, status }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,9 +37,11 @@ const NoteDropdown = ({ handleProceed, existingNote, status }) => {
       <button
         ref={toggleRef} // Assign reference to the button
         onClick={handleToggleDropdown}
-        className="px-4 py-2 bg-blue-500 text-white rounded-md focus:outline-none"
+        className={`relative px-2 py-2 bg-amber-400 text-white rounded-md focus:outline-none`}
       >
-        <CiStickyNote />
+        <CiStickyNote className="text-xl"/>
+        {note? <BiSolidPencil className="absolute top-[6px] right-[8px] bg-amber-400 rounded-full p-0 text-white text-xs"/>: 
+        <IoIosAddCircle className="absolute top-[4px] right-[7px] bg-white rounded-full p-0 text-green-500 text-xs"/>}
       </button>
       <PortalDropdown
         isOpen={isOpen}

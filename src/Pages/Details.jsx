@@ -27,8 +27,8 @@ import GenerateLinkModal from '../components/GenerateLinkModal';
 import Header from '../components/Header';
 import UpdateOrderIdModal from '../components/UpdateOrderIdModal';
 import Dropdown from '../components/Dropdown';
-import { IoEllipsisVerticalSharp } from 'react-icons/io5';
-import { transactionTypeColorMap } from '../utils/map';
+import { IoCheckmarkCircleOutline, IoEllipsisVerticalSharp } from 'react-icons/io5';
+import { transactionTypeColorMap, transactionTypeTextMap } from '../utils/map';
 import NoteDropdown from '../components/NoteDropdown';
 
 const initialCommonData = {
@@ -523,27 +523,35 @@ const Details = () => {
     }
   }
 
-  const updateExecutionDate = async (id, transactionPreference) => {
-    const data = { transactionPreference }
+  const updateTransaction = async (id, update) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/preference-date/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/update-transction/${id}`, {
         method: 'PATCH',
         headers: { 'Content-type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(data)
+        body: JSON.stringify(update)
       })
       const jsonData = await response.json()
       if (!response.ok) {
         throw new Error(jsonData.error || response.statusText)
       }
     } catch (error) {
-      console.error('Error updating execution date: ', error.message)
-      toast.error('Unable to update execution date')
+      console.error('Error updating transction date: ', error.message)
+      toast.error('Unable to update transaction')
     }
   }
 
   const handleNoteUpdate = (id, note, fractionId) => {
     dispatch(updateNote({ id, note, fractionId }))
+  }
+
+  const unitsMap = {
+    'Amount in next question': 'Amount',
+    'Amount given in next question': 'Amount',
+    'Long Term Units': 'Long Term Units',
+    'Unlocked Units': 'Unlocked Units',
+    'Redeem All Units': 'Redeem All Units',
+    'Units in next question': 'Units',
   }
 
   const showLoading = (<div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
@@ -606,12 +614,9 @@ const Details = () => {
                 <tr className=''>
                   <th></th>
                   <th>S No.</th>
-                  <th>Status</th>
                   <th>Investor Name</th>
                   <th>Transaction For</th>
-                  <th>AMC Name</th>
-                  <th>Scheme Name</th>
-                  <th>Scheme Option</th>
+                  <th>Scheme Name / Option</th>
                   <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Tenure of SIP</th>
@@ -633,6 +638,7 @@ const Details = () => {
                       let hasChild = item.transactionFractions?.length !== 0
                       let childLength = item.transactionFractions?.length
                       let transTypeBgColor = transactionTypeColorMap[item.transactionFor]
+                      let transTypeText = transactionTypeTextMap[item.transactionFor]
 
                       return <Fragment key={item._id}>
                         <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
@@ -641,18 +647,18 @@ const Details = () => {
                               <IoIosArrowUp className={`transform transition-transform ${openRows[item._id] ? 'rotate-180' : 'group-enabled:rotate-0 group-disabled:rotate-180'}`} />
                             </button>
                           </td>
-                          <td className='min-w-16'>{index + 1}</td>
-                          <td><span className=' px-3 py-2 rounded-3xl font-medium text-xs'
+                          <td>
+                            <span
                             style={{
                               backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
                               color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
-                            }}
-                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
+                            }} 
+                            className='p-1 w-9 h-9 flex items-center justify-center rounded-full font-medium text-xs'
+                            >{index + 1}</span>
+                          </td>
                           <td>{item.investorName}</td>
-                          <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
-                          <td>{item.amcName}</td>
-                          <td>{item.schemeName}</td>
-                          <td>{item.schemeOption}</td>
+                          <td><span className={`block w-14 py-px rounded-full ${transTypeBgColor}`}>{transTypeText}</span></td>
+                          <td>{item.schemeName + ' / ' + item.schemeOption}</td>
                           <td className='relative'>
                             <label
                               htmlFor={`execution-date-${item._id}`}
@@ -681,14 +687,45 @@ const Details = () => {
                                     return transaction;
                                   });
                                 });
-                                updateExecutionDate(item._id, value)
+                                updateTransaction(item._id, {transactionPreference: value})
                               }}
                             />
                           </td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
-                          <td>{formatDate(item.sipSwpStpDate)}</td>
+                          <td className='relative'>
+                            <label
+                              htmlFor={`sip-date-${item._id}`}
+                              className={`focus-within:bg-gray-100 p-1 px-2 border rounded-md text-center ${canModifyExecutionDate || canModifyTransactions ? 'hover:bg-gray-100' : ''}`}>
+                              {formatDate(item.sipSwpStpDate)}
+                            </label>
+                            <input
+                              type="date"
+                              id={`sip-date-${item._id}`}
+                              min={currentDate}
+                              className='text-xs absolute left-0 -z-10'
+                              value={formatDateToYYYYMMDD(item.sipSwpStpDate)}
+                              required
+                              disabled={!(canModifyExecutionDate || canModifyTransactions)}
+                              onFocus={(e) => e.target.showPicker()}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setSips(prevState => {
+                                  return prevState.map((transaction, i) => {
+                                    if (i === index) {
+                                      return {
+                                        ...transaction,
+                                        sipSwpStpDate: value
+                                      };
+                                    }
+                                    return transaction;
+                                  });
+                                });
+                                updateTransaction(item._id, {sipSwpStpDate: value})
+                              }}
+                            />
+                          </td>
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>
@@ -711,8 +748,8 @@ const Details = () => {
                           </td>
 
                           {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
-                              <CiLock />
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='border hover:border-yellow-300 enabled:hover:text-yellow-600 enabled:hover:bg-yellow-100  disabled:text-gray-500 disabled:cursor-not-allowed text-2xl w-9 h-9 rounded-md'>
+                              <CiLock className='m-auto'/>
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
@@ -720,20 +757,20 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button> :
-                              <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddSipsFraction(index) }}>+</button>}
+                              <button className='text-2xl border h-9 w-9 rounded-md hover:border-green-300 hover:text-green-800 hover:bg-green-100' onClick={() => { openRowAccordion(item._id); handleAddSipsFraction(index) }}>+</button>}
                           </td>}
 
                           <td>
                             {!item.hasFractions ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                              <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
                                 disabled={childLength === 1 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className='border border-indigo-300 bg-indigo-100 rounded-3xl px-2 py-2 text-sm text-indigo-800 disabled:bg-indigo-50 disabled:text-indigo-300'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                           <td>
@@ -748,12 +785,9 @@ const Details = () => {
                                   <tr className=''>
                                     <th></th>
                                     <th>S No.</th>
-                                    <th>Status</th>
                                     <th>Investor Name</th>
                                     <th>Transaction For</th>
-                                    <th>AMC Name</th>
-                                    <th>Scheme Name</th>
-                                    <th>Scheme Option</th>
+                                    <th>Scheme Name / Option</th>
                                     <th>Folio</th>
                                     <th>Tenure of SIP</th>
                                     <th>First Traxn Amount</th>
@@ -771,18 +805,17 @@ const Details = () => {
                                     item.transactionFractions?.map((fractionItem, fracIndex) =>
                                       <tr key={fracIndex} className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
                                         <td className=''></td>
-                                        <td className='min-w-16'>{index + 1}.{fracIndex + 1}</td>
-                                        <td><span className=' px-3 py-2 rounded-3xl font-medium '
+                                        <td className='min-w-16'>
+                                        <span className='p-1 h-9 w-9 flex items-center justify-center rounded-full font-medium text-xs'
                                           style={{
                                             backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
                                             color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                           }}
-                                        >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
+                                        >{index + 1}.{fracIndex + 1}</span>
+                                        </td>
                                         <td>{item.investorName}</td>
-                                        <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
-                                        <td>{item.amcName}</td>
-                                        <td>{item.schemeName}</td>
-                                        <td>{item.schemeOption}</td>
+                                        <td><span className={`block w-14 py-px rounded-full ${transTypeBgColor}`}>{transTypeText}</span></td>
+                                        <td>{item.schemeName + ' / ' + item.schemeOption}</td>
                                         <td>
                                           <input
                                             className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
@@ -910,9 +943,9 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                                          <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked' || ['RM Declined', 'Client Declined'].includes(fractionItem.approvalStatus)}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300 disabled:cursor-not-allowed'
+                                            className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
@@ -972,12 +1005,10 @@ const Details = () => {
                 <tr className=''>
                   <th></th>
                   <th className='min-w-16'>S No.</th>
-                  <th>Status</th>
                   <th>Investor Name</th>
                   <th>Transaction For</th>
-                  <th>AMC Name</th>
-                  <th>Scheme Name</th>
-                  <th>Scheme Option</th>
+                  <th>Source Scheme</th>
+                  <th>Target Scheme Name / Option</th>
                   <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Tenure of STP</th>
@@ -999,6 +1030,7 @@ const Details = () => {
                       let hasChild = item.transactionFractions?.length !== 0
                       let childLength = item.transactionFractions?.length
                       let transTypeBgColor = transactionTypeColorMap[item.transactionFor]
+                      let transTypeText = transactionTypeTextMap[item.transactionFor]
 
                       return <Fragment key={item._id}>
                         <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
@@ -1007,18 +1039,18 @@ const Details = () => {
                               <IoIosArrowUp className={`transform transition-transform ${openRows[item._id] ? 'rotate-180' : 'group-enabled:rotate-0 group-disabled:rotate-180'}`} />
                             </button>
                           </td>
-                          <td className='min-w-16'>{index + 1}</td>
-                          <td><span className=' px-3 py-2 rounded-3xl font-medium text-xs'
+                          <td className='min-w-16'>
+                          <span className='p-1 h-9 w-9 flex items-center justify-center rounded-full font-medium text-xs'
                             style={{
                               backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
                               color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
+                          >{index + 1}</span>
+                          </td>
                           <td>{item.investorName}</td>
-                          <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
-                          <td>{item.amcName}</td>
-                          <td>{item.schemeName}</td>
-                          <td>{item.schemeOption}</td>
+                          <td><span className={`block w-14 py-px rounded-full ${transTypeBgColor}`}>{transTypeText}</span></td>
+                          <td>{item.fromSchemeName}</td>
+                          <td>{item.schemeName + ' / ' + item.schemeOption}</td>
                           <td className='relative'>
                             <label
                               htmlFor={`execution-date-${item._id}`}
@@ -1047,14 +1079,45 @@ const Details = () => {
                                     return transaction;
                                   });
                                 });
-                                updateExecutionDate(item._id, value)
+                                updateTransaction(item._id, {transactionPreference: value})
                               }}
                             />
                           </td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
-                          <td>{formatDate(item.sipSwpStpDate)}</td>
+                          <td className='relative'>
+                            <label
+                              htmlFor={`stp-date-${item._id}`}
+                              className={`focus-within:bg-gray-100 p-1 px-2 border rounded-md text-center ${canModifyExecutionDate || canModifyTransactions ? 'hover:bg-gray-100' : ''}`}>
+                              {formatDate(item.sipSwpStpDate)}
+                            </label>
+                            <input
+                              type="date"
+                              id={`stp-date-${item._id}`}
+                              min={currentDate}
+                              className='text-xs absolute left-0 -z-10'
+                              value={formatDateToYYYYMMDD(item.sipSwpStpDate)}
+                              required
+                              disabled={!(canModifyExecutionDate || canModifyTransactions)}
+                              onFocus={(e) => e.target.showPicker()}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setStps(prevState => {
+                                  return prevState.map((transaction, i) => {
+                                    if (i === index) {
+                                      return {
+                                        ...transaction,
+                                        sipSwpStpDate: value
+                                      };
+                                    }
+                                    return transaction;
+                                  });
+                                });
+                                updateTransaction(item._id, {sipSwpStpDate: value})
+                              }}
+                            />
+                          </td>
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
 
@@ -1078,8 +1141,8 @@ const Details = () => {
                           </td>
 
                           {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
-                              <CiLock />
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='border hover:border-yellow-300 enabled:hover:text-yellow-600 enabled:hover:bg-yellow-100  disabled:text-gray-500 disabled:cursor-not-allowed text-2xl w-9 h-9 rounded-md'>
+                              <CiLock className='m-auto'/>
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
@@ -1087,20 +1150,20 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button>
-                              : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddStpsFraction(index) }}>+</button>}
+                              : <button className='text-2xl border h-9 w-9 rounded-md hover:border-green-300 hover:text-green-800 hover:bg-green-100' onClick={() => { openRowAccordion(item._id); handleAddStpsFraction(index) }}>+</button>}
                           </td>}
 
                           <td>
                             {!item?.hasFractions ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                              <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
                                 disabled={childLength === 1 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className='border border-indigo-300 bg-indigo-100 rounded-3xl px-2 py-2 text-sm text-indigo-800 disabled:bg-indigo-50 disabled:text-indigo-300'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                           <td>
@@ -1115,12 +1178,10 @@ const Details = () => {
                                   <tr className=' whitespace-nowrap  '>
                                     <th></th>
                                     <th className='min-w-16'>S No.</th>
-                                    <th>Status</th>
                                     <th>Investor Name</th>
                                     <th>Transaction For</th>
-                                    <th>AMC Name</th>
-                                    <th>Scheme Name</th>
-                                    <th>Scheme Option</th>
+                                    <th>Source Scheme</th>
+                                    <th>Target Scheme Name / Option</th>
                                     <th>Folio</th>
                                     <th>Tenure of STP</th>
                                     <th className='min-w-32'>First Traxn Amount</th>
@@ -1138,18 +1199,17 @@ const Details = () => {
                                     item.transactionFractions?.map((fractionItem, fracIndex) =>
                                       <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
                                         <td className=''></td>
-                                        <td className='min-w-16'>{index + 1}.{fracIndex + 1}</td>
-                                        <td><span className=' px-3 py-2 rounded-3xl font-medium '
+                                        <td className='min-w-16'>
+                                        <span className='p-1 h-9 w-9 flex items-center justify-center rounded-full font-medium text-xs'
                                           style={{
                                             backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
                                             color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                           }}
-                                        >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
+                                        >{index + 1}.{fracIndex + 1}</span></td>
                                         <td>{item.investorName}</td>
-                                        <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
-                                        <td>{item.amcName}</td>
-                                        <td>{item.schemeName}</td>
-                                        <td>{item.schemeOption}</td>
+                                        <td><span className={`block w-14 py-px rounded-full ${transTypeBgColor}`}>{transTypeText}</span></td>
+                                        <td>{item.fromSchemeName}</td>
+                                        <td>{item.schemeName + ' / ' + item.schemeOption}</td>
                                         <td>
                                           <input
                                             className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
@@ -1277,9 +1337,9 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                                          <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked' || ['RM Declined', 'Client Declined'].includes(fractionItem.approvalStatus)}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                            className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
@@ -1339,12 +1399,9 @@ const Details = () => {
                 <tr className=''>
                   <th></th>
                   <th>S No.</th>
-                  <th>Status</th>
                   <th>Investor Name</th>
                   <th>Transaction For</th>
-                  <th>AMC Name</th>
-                  <th>Source Scheme</th>
-                  <th>Scheme Option</th>
+                  <th>Source Scheme / Scheme Option</th>
                   <th>Execution Date</th>
                   <th>Folio</th>
                   <th>Tenure of SWP</th>
@@ -1366,6 +1423,7 @@ const Details = () => {
                       let hasChild = item.transactionFractions?.length !== 0
                       let childLength = item.transactionFractions?.length
                       let transTypeBgColor = transactionTypeColorMap[item.transactionFor]
+                      let transTypeText = transactionTypeTextMap[item.transactionFor]
 
                       return <Fragment key={item._id}>
                         <tr className='whitespace-nowrap border-b-[2px] border-solid border-[#E3EAF4]'>
@@ -1374,18 +1432,17 @@ const Details = () => {
                               <IoIosArrowUp className={`transform transition-transform ${openRows[item._id] ? 'rotate-180' : 'group-enabled:rotate-0 group-disabled:rotate-180'}`} />
                             </button>
                           </td>
-                          <td className='min-w-16'>{index + 1}</td>
-                          <td><span className=' px-3 py-2 rounded-3xl font-medium text-xs'
+                          <td className='min-w-16'>
+                          <span className='p-1 h-9 w-9 flex items-center justify-center rounded-full font-medium text-xs'
                             style={{
                               backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
                               color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
+                          >{index + 1}</span>
+                          </td>
                           <td>{item.investorName}</td>
-                          <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
-                          <td>{item.amcName}</td>
-                          <td>{item.fromSchemeName}</td>
-                          <td>{item.schemeOption}</td>
+                          <td><span className={`block w-14 py-px rounded-full ${transTypeBgColor}`}>{transTypeText}</span></td>
+                          <td>{item.fromSchemeName + " / " + item.schemeOption}</td>
                           <td className='relative'>
                             <label
                               htmlFor={`execution-date-${item._id}`}
@@ -1414,14 +1471,45 @@ const Details = () => {
                                     return transaction;
                                   });
                                 });
-                                updateExecutionDate(item._id, value)
+                                updateTransaction(item._id, {transactionPreference: value})
                               }}
                             />
                           </td>
                           <td>{item.folioNumber}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
-                          <td>{formatDate(item.sipSwpStpDate)}</td>
+                          <td className='relative'>
+                            <label
+                              htmlFor={`swp-date-${item._id}`}
+                              className={`focus-within:bg-gray-100 p-1 px-2 border rounded-md text-center ${canModifyExecutionDate || canModifyTransactions ? 'hover:bg-gray-100' : ''}`}>
+                              {formatDate(item.sipSwpStpDate)}
+                            </label>
+                            <input
+                              type="date"
+                              id={`swp-date-${item._id}`}
+                              min={currentDate}
+                              className='text-xs absolute left-0 -z-10'
+                              value={formatDateToYYYYMMDD(item.sipSwpStpDate)}
+                              required
+                              disabled={!(canModifyExecutionDate || canModifyTransactions)}
+                              onFocus={(e) => e.target.showPicker()}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setSwps(prevState => {
+                                  return prevState.map((transaction, i) => {
+                                    if (i === index) {
+                                      return {
+                                        ...transaction,
+                                        sipSwpStpDate: value
+                                      };
+                                    }
+                                    return transaction;
+                                  });
+                                });
+                                updateTransaction(item._id, {sipSwpStpDate: value})
+                              }}
+                            />
+                          </td>
                           <td className='min-w-36'>{item.paymentMode}</td>
                           <td>{item.amount}</td>
                           <td>
@@ -1444,8 +1532,8 @@ const Details = () => {
                           </td>
 
                           {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
-                              <CiLock />
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='border hover:border-yellow-300 enabled:hover:text-yellow-600 enabled:hover:bg-yellow-100  disabled:text-gray-500 disabled:cursor-not-allowed text-2xl w-9 h-9 rounded-md'>
+                              <CiLock className='m-auto'/>
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
@@ -1453,20 +1541,20 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button>
-                              : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddSwpsFraction(index) }}>+</button>}
+                              : <button className='text-2xl border h-9 w-9 rounded-md hover:border-green-300 hover:text-green-800 hover:bg-green-100' onClick={() => { openRowAccordion(item._id); handleAddSwpsFraction(index) }}>+</button>}
                           </td>}
 
                           <td>
                             {!item?.hasFractions ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                              <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
                                 disabled={childLength === 1 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className='border border-indigo-300 bg-indigo-100 rounded-3xl px-2 py-2 text-sm text-indigo-800 disabled:bg-indigo-50 disabled:text-indigo-300'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                           <td>
@@ -1481,12 +1569,9 @@ const Details = () => {
                                   <tr className=''>
                                     <th></th>
                                     <th className='min-w-16'>S No.</th>
-                                    <th>Status</th>
                                     <th>Investor Name</th>
                                     <th>Transaction For</th>
-                                    <th>AMC Name</th>
-                                    <th>Source Scheme</th>
-                                    <th>Scheme Option</th>
+                                    <th>Source Scheme / Scheme Option</th>
                                     <th>Folio</th>
                                     <th>Tenure of SWP</th>
                                     <th className='min-w-32'>First Traxn Amount</th>
@@ -1504,18 +1589,17 @@ const Details = () => {
                                     item.transactionFractions?.map((fractionItem, fracIndex) =>
                                       <tr key={fracIndex} className='whitespace-nowrap border-b-[2px] border-solid border-[#E3EAF4]'>
                                         <td></td>
-                                        <td className='min-w-16'>{index + 1}.{fracIndex + 1}</td>
-                                        <td><span className=' px-3 py-2 rounded-3xl font-medium '
+                                        <td className='min-w-16'>
+                                        <span className='p-1 h-9 w-9 flex items-center justify-center rounded-full font-medium text-xs'
                                           style={{
                                             backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
                                             color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                           }}
-                                        >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
+                                        >{index + 1}.{fracIndex + 1}</span>
+                                        </td>
                                         <td>{item.investorName}</td>
-                                        <td><span className={`px-3 py-1 rounded-full ${transTypeBgColor}`}>{item.transactionFor}</span></td>
-                                        <td>{item.amcName}</td>
-                                        <td>{item.fromSchemeName}</td>
-                                        <td>{item.schemeOption}</td>
+                                        <td><span className={`block w-14 py-px rounded-full ${transTypeBgColor}`}>{transTypeText}</span></td>
+                                        <td>{item.fromSchemeName + ' / ' + item.schemeOption}</td>
                                         <td>
                                           <input
                                             className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
@@ -1643,9 +1727,9 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                                          <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked' || ['RM Declined', 'Client Declined'].includes(fractionItem.approvalStatus)}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                            className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
@@ -1706,14 +1790,10 @@ const Details = () => {
                 <tr className='whitespace-nowrap'>
                   <th></th>
                   <th>S No.</th>
-                  <th>Status</th>
                   <th>Investor Name</th>
-                  <th>AMC Name</th>
-                  <th>Scheme Name</th>
-                  <th>Scheme Option</th>
+                  <th>Scheme Name / Option</th>
                   <th>Execution Date</th>
                   <th>Folio</th>
-                  <th>Traxn Units/Amount</th>
                   {/* <th>Purchase Date</th> */}
                   <th>Payment Mode</th>
                   <th>Transaction Amount</th>
@@ -1738,17 +1818,16 @@ const Details = () => {
                               <IoIosArrowUp className={`transform transition-transform ${openRows[item._id] ? 'rotate-180' : 'group-enabled:rotate-0 group-disabled:rotate-180'}`} />
                             </button>
                           </td>
-                          <td className=''>{index + 1}</td>
-                          <td><span className=' px-3 py-2 rounded-3xl font-medium'
+                          <td className=''>
+                          <span className='p-1 h-9 w-9 flex items-center justify-center rounded-full font-medium text-xs'
                             style={{
                               backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
                               color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
+                          >{index + 1}</span>
+                          </td>
                           <td>{item.investorName}</td>
-                          <td>{item.amcName}</td>
-                          <td>{item.schemeName}</td>
-                          <td>{item.schemeOption}</td>
+                          <td>{item.schemeName + ' / ' + item.schemeOption}</td>
                           <td className='relative'>
                             <label
                               htmlFor={`execution-date-${item._id}`}
@@ -1777,12 +1856,12 @@ const Details = () => {
                                     return transaction;
                                   });
                                 });
-                                updateExecutionDate(item._id, value)
+                                updateTransaction(item._id, {transactionPreference: value})
                               }}
                             />
                           </td>
                           <td>{item.folioNumber}</td>
-                          <td>{item.transactionUnits}</td>
+                          {/* <td>{item.transactionUnits}</td> */}
                           {/* <td>{formatDate(item.createdAt)}</td> */}
                           <td>{item.paymentMode}</td>
                           <td>{item.amount}</td>
@@ -1806,8 +1885,8 @@ const Details = () => {
                           </td>
 
                           {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
-                              <CiLock />
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='border hover:border-yellow-300 enabled:hover:text-yellow-600 enabled:hover:bg-yellow-100  disabled:text-gray-500 disabled:cursor-not-allowed text-2xl w-9 h-9 rounded-md'>
+                              <CiLock className='m-auto'/>
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
@@ -1815,20 +1894,20 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button> :
-                              <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddPurchasesFraction(index) }}>+</button>}
+                              <button className='text-2xl border h-9 w-9 rounded-md hover:border-green-300 hover:text-green-800 hover:bg-green-100' onClick={() => { openRowAccordion(item._id); handleAddPurchasesFraction(index) }}>+</button>}
                           </td>}
 
                           <td>
                             {!item?.hasFractions ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                              <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
                                 disabled={childLength === 1 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className='border border-indigo-300 bg-indigo-100 rounded-3xl px-2 py-2 text-sm text-indigo-800 disabled:bg-indigo-50 disabled:text-indigo-300'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                           <td>
@@ -1843,13 +1922,9 @@ const Details = () => {
                                   <tr className=' whitespace-nowrap  '>
                                     <th></th>
                                     <th>S No.</th>
-                                    <th>Status</th>
                                     <th>Investor Name</th>
-                                    <th>AMC Name</th>
-                                    <th>Scheme Name</th>
-                                    <th>Scheme Option</th>
+                                    <th>Scheme Name / Option</th>
                                     <th>Folio</th>
-                                    <th>Traxn Units/Amount</th>
                                     <th>Execution Date</th>
                                     <th>Payment Mode</th>
                                     <th>Transaction Amount</th>
@@ -1864,17 +1939,16 @@ const Details = () => {
                                     item.transactionFractions?.map((fractionItem, fracIndex) =>
                                       <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
                                         <td className=''></td>
-                                        <td className=''>{index + 1}.{fracIndex + 1}</td>
-                                        <td><span className=' px-3 py-2 rounded-3xl font-medium'
+                                        <td className=''>
+                                        <span className='p-1 h-9 w-9 flex items-center justify-center rounded-full font-medium text-xs'
                                           style={{
                                             backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
                                             color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                           }}
-                                        >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
+                                        >{index + 1}.{fracIndex + 1}</span>
+                                        </td>
                                         <td>{item.investorName}</td>
-                                        <td>{item.amcName}</td>
-                                        <td>{item.schemeName}</td>
-                                        <td>{item.schemeOption}</td>
+                                        <td>{item.schemeName + ' / ' + item.schemeOption}</td>
                                         <td>
                                           <input
                                             className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
@@ -1902,7 +1976,7 @@ const Details = () => {
                                             }} />
                                         </td>
 
-                                        <td>{item.transactionUnits}</td>
+                                        {/* <td>{item.transactionUnits}</td> */}
 
                                         <td className='relative'>
                                           <label
@@ -2002,9 +2076,9 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                                          <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked' || ['RM Declined', 'Client Declined'].includes(fractionItem.approvalStatus)}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                            className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
@@ -2065,17 +2139,14 @@ const Details = () => {
                 <tr className=' whitespace-nowrap '>
                   <th></th>
                   <th>S No.</th>
-                  <th>Status</th>
                   <th>Investor Name</th>
-                  <th>AMC Name</th>
-                  <th>Scheme Name</th>
-                  <th>Scheme Option</th>
+                  <th>Scheme Name / Option</th>
                   <th>Execution Date</th>
                   <th>Folio</th>
-                  <th>Traxn Units/Amount</th>
+                  {/* <th>Traxn </th> */}
                   {/* <th>Redemption Date</th> */}
                   <th>Payment Mode</th>
-                  <th>Transaction Amount</th>
+                  <th>Transaction Units/Amount</th>
                   <th>Approval Status</th>
                   {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
@@ -2097,17 +2168,16 @@ const Details = () => {
                               <IoIosArrowUp className={`transform transition-transform ${openRows[item._id] ? 'rotate-180' : 'group-enabled:rotate-0 group-disabled:rotate-180'}`} />
                             </button>
                           </td>
-                          <td className=''>{index + 1}</td>
-                          <td><span className=' px-3 py-2 rounded-3xl font-medium'
+                          <td className=''>
+                          <span className='p-1 h-9 w-9 flex items-center justify-center rounded-full font-medium text-xs'
                             style={{
                               backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
                               color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
+                          >{index + 1}</span>
+                          </td>
                           <td>{item.investorName}</td>
-                          <td>{item.amcName}</td>
-                          <td>{item.schemeName}</td>
-                          <td>{item.schemeOption}</td>
+                          <td>{item.schemeName + ' / ' + item.schemeOption}</td>
                           <td className='relative'>
                             <label
                               htmlFor={`execution-date-${item._id}`}
@@ -2136,15 +2206,17 @@ const Details = () => {
                                     return transaction;
                                   });
                                 });
-                                updateExecutionDate(item._id, value)
+                                updateTransaction(item._id, {transactionPreference: value})
                               }}
                             />
                           </td>
                           <td>{item.folioNumber}</td>
-                          <td>{item.transactionUnits}</td>
                           {/* <td>{formatDate(item.transactionPreference)}</td> */}
-                          <td>{item.paymentMode}</td>
-                          <td>{item.amount}</td>
+                          <td>{ item.paymentMode}</td>
+                          <td>
+                            <span className='bg-gray-100 text-gray-700 rounded px-1'>{unitsMap[item.transactionUnits]}</span> 
+                            {['Amount', 'Units'].includes(unitsMap[item.transactionUnits]) && <span className='ms-2 font-semibold text-green-700'>{item.amount}</span>}
+                          </td>
                           <td>
                             <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild } className='py-2' value={item.approvalStatus} onChange={(e) => {
                               const value = e.target.value
@@ -2165,8 +2237,8 @@ const Details = () => {
                           </td>
 
                           {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
-                              <CiLock />
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='border hover:border-yellow-300 enabled:hover:text-yellow-600 enabled:hover:bg-yellow-100  disabled:text-gray-500 disabled:cursor-not-allowed text-2xl w-9 h-9 rounded-md'>
+                              <CiLock className='m-auto'/>
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
@@ -2174,20 +2246,20 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button>
-                              : <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleAddRedemptionsFraction(index) }}>+</button>}
+                              : <button className='text-2xl border h-9 w-9 rounded-md hover:border-green-300 hover:text-green-800 hover:bg-green-100' onClick={() => { openRowAccordion(item._id); handleAddRedemptionsFraction(index) }}>+</button>}
                           </td>}
 
                           <td>
                             {!item?.hasFractions ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                              <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
                                 disabled={childLength === 1 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className='border border-indigo-300 bg-indigo-100 rounded-3xl px-2 py-2 text-sm text-indigo-800 disabled:bg-indigo-50 disabled:text-indigo-300'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                           <td>
@@ -2202,16 +2274,12 @@ const Details = () => {
                                   <tr className=' whitespace-nowrap  '>
                                     <th></th>
                                     <th>S No.</th>
-                                    <th>Status</th>
                                     <th>Investor Name</th>
-                                    <th>AMC Name</th>
-                                    <th>Scheme Name</th>
-                                    <th>Scheme Option</th>
+                                    <th>Scheme Name / Option</th>
                                     <th>Folio</th>
-                                    <th>Traxn Units/Amount</th>
                                     <th>Execution Date</th>
                                     <th>Payment Mode</th>
-                                    <th>Transaction Amount</th>
+                                    <th>Transaction Units/Amount</th>
                                     <th>Approval Status</th>
                                     <th>Link</th>
                                     {canModifyTransactions && <th>Actions</th>}
@@ -2223,17 +2291,16 @@ const Details = () => {
                                     item.transactionFractions?.map((fractionItem, fracIndex) =>
                                       <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
                                         <td className=''></td>
-                                        <td className=''>{index + 1}.{fracIndex + 1}</td>
-                                        <td><span className=' px-3 py-2 rounded-3xl font-medium'
+                                        <td className=''>
+                                        <span className='p-1 h-9 w-9 flex items-center justify-center rounded-full font-medium text-xs'
                                           style={{
                                             backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
                                             color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                           }}
-                                        >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
+                                        >{index + 1}.{fracIndex + 1}</span>
+                                        </td>
                                         <td>{item.investorName}</td>
-                                        <td>{item.amcName}</td>
-                                        <td>{item.schemeName}</td>
-                                        <td>{item.schemeOption}</td>
+                                        <td>{item.schemeName + " / " + item.schemeOption}</td>
                                         <td>
                                           <input
                                             className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
@@ -2261,7 +2328,6 @@ const Details = () => {
                                             }} />
                                         </td>
 
-                                        <td>{item.transactionUnits}</td>
 
                                         <td className='relative'>
                                           <label
@@ -2302,8 +2368,11 @@ const Details = () => {
 
                                         <td>{item.paymentMode}</td>
                                         <td>
+                                          <span className='text-xs text-gray-600 px-1 bg-blue-100 rounded'>
+                                            {unitsMap[item.transactionUnits]}
+                                          </span>
                                           <input
-                                            className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                            className='ms-2 w-28 text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                             value={fractionItem.fractionAmount}
                                             type='number'
                                             disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -2361,9 +2430,9 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                                          <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked' || ['RM Declined', 'Client Declined'].includes(fractionItem.approvalStatus)}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                            className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 
@@ -2424,17 +2493,12 @@ const Details = () => {
                 <tr className=' whitespace-nowrap '>
                   <th></th>
                   <th>S No.</th>
-                  <th>Status</th>
                   <th>Investor Name</th>
-                  <th>AMC Name</th>
-                  <th>From Scheme</th>
-                  <th>From Scheme option</th>
-                  <th>To Scheme</th>
-                  <th>To Scheme option</th>
+                  <th>From Scheme Name / Option</th>
+                  <th>To Scheme Name / Option</th>
                   <th>Execution Date</th>
                   <th>Folio</th>
-                  <th>Traxn Units/Amount</th>
-                  <th>Transaction Amount</th>
+                  <th>Transaction Units/Amount</th>
                   <th>Approval Status</th>
                   {canModifyTransactions && <th>Action</th>}
                   <th>Links</th>
@@ -2456,19 +2520,17 @@ const Details = () => {
                               <IoIosArrowUp className={`transform transition-transform ${openRows[item._id] ? 'rotate-180' : 'group-enabled:rotate-0 group-disabled:rotate-180'}`} />
                             </button>
                           </td>
-                          <td className=''>{index + 1}</td>
-                          <td><span className=' px-3 py-2 rounded-3xl font-medium'
+                          <td className=''>
+                          <span className='p-1 h-9 w-9 flex items-center justify-center rounded-full font-medium text-xs'
                             style={{
                               backgroundColor: color.find((color) => color.type === item.status)?.bgcolor || 'rgb(240, 240, 240)',
                               color: color.find((color) => color.type === item.status)?.color || 'rgb(120 120 120)'
                             }}
-                          >{color.find((color) => color.type === item.status)?.value || "UNKNOWN"}</span></td>
+                          >{index + 1}</span>
+                          </td>
                           <td>{item.investorName}</td>
-                          <td>{item.amcName}</td>
-                          <td>{item.fromSchemeName}</td>
-                          <td>{item.fromSchemeOption}</td>
-                          <td>{item.schemeName}</td>
-                          <td>{item.schemeOption}</td>
+                          <td>{item.fromSchemeName} / {item.fromSchemeOption}</td>
+                          <td>{item.schemeName} / {item.schemeOption}</td>
                           <td className='relative'>
                             <label
                               htmlFor={`execution-date-${item._id}`}
@@ -2490,14 +2552,16 @@ const Details = () => {
                                   index,
                                   transactionPreference: value
                                 }))
-                                updateExecutionDate(item._id, value)
+                                updateTransaction(item._id, {transactionPreference: value})
                               }}
                             />
                           </td>
                           <td>{item.folioNumber}</td>
-                          <td>{item.transactionUnits}</td>
                           {/* <td>{formatDate(item.transactionPreference)}</td> */}
-                          <td>{item.amount}</td>
+                          <td>
+                            <span className='bg-gray-100 text-gray-700 rounded px-1'>{unitsMap[item.transactionUnits]}</span> 
+                            {['Amount', 'Units'].includes(unitsMap[item.transactionUnits]) && <span className='ms-2 font-semibold text-green-700'>{item.amount}</span>}
+                          </td>
 
                           <td>
                             <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild } className='py-2' value={item.approvalStatus} onChange={(e) => {
@@ -2514,8 +2578,8 @@ const Details = () => {
                           </td>
 
                           {canModifyTransactions && <td>{item.linkStatus === 'locked' ?
-                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='hover:border hover:border-gray-400 disabled:hover:border-none disabled:text-gray-500 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
-                              <CiLock />
+                            <button title='Click to unlock' onClick={() => dispatch(unlockTransaction(item._id))} disabled={!canModifyTransactions || item.linkStatus === 'generated'} className='border hover:border-yellow-300 enabled:hover:text-yellow-600 enabled:hover:bg-yellow-100  disabled:text-gray-500 disabled:cursor-not-allowed text-2xl w-9 h-9 rounded-md'>
+                              <CiLock className='m-auto'/>
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
@@ -2523,20 +2587,20 @@ const Details = () => {
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button> :
-                              <button className=' text-2xl border px-2 py-1 rounded-md' onClick={() => { openRowAccordion(item._id); handleSwitchAdd(index) }}>+</button>}
+                              <button className='text-2xl border h-9 w-9 rounded-md hover:border-green-300 hover:text-green-800 hover:bg-green-100' onClick={() => { openRowAccordion(item._id); handleSwitchAdd(index) }}>+</button>}
                           </td>}
 
                           <td>
                             {!item.hasFractions ? item.linkStatus === 'generated' ?
-                              <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                              <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                               <button
                                 disabled={!canModifyTransactions || ['RM Declined', 'Client Declined'].includes(item.approvalStatus)}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                 onClick={() => handleGenerateLink(item._id, item.approvalStatus)}
                               >Approve</button>
                               : <button
                                 disabled={childLength === 1 || item.linkStatus === 'locked'}
-                                className=' bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-400 disabled:cursor-not-allowed'
+                                className='border border-indigo-300 bg-indigo-100 rounded-3xl px-2 py-2 text-sm text-indigo-800 disabled:bg-indigo-50 disabled:text-indigo-300'
                                 onClick={() => handleSaveFractions(item)}>Save Fractions</button>}
                           </td>
                           <td>
@@ -2551,17 +2615,12 @@ const Details = () => {
                                   <tr className=' whitespace-nowrap  '>
                                     <th></th>
                                     <th>S No.</th>
-                                    <th>Status</th>
                                     <th>Investor Name</th>
-                                    <th>AMC Name</th>
-                                    <th>From Scheme</th>
-                                    <th>From Scheme option</th>
-                                    <th>To Scheme</th>
-                                    <th>To Scheme option</th>
+                                    <th>From Scheme Name / Option</th>
+                                    <th>To Scheme Name / Option</th>
                                     <th>Folio</th>
-                                    <th>Transaction Units/Amount</th>
                                     <th>Execution Date</th>
-                                    <th>Transaction Amount</th>
+                                    <th>Transaction Units/Amount</th>
                                     <th>Approval Status</th>
                                     <th>Links</th>
                                     {canModifyTransactions && <th>Actions</th>}
@@ -2574,19 +2633,17 @@ const Details = () => {
                                       <tr className=' whitespace-nowrap  border-b-[2px] border-solid border-[#E3EAF4]'>
                                         {/* <td><IoIosArrowForward className=' text-lg' /></td> */}
                                         <td className=''></td>
-                                        <td className=''>{index + 1}.{fracIndex + 1}</td>
-                                        <td><span className=' px-3 py-2 rounded-3xl font-medium'
+                                        <td className=''>
+                                        <span className=' px-3 py-2 rounded-3xl font-medium'
                                           style={{
                                             backgroundColor: color.find((color) => color.type === fractionItem.status)?.bgcolor || 'rgb(240, 240, 240)',
                                             color: color.find((color) => color.type === fractionItem.status)?.color || 'rgb(120 120 120)'
                                           }}
-                                        >{color.find((color) => color.type === fractionItem.status)?.value || "UNKNOWN"}</span></td>
+                                        >{index + 1}.{fracIndex + 1}</span>
+                                        </td>
                                         <td>{item.investorName}</td>
-                                        <td>{item.amcName}</td>
-                                        <td>{item.fromSchemeName}</td>
-                                        <td>{item.fromSchemeOption}</td>
-                                        <td>{item.schemeName}</td>
-                                        <td>{item.schemeOption}</td>
+                                        <td>{item.fromSchemeName} / {item.fromSchemeOption}</td>
+                                        <td>{item.schemeName} / {item.schemeOption}</td>
                                         <td>
                                           <input
                                             className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
@@ -2595,8 +2652,6 @@ const Details = () => {
                                             disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
                                             onChange={(e) => dispatch(updateSwitchFractionFolio({ index, fracIndex, folioNumber: e.target.value }))} />
                                         </td>
-
-                                        <td>{item.transactionUnits}</td>
 
                                         <td className='relative'>
                                           <label
@@ -2618,8 +2673,11 @@ const Details = () => {
                                         </td>
 
                                         <td>
+                                        <span className='text-xs text-gray-600 px-1 bg-blue-100 rounded'>
+                                            {unitsMap[item.transactionUnits]}
+                                          </span>
                                           <input
-                                            className='text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
+                                            className='ms-2 w-28 text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
                                             value={fractionItem.fractionAmount}
                                             type='text'
                                             disabled={['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus === 'locked'}
@@ -2643,9 +2701,9 @@ const Details = () => {
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
-                                          <div className='bg-green-500 text-sm text-white rounded-full px-4 py-2 w-32'>Approved</div> :
+                                          <div className='bg-green-200 text-sm text-green-700 rounded-full px-2 w-fit py-[2px] flex items-center gap-1'><IoCheckmarkCircleOutline /> Approved</div> :
                                           <button disabled={!canModifyTransactions || fractionItem.fractionAmount > item.amount || ['generated', 'deleted'].includes(fractionItem.linkStatus) || item.linkStatus !== 'locked' || ['RM Declined', 'Client Declined'].includes(fractionItem.approvalStatus)}
-                                            className='w-32 bg-blue-600 rounded-3xl px-4 py-2 text-sm text-white disabled:bg-blue-300'
+                                            className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
                                             onClick={() => { handleGenerateLinkOfFraction(item._id, fractionItem._id, fractionItem.approvalStatus) }}>Approve</button>
                                         }</td>
 

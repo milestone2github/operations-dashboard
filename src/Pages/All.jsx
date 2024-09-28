@@ -27,7 +27,7 @@ const initialFilters = {
   status: '',
   approvalStatus: '',
   searchBy: 'family head',
-  search: ''
+  searchKey: ''
 }
 
 

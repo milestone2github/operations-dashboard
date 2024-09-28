@@ -82,10 +82,8 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
     updateFilters({
       ...filters,
       searchBy: selectedMenuOption,
-      search: searchKeyword
+      searchKey: searchKeyword
     });
-
-    // console.log('Searching for:', searchKeyword, 'in', selectedMenuOption);
   };
 
   const handleMinAmountChange = (e) => {
@@ -161,11 +159,15 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
       maxAmount: '',
       transactionFor: '',
       status: '',
-      approvalStatus: ''
+      approvalStatus: '',
+      searchKey: '',
+      searchBy: 'family head'
     })
     setSortBy('Latest')
     minAmountRef.current.value = ''
     maxAmountRef.current.value = ''
+    setSearchKeyword('')
+    setSelectedMenuOption('family head')
   }
 
   const toggleListVisiblilty = () => {setIsFilterListVisible(prev => !prev)}
@@ -182,6 +184,11 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+
+  useEffect(() => {
+    if(searchKeyword)
+      updateFilters({...filters, searchBy: selectedMenuOption})
+  }, [selectedMenuOption])
 
   return (
     <div className="flex flex-col text-sm text-gray-700">
@@ -249,7 +256,7 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
                 className={`bg-gray-100 text-sm rounded-md focus:outline-none`}
               >
                 <option value="family head">Family Head</option>
-                <option value="client name">Client Name</option>
+                <option value="investor name">Investor Name</option>
                 <option value="PAN">PAN</option>
               </select>
             </div>
@@ -259,7 +266,7 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
             type="text"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
             placeholder="Search Keywords"
             className="mx-1 text-sm rounded-md focus:outline-none"
           />
@@ -310,8 +317,8 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
 
           <label
             htmlFor="min-date"
-            className={`relative focus-within:bg-gray-100 text-sm w-[80px] p-1 text-center hover:bg-gray-100 ${!filters.minDate ? 'text-gray-500' : 'text-blue-600'}`}
-          >{filters.minDate ? formatDateDDShortMonthNameYY(filters.minDate) : 'Min'}
+            className={`relative focus-within:bg-gray-100 text-sm w-[84px] p-1 text-center hover:bg-gray-100 ${!filters.minDate ? 'text-gray-500' : 'text-blue-600'}`}
+          >{filters.minDate ? formatDateDDShortMonthNameYY(filters.minDate) : 'From'}
             <input
               type="date"
               name="minDate"
@@ -325,8 +332,8 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
           <div className='h-7 border-s'></div>
           <label
             htmlFor="max-date"
-            className={`relative focus-within:bg-gray-100 text-sm w-[80px] p-1 text-center rounded-e-md hover:bg-gray-100 ${!filters.maxDate ? 'text-gray-500' : 'text-blue-600'}`}
-          >{filters.maxDate ? formatDateDDShortMonthNameYY(filters.maxDate) : 'Max'}
+            className={`relative focus-within:bg-gray-100 text-sm w-[84px] p-1 text-center rounded-e-md hover:bg-gray-100 ${!filters.maxDate ? 'text-gray-500' : 'text-blue-600'}`}
+          >{filters.maxDate ? formatDateDDShortMonthNameYY(filters.maxDate) : 'To'}
             <input
               type="date"
               name="maxDate"

@@ -21,7 +21,7 @@ const initialFilters = {
   type: "",
   sort: "trxdate-desc", // Default sort order
   searchBy: 'family head',
-  search: ''
+  searchKey: ''
 };
 
 const Reco = () => {

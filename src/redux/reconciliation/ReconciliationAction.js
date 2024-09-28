@@ -12,7 +12,9 @@ export const getRecoTransactions = createAsyncThunk(
       amcName,
       rmName,
       type,
-      sort
+      sort,
+      searchBy,
+      searchKey
     } = filters;
 
     let query = new URLSearchParams();
@@ -33,6 +35,8 @@ export const getRecoTransactions = createAsyncThunk(
     if (type) query.append('type', type);
     if (minDate) query.append('minDate', minDate);
     if (maxDate) query.append('maxDate', maxDate);
+    if (searchBy) query.append('searchBy', searchBy)
+    if (searchKey) query.append('searchKey', searchKey)
 
     try {
       const response = await fetch(

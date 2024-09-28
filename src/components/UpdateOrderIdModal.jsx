@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react'
 
-function UpdateOrderIdModal({ isOpen, handleCancel, handleProceed, existingOrderId, status }) {
-  const [orderId, setOrderId] = useState(existingOrderId)
+const platformOptions = ["", "BSESTARMF", "NSENMF", "CAMS EDGE", "KARVY", "OFFLINE"]
+
+function UpdateOrderIdModal({ isOpen, handleCancel, handleProceed, existingData, status }) {
+  const [orderId, setOrderId] = useState('')
+  const [platform, setPlatform] = useState('')
 
   useEffect(() => {
     if (!isOpen) {
@@ -10,12 +13,13 @@ function UpdateOrderIdModal({ isOpen, handleCancel, handleProceed, existingOrder
   }, [isOpen])
 
   useEffect(() => {
-      setOrderId(existingOrderId)
-  }, [existingOrderId])
+      setOrderId(existingData.orderId)
+      setPlatform(existingData.platform)
+  }, [existingData])
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    handleProceed(orderId)
+    handleProceed(platform, orderId)
   }
 
   if (!isOpen) return null
@@ -25,6 +29,21 @@ function UpdateOrderIdModal({ isOpen, handleCancel, handleProceed, existingOrder
       <form onSubmit={handleSubmit} className={`w-fit h-fit bg-white rounded-md shadow-md p-6 py-7 md:w-[460px] flex flex-col gap-y-4`}>
         <p className="text-yellow-600 text-lg font-medium mb-1">Update Order ID</p>
         
+        <div className="flex flex-col gap-y-px">
+          <label htmlFor="platform" className='text-sm text-gray-600'>Processed platform</label>
+          <select 
+            name="platform"  
+            id="platform" 
+            required
+            className='rounded-md p-2 border border-gray-500 focus:outline-2 focus:outline-blue-500'
+            value={platform} 
+            onChange={(e) => setPlatform(e.target.value)}
+          >{
+            platformOptions.map(option => 
+              <option value={option} selected={option === platform}>{option || 'select'}</option>
+            )
+            }</select>
+        </div>
         <div className="flex flex-col gap-y-px">
           <label htmlFor="orderid" className='text-sm text-gray-600'>Order Id</label>
           <input

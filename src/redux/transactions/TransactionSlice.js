@@ -131,7 +131,23 @@ const transactionSlice = createSlice({
           }
         }
       }
-    }
+    },
+
+    resetError: (state) => {
+      state.error = null
+    },
+
+    resetLinkGenerateStatus: (state) => {
+      state.linkGenerateStatus = 'idle'
+    },
+
+    resetOrderIdStatus: (state) => {
+      state.orderIdStatus = 'idle'
+    },
+
+    resetNoteUpdateStatus: (state) => {
+      state.noteUpdateStatus = 'idle'
+    },
   },
 
   extraReducers: (builder) => {
@@ -289,7 +305,11 @@ export const {
   updateSwitchFractionFolio,
   updateSwitchApprovalStatus,
   updateSwitchExecutionDate,
-  updateSwitchFractionApprovalStatus
+  updateSwitchFractionApprovalStatus,
+  resetError,
+  resetLinkGenerateStatus,
+  resetNoteUpdateStatus,
+  resetOrderIdStatus
 } = transactionSlice.actions
 
 export default transactionSlice.reducer

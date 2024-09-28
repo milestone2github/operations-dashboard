@@ -18,7 +18,11 @@ import {
   updateSwitchFractionFolio,
   updateSwitchApprovalStatus,
   updateSwitchFractionApprovalStatus,
-  updateSwitchExecutionDate
+  updateSwitchExecutionDate,
+  resetOrderIdStatus,
+  resetNoteUpdateStatus,
+  resetLinkGenerateStatus,
+  resetError
 } from '../redux/transactions/TransactionSlice';
 
 import { formatDate, formatDateToYYYYMMDD } from '../utils/formatDate';
@@ -66,7 +70,7 @@ const Details = () => {
   const [isOrderIdModalOpen, setIsOrderIdModalOpen] = useState(false)
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(true)
   const [transactionForLink, setTransactionForLink] = useState({ id: '', fractionId: '' })
-  const [transactionForOrderId, setTransactionForOrderId] = useState({ id: '', fractionId: '', orderId: '' })
+  const [transactionForOrderId, setTransactionForOrderId] = useState({ id: '', fractionId: '', orderId: '', platform: '' })
   const [openRows, setOpenRows] = useState({})
 
   const dispatch = useDispatch()
@@ -443,13 +447,13 @@ const Details = () => {
     setTransactionForLink({ id: '', fractionId: '' })
   }
 
-  const handleUpdateOrderId = (orderId) => {
-    dispatch(updateOrderId({ ...transactionForOrderId, orderId }))
+  const handleUpdateOrderId = (platform, orderId) => {
+    dispatch(updateOrderId({ ...transactionForOrderId, platform, orderId }))
   }
 
   const handleCancelOrderIdModal = () => {
     setIsOrderIdModalOpen(false)
-    setTransactionForOrderId({ id: '', fractionId: '', orderId: '' })
+    setTransactionForOrderId({ id: '', fractionId: '', orderId: '', platform: '' })
   }
 
   useEffect(() => {
@@ -554,6 +558,28 @@ const Details = () => {
     'units in next question': 'Units',
     'switch all units': 'Switch All Units',
   }
+
+  const updateStatusAfter4s = (resetFunction) => {
+    setTimeout(() => {
+      dispatch(resetFunction())
+    }, 4000);
+  }
+
+  // side effect to reset all status and error 
+  useEffect(() => {
+    let statusArray = ['failed', 'completed']
+    if(statusArray.includes(orderIdStatus)) {
+      updateStatusAfter4s(resetOrderIdStatus)
+    }
+    if(statusArray.includes(noteUpdateStatus)) {
+      updateStatusAfter4s(resetNoteUpdateStatus)
+    }
+    if(statusArray.includes(linkGenerateStatus)) {
+      updateStatusAfter4s(resetLinkGenerateStatus)
+    }
+
+    if(error) {updateStatusAfter4s(resetError)}
+  }, [orderIdStatus, noteUpdateStatus, linkGenerateStatus, error])
 
   const showLoading = (<div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
     <Loader />
@@ -754,7 +780,7 @@ const Details = () => {
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
-                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId, platform: item.orderPlatform }); setIsOrderIdModalOpen(true) }}
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button> :
@@ -962,7 +988,7 @@ const Details = () => {
                                                 </button>
                                                 <button
                                                   disabled={item.linkStatus === 'locked'}
-                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId }); setIsOrderIdModalOpen(true) }}
+                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId, platform: fractionItem.orderPlatform  }); setIsOrderIdModalOpen(true) }}
                                                   className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
                                                 </button>
 
@@ -1147,7 +1173,7 @@ const Details = () => {
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
-                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId, platform: item.orderPlatform }); setIsOrderIdModalOpen(true) }}
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button>
@@ -1356,7 +1382,7 @@ const Details = () => {
                                                 </button>
                                                 <button
                                                   disabled={item.linkStatus === 'locked'}
-                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId }); setIsOrderIdModalOpen(true) }}
+                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId, platform: fractionItem.orderPlatform  }); setIsOrderIdModalOpen(true) }}
                                                   className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
                                                 </button>
 
@@ -1538,7 +1564,7 @@ const Details = () => {
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
-                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId, platform: item.orderPlatform }); setIsOrderIdModalOpen(true) }}
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button>
@@ -1746,7 +1772,7 @@ const Details = () => {
                                                 </button>
                                                 <button
                                                   disabled={item.linkStatus === 'locked'}
-                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId }); setIsOrderIdModalOpen(true) }}
+                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId, platform: fractionItem.orderPlatform  }); setIsOrderIdModalOpen(true) }}
                                                   className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
                                                 </button>
 
@@ -1891,7 +1917,7 @@ const Details = () => {
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
-                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId, platform: item.orderPlatform }); setIsOrderIdModalOpen(true) }}
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button> :
@@ -2095,7 +2121,7 @@ const Details = () => {
                                                 </button>
                                                 <button
                                                   disabled={item.linkStatus === 'locked'}
-                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId }); setIsOrderIdModalOpen(true) }}
+                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId, platform: fractionItem.orderPlatform  }); setIsOrderIdModalOpen(true) }}
                                                   className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
                                                 </button>
 
@@ -2243,7 +2269,7 @@ const Details = () => {
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
-                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId, platform: item.orderPlatform }); setIsOrderIdModalOpen(true) }}
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button>
@@ -2449,7 +2475,7 @@ const Details = () => {
                                                 </button>
                                                 <button
                                                   disabled={item.linkStatus === 'locked'}
-                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId }); setIsOrderIdModalOpen(true) }}
+                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId, platform: fractionItem.orderPlatform  }); setIsOrderIdModalOpen(true) }}
                                                   className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
                                                 </button>
 
@@ -2584,7 +2610,7 @@ const Details = () => {
                             </button> : item.linkStatus === 'generated' ?
                               <button
                                 title='update order ID'
-                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId }); setIsOrderIdModalOpen(true) }}
+                                onClick={() => { setTransactionForOrderId({ id: item._id, orderId: item.orderId, platform: item.orderPlatform }); setIsOrderIdModalOpen(true) }}
                                 className='border border-transparent enabled:hover:border-orange-400 text-orange-400 disabled:text-gray-400 disabled:cursor-not-allowed text-2xl p-1 rounded-md'>
                                 <MdUpdate />
                               </button> :
@@ -2720,7 +2746,7 @@ const Details = () => {
                                                 </button>
                                                 <button
                                                   disabled={item.linkStatus === 'locked'}
-                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId }); setIsOrderIdModalOpen(true) }}
+                                                  onClick={() => { setTransactionForOrderId({ id: item._id, fractionId: fractionItem._id, orderId: fractionItem.orderId, platform: fractionItem.orderPlatform  }); setIsOrderIdModalOpen(true) }}
                                                   className='hover:bg-gray-100 p-2 disabled:cursor-not-allowed'>Update Order ID
                                                 </button>
 
@@ -2774,7 +2800,7 @@ const Details = () => {
         isOpen={isOrderIdModalOpen}
         handleProceed={handleUpdateOrderId}
         handleCancel={handleCancelOrderIdModal}
-        existingOrderId={transactionForOrderId.orderId}
+        existingData={transactionForOrderId}
         status={orderIdStatus}
       />
       <Toaster />

@@ -546,12 +546,13 @@ const Details = () => {
   }
 
   const unitsMap = {
-    'Amount in next question': 'Amount',
-    'Amount given in next question': 'Amount',
-    'Long Term Units': 'Long Term Units',
-    'Unlocked Units': 'Unlocked Units',
-    'Redeem All Units': 'Redeem All Units',
-    'Units in next question': 'Units',
+    'amount in next question': 'Amount',
+    'amount given in next question': 'Amount',
+    'long term units': 'Long Term Units',
+    'unlocked units': 'Unlocked Units',
+    'redeem all units': 'Redeem All Units',
+    'units in next question': 'Units',
+    'switch all units': 'Switch All Units',
   }
 
   const showLoading = (<div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
@@ -2214,8 +2215,8 @@ const Details = () => {
                           {/* <td>{formatDate(item.transactionPreference)}</td> */}
                           <td>{ item.paymentMode}</td>
                           <td>
-                            <span className='bg-gray-100 text-gray-700 rounded px-1'>{unitsMap[item.transactionUnits]}</span> 
-                            {['Amount', 'Units'].includes(unitsMap[item.transactionUnits]) && <span className='ms-2 font-semibold text-green-700'>{item.amount}</span>}
+                            <span className='bg-gray-100 text-gray-700 rounded px-1'>{unitsMap[item.transactionUnits?.toLowerCase()]}</span> 
+                            {['Amount', 'Units'].includes(unitsMap[item.transactionUnits?.toLowerCase()]) && <span className='ms-2 font-semibold text-green-700'>{item.amount}</span>}
                           </td>
                           <td>
                             <select name="approval-status" disabled={!(canModifyTransactions || canModifyExecutionDate) || hasChild } className='py-2' value={item.approvalStatus} onChange={(e) => {
@@ -2369,7 +2370,7 @@ const Details = () => {
                                         <td>{item.paymentMode}</td>
                                         <td>
                                           <span className='text-xs text-gray-600 px-1 bg-blue-100 rounded'>
-                                            {unitsMap[item.transactionUnits]}
+                                            {unitsMap[item.transactionUnits?.toLowerCase()]}
                                           </span>
                                           <input
                                             className='ms-2 w-28 text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'
@@ -2559,8 +2560,8 @@ const Details = () => {
                           <td>{item.folioNumber}</td>
                           {/* <td>{formatDate(item.transactionPreference)}</td> */}
                           <td>
-                            <span className='bg-gray-100 text-gray-700 rounded px-1'>{unitsMap[item.transactionUnits]}</span> 
-                            {['Amount', 'Units'].includes(unitsMap[item.transactionUnits]) && <span className='ms-2 font-semibold text-green-700'>{item.amount}</span>}
+                            <span className='bg-gray-100 text-gray-700 rounded px-1'>{unitsMap[item.transactionUnits?.toLowerCase()]}</span> 
+                            {['Amount', 'Units'].includes(unitsMap[item.transactionUnits?.toLowerCase()]) && <span className='ms-2 font-semibold text-green-700'>{item.amount}</span>}
                           </td>
 
                           <td>
@@ -2674,7 +2675,7 @@ const Details = () => {
 
                                         <td>
                                         <span className='text-xs text-gray-600 px-1 bg-blue-100 rounded'>
-                                            {unitsMap[item.transactionUnits]}
+                                            {unitsMap[item.transactionUnits?.toLowerCase()]}
                                           </span>
                                           <input
                                             className='ms-2 w-28 text-black border-[2px] border-solid border-white py-2 pl-2 outline-blue-400 rounded disabled:bg-transparent disabled:border-none'

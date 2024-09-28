@@ -12,14 +12,24 @@ import toast, { Toaster } from 'react-hot-toast';
 import { LuListTodo, LuUserCheck2 } from 'react-icons/lu';
 import { CiBoxList } from 'react-icons/ci';
 import { MdOutlineCheckBoxOutlineBlank } from 'react-icons/md';
+import { FaSearch } from 'react-icons/fa';
+
+const initialFilters = {
+    searchBy: 'family head',
+    search: ''
+};
 
 const Pending = () => {
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [selectedMenuOption, setSelectedMenuOption] = useState('family head');
     const [itemToUpdate, setItemToUpdate] = useState({ _id: null, familyHead: null, relationshipManager: null })
     const [isSmModalOpen, setIsSmModalOpen] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams()
     const activeTab = searchParams.get('tab')
     const dispatch = useDispatch()
     const { isLoading, error, assignStatus, data } = useSelector((state) => state.groupedTransactions)
+    const [filters, setFilters] = useState(initialFilters);
+    const [openDropdown, setOpenDropdown] = useState({});
     const {
         smNameList,
         error: fetchSmListError,
@@ -74,6 +84,17 @@ const Pending = () => {
     const handleTabChange = (tabName) => {
         setSearchParams({ tab: tabName })
     }
+
+    const handleSearch = () => {
+        // Trigger search based on `searchKeyword` and `selectedMenuOption`
+        updateFilters({
+          ...filters,
+          searchBy: selectedMenuOption,
+          search: searchKeyword
+        });
+    
+        // console.log('Searching for:', searchKeyword, 'in', selectedMenuOption);
+    };
 
     const customstyles = {
         headRow: {
@@ -179,6 +200,37 @@ const Pending = () => {
                     <div className='flex justify-between p-2 px-3'>
                         <h3 className='sticky z-30 top-0 p-2 bg-white'>Transaction Details</h3>
                         <ul className="flex">
+
+                            <div className="flex items-center px-2  text-sm  border h-[42px]">
+                                <div className="relative">
+                                    <select
+                                        value={selectedMenuOption}
+                                        onChange={(e) => setSelectedMenuOption(e.target.value)}   
+                                        className={'bg-black text-white text-sm focus:outline-none p-1'}
+                                    >
+                                        <option value="family head">Family Head</option>
+                                        <option value="client name">Client Name</option>
+                                        <option value="PAN">PAN</option>
+                                    </select>
+                                </div>
+
+                                {/* Search Input */}
+                                <input
+                                    type="text"
+                                    value={searchKeyword}
+                                    onChange={(e) => setSearchKeyword(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
+                                    placeholder="Search Keywords"
+                                    className="mx-1 text-sm focus:outline-none"
+                                />
+
+                                {/* Search Icon */}
+                                <FaSearch
+                                    className="cursor-pointer" // Makes the icon clickable
+                                    onClick={handleSearch} // Triggers search when the icon is clicked
+                                />
+                            </div>
+
                             <li className="relative">
                                 <input
                                     type="radio"

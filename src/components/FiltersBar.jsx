@@ -9,6 +9,7 @@ import { resetSchemeList } from '../redux/allFilterOptions/FilterOptionsSlice'
 import SortMenu from './SortMenu'
 import { MdCurrencyRupee, MdFilterList } from 'react-icons/md'
 import { FiSave } from 'react-icons/fi'
+import { FaSearch } from 'react-icons/fa'
 import { IoCheckmarkCircle } from 'react-icons/io5'
 import { resetAddStatus, setActiveAll } from '../redux/savedFilters/SavedFiltersSlice'
 import { addSavedFilters, updateActiveSavedFilters } from '../redux/savedFilters/SavedFiltersAction'
@@ -24,6 +25,8 @@ sortMap.set('Amount: high to low', 'amount-desc')
 const reverseSortMap = new Map([...sortMap].map(([key, value]) => [value, key]));
 
 function FiltersBar({ filters, updateFilters, results, aum }) {
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [selectedMenuOption, setSelectedMenuOption] = useState('family head');
   const { amcList, typeList, schemesList, rmNameList, smNameList, statusList, approvalStatusList, transactionForList, error } = useSelector(state => state.allFilterOptions)
   const [filteredAmcs, setFilteredAmcs] = useState([''])
   const [filteredSchemes, setFilteredSchemes] = useState([''])
@@ -73,6 +76,17 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
     const { name, value } = e.target
     updateFilters({ ...filters, [name]: value })
   }
+
+  const handleSearch = () => {
+    // Trigger search based on `searchKeyword` and `selectedMenuOption`
+    updateFilters({
+      ...filters,
+      searchBy: selectedMenuOption,
+      search: searchKeyword
+    });
+
+    // console.log('Searching for:', searchKeyword, 'in', selectedMenuOption);
+  };
 
   const handleMinAmountChange = (e) => {
     const value = e.target.value
@@ -223,8 +237,51 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
             maximumFractionDigits: 2
           })}</span>
         </div>
+        
 
-        <div title='Amount' className="flex bg-white items-center rounded-md border">
+        <div className={'rounded-md  focus-within:ring-2 focus-within:ring-blue-500'}>
+           
+          <div className="flex items-center px-2 py-1 text-sm rounded-md border text-gray-500">
+            <div className="relative">
+              <select
+                value={selectedMenuOption}
+                onChange={(e) => setSelectedMenuOption(e.target.value)}   
+                className={`bg-gray-100 text-sm rounded-md focus:outline-none`}
+              >
+                <option value="family head">Family Head</option>
+                <option value="client name">Client Name</option>
+                <option value="PAN">PAN</option>
+              </select>
+            </div>
+
+            {/* Search Input */}
+            <input
+            type="text"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
+            placeholder="Search Keywords"
+            className="mx-1 text-sm rounded-md focus:outline-none"
+          />
+
+          {/* Search Icon */}
+          <FaSearch
+            className="cursor-pointer" // Makes the icon clickable
+            onClick={handleSearch} // Triggers search when the icon is clicked
+          />
+        </div>
+      </div>
+
+        <SortMenu
+          list={sortOptions}
+          selectedValue={sortBy}
+          updateSelected={(value) => setSortBy(value)}
+          width='200px'
+        />
+        <button title='Clear all filters' onClick={handleClearAll} className='rounded-md border border-red-100 px-2 hover:border-red-500 hover:text-red-500'>Clear all</button>
+      </div>
+      <div className="flex items-center gap-x-2 gap-y-2 my-3 text-sm text-gray-700 flex-wrap">
+      <div title='Amount' className="flex bg-white items-center rounded-md border">
           <span className='text-base text-gray-500 px-1'><MdCurrencyRupee /></span>
           <input
             ref={minAmountRef}
@@ -248,15 +305,6 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
             onBlur={handleMaxAmountChange}
           />
         </div>
-        <SortMenu
-          list={sortOptions}
-          selectedValue={sortBy}
-          updateSelected={(value) => setSortBy(value)}
-          width='200px'
-        />
-        <button title='Clear all filters' onClick={handleClearAll} className='rounded-md border border-red-100 px-2 hover:border-red-500 hover:text-red-500'>Clear all</button>
-      </div>
-      <div className="flex items-center gap-x-2 gap-y-2 my-3 text-sm text-gray-700 flex-wrap">
         <div className="flex bg-white items-center rounded-md border">
           <span className='text-xl ps-px'><CiCalendarDate /></span>
 

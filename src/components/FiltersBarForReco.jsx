@@ -8,6 +8,7 @@ import { formatDateDDShortMonthNameYY } from '../utils/formatDate'
 import { resetSchemeList } from '../redux/allFilterOptions/FilterOptionsSlice'
 import SortMenu from './SortMenu'
 import { MdCurrencyRupee } from 'react-icons/md'
+import { FaSearch } from 'react-icons/fa'
 
 const sortOptions = ['Latest', 'Oldest', 'Amount: low to high', 'Amount: high to low']
 const sortMap = new Map()
@@ -17,6 +18,8 @@ sortMap.set('Amount: low to high', 'amount-asc')
 sortMap.set('Amount: high to low', 'amount-desc')
 
 function FiltersBar({ filters, updateFilters, results, aum }) {
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [selectedMenuOption, setSelectedMenuOption] = useState('family head');
   const { amcList, typeList, schemesList, rmNameList, error } = useSelector(state => state.allFilterOptions)
   const [filteredAmcs, setFilteredAmcs] = useState([''])
   const [filteredSchemes, setFilteredSchemes] = useState([''])
@@ -59,6 +62,17 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
     const { name, value } = e.target
     updateFilters({ ...filters, [name]: value })
   }
+
+  const handleSearch = () => {
+    // Trigger search based on `searchKeyword` and `selectedMenuOption`
+    updateFilters({
+      ...filters,
+      searchBy: selectedMenuOption,
+      search: searchKeyword
+    });
+
+    // console.log('Searching for:', searchKeyword, 'in', selectedMenuOption);
+  };
 
   const handleMinAmountChange = (e) => {
     const value = e.target.value
@@ -122,30 +136,39 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
           })}</span>
         </div>
 
-        <div title='Amount' className="flex bg-white items-center rounded-md border">
-          <span className='text-base text-gray-500 px-1'><MdCurrencyRupee /></span>
-          <input
-            ref={minAmountRef}
-            type="number"
-            name="minAmount"
-            id="filter-min-amount"
-            placeholder='Min'
-            title='Min amount'
-            className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center hover:bg-gray-100 placeholder:text-gray-500 ${!filters.minAmount ? 'text-gray-500' : 'text-blue-600'}`}
-            onBlur={handleMinAmountChange}
-          />
-          <div className='h-7 border-s'></div>
-          <input
-            ref={maxAmountRef}
-            type="number"
-            name="maxAmount"
-            id="filter-max-amount"
-            placeholder='Max'
-            title='Max amount'
-            className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center rounded-e-md hover:bg-gray-100 placeholder:text-gray-500 ${!filters.maxAmount ? 'text-gray-500' : 'text-blue-600'}`}
-            onBlur={handleMaxAmountChange}
-          />
+        <div className={'rounded-md  focus-within:ring-2 focus-within:ring-blue-500'}>
+           
+          <div className="flex items-center px-2 py-1 text-sm rounded-md border text-gray-500">
+            <div className="relative">
+              <select
+                value={selectedMenuOption}
+                onChange={(e) => setSelectedMenuOption(e.target.value)}   
+                className={`bg-gray-100 text-sm rounded-md focus:outline-none`}
+              >
+                <option value="family head">Family Head</option>
+                <option value="client name">Client Name</option>
+                <option value="PAN">PAN</option>
+              </select>
+            </div>
+
+            {/* Search Input */}
+            <input
+              type="text"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
+              placeholder="Search Keywords"
+              className="mx-1 text-sm rounded-md focus:outline-none"
+            />
+
+            {/* Search Icon */}
+            <FaSearch
+              className="cursor-pointer" // Makes the icon clickable
+              onClick={handleSearch} // Triggers search when the icon is clicked
+            />
+          </div>
         </div>
+
         <SortMenu
           list={sortOptions}
           selectedValue={sortBy}
@@ -155,6 +178,30 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
         <button title='Clear all filters' onClick={handleClearAll} className='rounded-md border border-red-100 px-2 hover:border-red-500 hover:text-red-500'>Clear all</button>
       </div>
       <div className="flex items-center gap-x-2 gap-y-2 my-3 text-sm text-gray-700 flex-wrap">
+        <div title='Amount' className="flex bg-white items-center rounded-md border">
+            <span className='text-base text-gray-500 px-1'><MdCurrencyRupee /></span>
+            <input
+              ref={minAmountRef}
+              type="number"
+              name="minAmount"
+              id="filter-min-amount"
+              placeholder='Min'
+              title='Min amount'
+              className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center hover:bg-gray-100 placeholder:text-gray-500 ${!filters.minAmount ? 'text-gray-500' : 'text-blue-600'}`}
+              onBlur={handleMinAmountChange}
+            />
+            <div className='h-7 border-s'></div>
+            <input
+              ref={maxAmountRef}
+              type="number"
+              name="maxAmount"
+              id="filter-max-amount"
+              placeholder='Max'
+              title='Max amount'
+              className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center rounded-e-md hover:bg-gray-100 placeholder:text-gray-500 ${!filters.maxAmount ? 'text-gray-500' : 'text-blue-600'}`}
+              onBlur={handleMaxAmountChange}
+            />
+        </div>
         <div className="flex bg-white items-center rounded-md border">
           <span className='text-xl ps-px'><CiCalendarDate /></span>
 

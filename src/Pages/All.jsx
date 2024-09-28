@@ -25,8 +25,11 @@ const initialFilters = {
   maxAmount: '',
   transactionFor: '',
   status: '',
-  approvalStatus: ''
+  approvalStatus: '',
+  searchBy: 'family head',
+  search: ''
 }
+
 
 const All = () => {
   const [filters, setFilters] = useState(initialFilters)
@@ -78,6 +81,7 @@ const All = () => {
       dispatch(getFilteredTransactions({ filters, items, page: page - 1 }))
     }
   }
+  
 
   const handleNext = () => {
     if (transactions.length >= items) {

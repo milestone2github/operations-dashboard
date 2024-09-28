@@ -20,6 +20,8 @@ const initialFilters = {
   rmName: "",
   type: "",
   sort: "trxdate-desc", // Default sort order
+  searchBy: 'family head',
+  search: ''
 };
 
 const Reco = () => {

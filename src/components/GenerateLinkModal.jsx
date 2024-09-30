@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
 
 const platformOptions = ["", "BSESTARMF", "NSENMF", "CAMS EDGE", "KARVY", "OFFLINE"]
+const paymentModeOptions = ["", 'Netbanking', 'Mandate', 'Cheque', 'NEFT/RTGS', 'Zero Balance', 'UPI']
 
-function GenerateLinkModal({ isOpen, title, handleCancel, handleProceed, status, error }) {
+function GenerateLinkModal({ isOpen, title, handleCancel, handleProceed, status, error, transaction }) {
   const [orderId, setOrderId] = useState('')
   const [platform, setPlatform] = useState('')
+  const [paymentMode, setPaymentMode] = useState('')
 
   useEffect(() => {
     if (!isOpen) {
@@ -13,9 +15,15 @@ function GenerateLinkModal({ isOpen, title, handleCancel, handleProceed, status,
     }
   }, [isOpen])
 
+  useEffect(() => {
+    if(transaction?.paymentMode) {
+      setPaymentMode(transaction.paymentMode)
+    }
+  }, [transaction?.paymentMode])
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    handleProceed(platform, orderId)
+    handleProceed(platform, orderId, paymentMode)
   }
 
   if (!isOpen) return null
@@ -53,6 +61,20 @@ function GenerateLinkModal({ isOpen, title, handleCancel, handleProceed, status,
           />
           {error && <p className='text-red-400 text-sm text-left mt-1'>{error}</p>}
         </div>
+        { ['SIP', 'Purchase'].includes(transaction?.type) && <div className="flex flex-col gap-y-px">
+          <label htmlFor="paymentMode" className='text-sm text-gray-600'>{transaction.type === 'SIP'? 'First Installment Payment Mode' : 'Payment Mode'} <span className='text-xs text-gray-500'>(optional)</span></label>
+          <select 
+            name="paymentMode"  
+            id="paymentMode" 
+            className='rounded-md p-2 border border-gray-500 focus:outline-2 focus:outline-blue-500'
+            value={paymentMode} 
+            onChange={(e) => setPaymentMode(e.target.value)}
+          >{
+            paymentModeOptions.map(option => 
+              <option value={option} selected={option === paymentMode}>{option || 'select'}</option>
+            )
+            }</select>
+        </div>}
         <div className='flex gap-x-3 mt-7 justify-end'>
           <button onClick={handleCancel} type='button' className='border rounded-lg py-2 px-6 text-gray-800 hover:bg-gray-200'>Cancel</button>
           <button type='submit' disabled={status === 'pending'} className='border rounded-lg py-2 px-6 bg-green-800 hover:bg-green-900 text-white'>{status === 'pending'? 'Processing...' : 'Generate'}</button>

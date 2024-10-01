@@ -75,7 +75,7 @@ const Menu = ({ menu, func }) => {
     {
       id: 8,
       icon: <FaWpforms className=' text-xl' />,
-      sname: "Schemes",
+      sname: "SCM+",
       lname: "NFO Schemes",
       path: "/nfo-schemes"
     },
@@ -105,7 +105,7 @@ const Menu = ({ menu, func }) => {
         <div className="text-[#F9FBFD] break-words invisible">
           mNiv
         </div>
-        <ul className='listoftabs whitespace-nowrap flex flex-col gap-1 justify-center items-center text-xs w-full'>
+        <ul className='listoftabs whitespace-nowrap flex flex-col gap-[2px] justify-center items-center text-xs w-full'>
           {
             tabs.map((tab, index) =>
               <Link
@@ -146,7 +146,7 @@ const Menu = ({ menu, func }) => {
           }
         </ul>
 
-        <button title='Logout' className='border p-2 rounded-lg text-[#F1F6FF] hover:bg-[#F1F6FF] hover:text-[#2879F3]' onClick={handleLogout} >
+        <button title='Logout' className='border p-[6px] rounded-lg text-[#F1F6FF] hover:bg-[#F1F6FF] hover:text-[#2879F3]' onClick={handleLogout} >
           <FaPowerOff className='text-xl' />
         </button>
 

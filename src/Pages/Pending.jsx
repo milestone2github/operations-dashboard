@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import DataTable from 'react-data-table-component'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,6 +11,8 @@ import { getSMNames } from '../redux/allFilterOptions/FilterOptionsAction';
 import toast, { Toaster } from 'react-hot-toast';
 import { LuListTodo, LuUserCheck2 } from 'react-icons/lu';
 import { MdOutlineCheckBoxOutlineBlank } from 'react-icons/md';
+import { RiExpandUpDownFill } from 'react-icons/ri';
+import { resetAssignStatus, resetError } from '../redux/groupedTransaction/GroupedTrxSlice';
 // import { FaSearch } from 'react-icons/fa';
 
 // const initialFilters = {
@@ -36,6 +38,11 @@ const Pending = () => {
     } = useSelector((state) => state.allFilterOptions)
     const navigate = useNavigate()
 
+    const { role } = useSelector(state => state.user.userData?.role)
+    // Permissions 
+    const canModifySm = ['operations senior', 'management', 'Administrator'].includes(role.toLowerCase())
+    const canAssignSm = ['operations senior', 'operations', 'management', 'Administrator'].includes(role.toLowerCase())
+
     useEffect(() => {
         dispatch(getSMNames())
         if (!searchParams.has('tab')) {
@@ -51,10 +58,16 @@ const Pending = () => {
     useEffect(() => {
         if (error) {
             toast.error(error)
+            setTimeout(() => {
+                dispatch(resetError())
+            }, 3000);
         }
         if (assignStatus === 'completed') {
             toast.success('Service manager assigned')
             handleCloseModal()
+            setTimeout(() => {
+                dispatch(resetAssignStatus())
+            }, 3000);
         }
     }, [error, assignStatus])
 
@@ -66,8 +79,8 @@ const Pending = () => {
         return name;
     }
 
-    const handleAssignSm = (_id, familyHead, relationshipManager) => {
-        setItemToUpdate({ _id, familyHead, relationshipManager })
+    const handleAssignSm = (_id, serialNumber, familyHead, relationshipManager, existingSm) => {
+        setItemToUpdate({ _id, serialNumber, familyHead, relationshipManager, existingSm })
         setIsSmModalOpen(true)
     }
 
@@ -158,32 +171,36 @@ const Pending = () => {
         },
         {
             name: <div>SM Name</div>,
-            selector: row => <div>{
+            selector: (row, index) => <div>{
                 row.serviceManager ?
-                    row.serviceManager :
-                    <button
-                        className='rounded-md px-3 py-1 text-sm border enabled:hover:border-blue-700 enabled:hover:bg-blue-600 bg-blue-500 text-gray-50'
-                        onClick={() => handleAssignSm(row._id, row.familyHead, row.relationshipManager)}
+                    canModifySm ? <div role='button' className='rounded-md border flex items-center py-1 hover:border-blue-300 hover:text-blue-600' onClick={() => handleAssignSm(row._id, index + 1, row.familyHead, row.relationshipManager, row.serviceManager)}>
+                        <span className='px-1'>{trimTo16letters(row.serviceManager)}</span>
+                        <RiExpandUpDownFill className='text-xl px-1' />
+                    </div> :
+                        <div title={row.serviceManager}>{trimTo16letters(row.serviceManager)}</div>
+                : <button
+                    disabled={!canAssignSm}
+                    className='rounded-md px-3 py-1 text-sm border enabled:hover:border-blue-700 enabled:hover:bg-blue-600 disabled:bg-blue-300 bg-blue-500 text-gray-50'
+                    onClick={() => handleAssignSm(row._id, index + 1, row.familyHead, row.relationshipManager)}
                     >Assign SM
-                    </button>
+                </button>
             }</div>,
-            center: "true",
-
+            center: true,
+            minWidth: '200px'
         },
         {
             name: <div className='text-center'>Execution date</div>,
             selector: row => formatDate(row.createdAt),
-            center: "true",
-            minWidth: "200px",
+            center: false,
+            minWidth: "180px",
             sortable: true
-
         }
     ]
 
     const handlclick = (row) => {
-        let params = new URLSearchParams() 
+        let params = new URLSearchParams()
         params.append('smFilter', activeTab)
-        if(row.familyHead) {params.append('fh', row.familyHead)}
+        if (row.familyHead) { params.append('fh', row.familyHead) }
         navigate(`details?${params.toString()}`)
     }
 

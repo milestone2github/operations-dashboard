@@ -23,12 +23,11 @@ export const approvalStatusList = [
   "Approved",
   "Link still Pending",
   "KYC not Compliant",
-  "Technical Issue",
   "Client Declined",
   "RM Declined",
   "Submitted to RTA",
   "System Update Awaiting",
   "RM Hold the Execution",
-  "Wrongly / Double Entry",
+  "Folio Creation Awaiting",
   "Onboarding Pending"
 ]

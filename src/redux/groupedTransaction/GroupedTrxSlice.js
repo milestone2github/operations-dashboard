@@ -11,7 +11,9 @@ const groupedTrxSlice = createSlice({
   name: 'groupedTransactions',
   initialState,
   reducers: {
-    resetGroupedTransanction: () => initialState
+    resetGroupedTransanction: (state) => initialState,
+    resetError: (state) => {state.error = null},
+    resetAssignStatus: (state) => {state.assignStatus = 'idle'},
   },
   extraReducers(builder) {
     builder.addCase(getGroupedTransactions.pending, (state) => {
@@ -50,5 +52,5 @@ const groupedTrxSlice = createSlice({
   }
 })
 
-export const { } = groupedTrxSlice.actions
+export const { resetAssignStatus, resetError } = groupedTrxSlice.actions
 export default groupedTrxSlice.reducer

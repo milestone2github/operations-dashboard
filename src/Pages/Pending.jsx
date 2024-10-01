@@ -142,7 +142,7 @@ const Pending = () => {
             name: "S No.",
             selector: (row, index) => <div>{index + 1}</div>,
             center: "true",
-            maxWidth: "60px",
+            maxWidth: '20px'
         },
         {
             name: <div className='text-start'>Family Head</div>,
@@ -192,14 +192,14 @@ const Pending = () => {
                     >Assign SM
                     </button>
             }</div>,
-            center: true,
+            center: "true",
             minWidth: '200px'
         },
         {
             name: <div className='text-center'>Execution date</div>,
             selector: row => formatDate(row.createdAt),
-            center: false,
             minWidth: "180px",
+            center: 'true',
             sortable: true
         }
     ]

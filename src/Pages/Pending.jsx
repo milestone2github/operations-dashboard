@@ -13,12 +13,7 @@ import { LuListTodo, LuUserCheck2 } from 'react-icons/lu';
 import { MdOutlineCheckBoxOutlineBlank } from 'react-icons/md';
 import { RiExpandUpDownFill } from 'react-icons/ri';
 import { resetAssignStatus, resetError } from '../redux/groupedTransaction/GroupedTrxSlice';
-// import { FaSearch } from 'react-icons/fa';
-
-// const initialFilters = {
-//     searchBy: 'family head',
-//     search: ''
-// };
+import { FaSearch } from 'react-icons/fa';
 
 const Pending = () => {
     const [itemToUpdate, setItemToUpdate] = useState({ _id: null, familyHead: null, relationshipManager: null })
@@ -27,8 +22,8 @@ const Pending = () => {
     const activeTab = searchParams.get('tab')
     const dispatch = useDispatch()
     const { isLoading, error, assignStatus, data } = useSelector((state) => state.groupedTransactions)
-    // const [selectedMenuOption, setSelectedMenuOption] = useState('family head');
-    // const [searchKeyword, setSearchKeyword] = useState('');
+    const [searchBy, setSearchBy] = useState('family head');
+    const [searchKeyword, setSearchKeyword] = useState('');
     // const [filters, setFilters] = useState(initialFilters);
     // const [openDropdown, setOpenDropdown] = useState({});
     const {
@@ -51,9 +46,22 @@ const Pending = () => {
     }, [])
 
     useEffect(() => {
-        console.log('tab changed')
-        dispatch(getGroupedTransactions(activeTab))
+        dispatch(getGroupedTransactions({
+            smFilter: activeTab, 
+            searchBy, 
+            searchKey: searchKeyword
+        }))
     }, [activeTab])
+
+    useEffect(() => {
+        if(searchKeyword){
+            dispatch(getGroupedTransactions({
+                smFilter: activeTab, 
+                searchBy, 
+                searchKey: searchKeyword
+            }))
+        }
+    }, [searchBy])
 
     useEffect(() => {
         if (error) {
@@ -97,14 +105,13 @@ const Pending = () => {
         setSearchParams({ tab: tabName })
     }
 
-    // const handleSearch = () => {
-    //     // Trigger search based on `searchKeyword` and `selectedMenuOption`
-    //     updateFilters({
-    //       ...filters,
-    //       searchBy: selectedMenuOption,
-    //       search: searchKeyword
-    //     });
-    // };
+    const handleSearch = () => {
+        dispatch(getGroupedTransactions({
+            smFilter: activeTab, 
+            searchBy, 
+            searchKey: searchKeyword
+        }))
+    };
 
     const customstyles = {
         headRow: {
@@ -173,17 +180,17 @@ const Pending = () => {
             name: <div>SM Name</div>,
             selector: (row, index) => <div>{
                 row.serviceManager ?
-                    canModifySm ? <div role='button' className='rounded-md border flex items-center py-1 hover:border-blue-300 hover:text-blue-600' onClick={() => handleAssignSm(row._id, index + 1, row.familyHead, row.relationshipManager, row.serviceManager)}>
+                    canModifySm ? <div role='button' className='rounded-md border flex items-center py-[2px] hover:border-blue-300 hover:text-blue-600' onClick={() => handleAssignSm(row._id, index + 1, row.familyHead, row.relationshipManager, row.serviceManager)}>
                         <span className='px-1'>{trimTo16letters(row.serviceManager)}</span>
                         <RiExpandUpDownFill className='text-xl px-1' />
                     </div> :
                         <div title={row.serviceManager}>{trimTo16letters(row.serviceManager)}</div>
-                : <button
-                    disabled={!canAssignSm}
-                    className='rounded-md px-3 py-1 text-sm border enabled:hover:border-blue-700 enabled:hover:bg-blue-600 disabled:bg-blue-300 bg-blue-500 text-gray-50'
-                    onClick={() => handleAssignSm(row._id, index + 1, row.familyHead, row.relationshipManager)}
+                    : <button
+                        disabled={!canAssignSm}
+                        className='rounded-md px-3 py-1 text-sm border enabled:hover:border-blue-700 enabled:hover:bg-blue-600 disabled:bg-blue-300 bg-blue-500 text-gray-50'
+                        onClick={() => handleAssignSm(row._id, index + 1, row.familyHead, row.relationshipManager)}
                     >Assign SM
-                </button>
+                    </button>
             }</div>,
             center: true,
             minWidth: '200px'
@@ -211,37 +218,34 @@ const Pending = () => {
             </div>
             <div className="table-section h-[88vh] bg-[#F8FAFC] flex justify-center p-3">
                 <div className='relative inner-section bg-white rounded-md  h-full w-full md:w-[87vw] lg:w-[90vw]  '>
-                    <div className='flex justify-between p-2 px-3'>
-                        <h3 className='sticky z-30 top-0 p-2 bg-white'>Transaction Details</h3>
-                        <ul className="flex">
+                    <div className='flex justify-start p-2 px-3'>
+                        <h3 className='h-10 p-2 bg-white'>Transaction Details</h3>
+                        <div className="ms-auto hidden md:flex items-center text-sm border h-11 me-4">
+                                <select
+                                    value={searchBy}
+                                    onChange={(e) => setSearchBy(e.target.value)}
+                                    className={'bg-gray-50 h-full text-sm focus:outline-none p-1'}
+                                >
+                                    <option value="family head">Family Head</option>
+                                    <option value="investor name">Investor Name</option>
+                                    <option value="PAN">PAN</option>
+                                </select>
+                            <div className='h-full border-l'></div>
+                            <input
+                                type="text"
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
+                                placeholder="Search Keywords"
+                                className="ms-2 mx-1 text-sm focus:outline-none"
+                            />
 
-                            {/* <div className="flex items-center px-2  text-sm  border h-[42px] me-4">
-                                <div className="relative">
-                                    <select
-                                        value={selectedMenuOption}
-                                        onChange={(e) => setSelectedMenuOption(e.target.value)}   
-                                        className={'bg-black text-white text-sm focus:outline-none p-1'}
-                                    >
-                                        <option value="family head">Family Head</option>
-                                        <option value="investor name">Investor Name</option>
-                                        <option value="PAN">PAN</option>
-                                    </select>
-                                </div>
+                            <button onClick={handleSearch} className="cursor-pointer h-full p-2 hover:bg-gray-50">
+                                <FaSearch/>
+                            </button>
+                        </div>
 
-                                <input
-                                    type="text"
-                                    value={searchKeyword}
-                                    onChange={(e) => setSearchKeyword(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
-                                    placeholder="Search Keywords"
-                                    className="mx-1 text-sm focus:outline-none"
-                                />
-
-                                <FaSearch
-                                    className="cursor-pointer" // Makes the icon clickable
-                                    onClick={handleSearch} // Triggers search when the icon is clicked
-                                />
-                            </div> */}
+                        <ul className="ms-auto md:ms-0 flex h-[42px] shadow shadow-blue-100">
 
                             <li className="relative">
                                 <input
@@ -300,7 +304,32 @@ const Pending = () => {
                         </ul>
                     </div>
 
-                    <div className='p-2'>
+                    <div className="mx-3 mb-2 md:hidden flex items-center text-sm border h-11">
+                                <select
+                                    value={searchBy}
+                                    onChange={(e) => setSearchBy(e.target.value)}
+                                    className={'bg-gray-50 h-full text-sm focus:outline-none p-1'}
+                                >
+                                    <option value="family head">Family Head</option>
+                                    <option value="investor name">Investor Name</option>
+                                    <option value="PAN">PAN</option>
+                                </select>
+                            <div className='h-full border-l'></div>
+                            <input
+                                type="text"
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
+                                placeholder="Search Keywords"
+                                className="ms-2 mx-1 w-full text-sm focus:outline-none"
+                            />
+
+                            <button onClick={handleSearch} className="cursor-pointer h-full p-2 hover:bg-gray-50">
+                                <FaSearch/>
+                            </button>
+                        </div>
+
+                    <div className='p-1'>
                         {isLoading ? <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'><Loader /></div>
                             : <DataTable
                                 columns={columns}
@@ -310,7 +339,7 @@ const Pending = () => {
                                 pointerOnHover
                                 onRowClicked={handlclick}
                                 customStyles={customstyles}
-                                fixedHeaderScrollHeight='75vh'
+                                fixedHeaderScrollHeight='72vh'
                             >
                             </DataTable>}
                     </div>

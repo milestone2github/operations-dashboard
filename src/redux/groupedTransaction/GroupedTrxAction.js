@@ -1,9 +1,14 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const getGroupedTransactions = createAsyncThunk('groupedTrx/get',
-  async (smFilter, {rejectWithValue}) => {
+  async ({smFilter, searchBy, searchKey}, {rejectWithValue}) => {
+    let searchParams = new URLSearchParams()
+    if(smFilter){searchParams.append('smFilter', smFilter)}
+    if(searchBy){searchParams.append('searchBy', searchBy)}
+    if(searchKey){searchParams.append('searchKey', searchKey)}
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/group-by-fhrm?smFilter=${smFilter}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ops-dash/group-by-fhrm?${searchParams}`, {
         method: 'GET',
         credentials: 'include'
       })
@@ -13,7 +18,7 @@ export const getGroupedTransactions = createAsyncThunk('groupedTrx/get',
       if(!response.ok) {
         throw new Error(resData.error || 'Internal server error')
       }
-  
+      
       return resData.data
     } catch (error) {
       console.log('Error fething grouped transactions, ', error.message)

@@ -39,7 +39,7 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
   const listRef = useRef(null)
   const viewListBtn = useRef(null)
 
-  const {all, addStatus} = useSelector(state => state.savedFilters)
+  const { all, addStatus } = useSelector(state => state.savedFilters)
 
   useEffect(() => {
     dispatch(getAllAmc())
@@ -119,27 +119,27 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
   }
 
   const handleSaveCurrentFilter = () => {
-    if(all.filters?.length >= import.meta.env.VITE_SAVED_FILTER_LIMIT || 3) {
+    if (all.filters?.length >= import.meta.env.VITE_SAVED_FILTER_LIMIT || 3) {
       let response = confirm("The filter limit has been reached. The oldest filter will be removed to save the new one. Do you want to proceed?")
       console.log('response: ', response)//test
-      if(!response) {return}
+      if (!response) { return }
     }
     let filterSearchParams = new URLSearchParams();
     for (const [key, value] of Object.entries(filters)) {
-      if(value) {
+      if (value) {
         filterSearchParams.append(key, value)
       }
     }
     let filterString = filterSearchParams.toString()
-    dispatch(addSavedFilters({at: filterString}))
+    dispatch(addSavedFilters({ at: filterString }))
   }
 
   useEffect(() => {
-    if(addStatus === 'completed') {
+    if (addStatus === 'completed') {
       toast.success('Saved')
       setTimeout(dispatch(resetAddStatus()), 3000);
     }
-    else if(addStatus === 'failed') {
+    else if (addStatus === 'failed') {
       toast.error('Unable to save')
       setTimeout(dispatch(resetAddStatus()), 3000);
     }
@@ -170,8 +170,8 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
     setSelectedMenuOption('family head')
   }
 
-  const toggleListVisiblilty = () => {setIsFilterListVisible(prev => !prev)}
-  
+  const toggleListVisiblilty = () => { setIsFilterListVisible(prev => !prev) }
+
   const handleClickOutside = (e) => {
     if (!listRef?.current?.contains(e.target) && viewListBtn.current !== e.target) {
       setIsFilterListVisible(false);
@@ -186,8 +186,8 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
   }, [])
 
   useEffect(() => {
-    if(searchKeyword)
-      updateFilters({...filters, searchBy: selectedMenuOption})
+    if (searchKeyword)
+      updateFilters({ ...filters, searchBy: selectedMenuOption })
   }, [selectedMenuOption])
 
   return (
@@ -195,13 +195,13 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
       <div className="flex justify-start items-center flex-wrap gap-2">
         <p className='text-gray-700 font-medium text-lg'>Filters</p>
         <div className='relative border rounded border-blue-300 flex h-6'>
-          <button ref={viewListBtn} title='saved filters' onClick={toggleListVisiblilty} className={`px-1 ${isFilterListVisible? 'bg-blue-200':''} hover:bg-blue-200`}><MdFilterList className='text-blue-800 text-base' /></button>
+          <button ref={viewListBtn} title='saved filters' onClick={toggleListVisiblilty} className={`px-1 ${isFilterListVisible ? 'bg-blue-200' : ''} hover:bg-blue-200`}><MdFilterList className='text-blue-800 text-base' /></button>
           <div className='h-6 border-s border-s-blue-300'></div>
-          <button 
-            title='save filter' 
+          <button
+            title='save filter'
             onClick={handleSaveCurrentFilter}
             className='px-1 hover:bg-blue-200'
-            ><FiSave className='text-blue-700 text-base font-light' />
+          ><FiSave className='text-blue-700 text-base font-light' />
           </button>
 
           {isFilterListVisible && <ul ref={listRef} className='absolute p-3 z-10 shadow-md rounded-lg -left-16 md:-left-2 top-[calc(100%+4px)] bg-white border flex flex-col gap-3 max-w-[calc(97vw)] md:max-w-[calc(100vw-280px)] xl:max-w-[992px] overflow-x-auto'>{
@@ -209,19 +209,20 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
               let searchParams = new URLSearchParams(encodedString)
               let keys = searchParams.keys().toArray()
               return (
-                <li 
+                <li
                   key={index}
                   role='button'
-                  onClick={() => {dispatch(setActiveAll(index)); dispatch(updateActiveSavedFilters({atIdx: index}))}}
-                  className={`${all.active === index? 'bg-blue-50 border-blue-300' : ' border-gray-200'}  flex gap-1 items-center p-2 rounded-md border w-max md:w-max xl:w-full`}
-                  >{
-                  keys.map(key => {
-                    return(<span key={key} className='relative'>
-                      <span className={`text-gray-600 text-[.65rem] p-px px-[2px] leading-3 rounded  absolute -top-[50%] translate-y-1/2 left-2 text-nowrap ${all.active === index? 'bg-blue-50' : 'bg-white'}`}>{filterKeyMap[key] || key}</span>
-                      <span className='border text-gray-800 min-w-28 text-sm text-center inline-block text-nowrap rounded border-indigo-200 px-2 py-1'>{key === 'sort' ? reverseSortMap.get(searchParams.get(key)) : searchParams.get(key)}</span>
-                    </span>)})
-                }
-                {/* <div className='relative ms-auto'>
+                  onClick={() => { dispatch(setActiveAll(index)); dispatch(updateActiveSavedFilters({ atIdx: index })) }}
+                  className={`${all.active === index ? 'bg-blue-50 border-blue-300' : ' border-gray-200'}  flex gap-1 items-center p-2 rounded-md border w-max md:w-max xl:w-full`}
+                >{
+                    keys.map(key => {
+                      return (<span key={key} className='relative'>
+                        <span className={`text-gray-600 text-[.65rem] p-px px-[2px] leading-3 rounded  absolute -top-[50%] translate-y-1/2 left-2 text-nowrap ${all.active === index ? 'bg-blue-50' : 'bg-white'}`}>{filterKeyMap[key] || key}</span>
+                        <span className='border text-gray-800 min-w-28 text-sm text-center inline-block text-nowrap rounded border-indigo-200 px-2 py-1'>{key === 'sort' ? reverseSortMap.get(searchParams.get(key)) : searchParams.get(key)}</span>
+                      </span>)
+                    })
+                  }
+                  {/* <div className='relative ms-auto'>
                   <input className='absolute invisible' type="radio" name="selectedSavedFilter" id={`filter${index+1}`} />
                   <label className='ms-2 rounded-full ring-1 ring-inset ring-green-500 flex items-center justify-center' htmlFor={`filter${index+1}`}>
                     <IoCheckmarkCircle className='text-2xl text-green-500'/>
@@ -244,40 +245,32 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
             maximumFractionDigits: 2
           })}</span>
         </div>
-        
 
-        <div className={'rounded-md  focus-within:ring-2 focus-within:ring-blue-500'}>
-           
-          <div className="flex items-center px-2 py-1 text-sm rounded-md border text-gray-500">
-            <div className="relative">
-              <select
-                value={selectedMenuOption}
-                onChange={(e) => setSelectedMenuOption(e.target.value)}   
-                className={`bg-gray-100 text-sm rounded-md focus:outline-none`}
-              >
-                <option value="family head">Family Head</option>
-                <option value="investor name">Investor Name</option>
-                <option value="PAN">PAN</option>
-              </select>
-            </div>
 
-            {/* Search Input */}
-            <input
+        <div className="mx-3 flex items-center text-sm border rounded-md focus-within:ring-2 focus-within:ring-blue-500">
+          <select
+            value={selectedMenuOption}
+            onChange={(e) => setSelectedMenuOption(e.target.value)}
+            className={'bg-gray-50 h-full text-sm focus:outline-none p-1 rounded-s-md border-e hover:bg-gray-100'}
+          >
+            <option value="family head">Family Head</option>
+            <option value="investor name">Investor Name</option>
+            <option value="PAN">PAN</option>
+          </select>
+
+          <input
             type="text"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search Keywords"
-            className="mx-1 text-sm rounded-md focus:outline-none"
+            className="ms-2 mx-1 w-full text-sm focus:outline-none"
           />
 
-          {/* Search Icon */}
-          <FaSearch
-            className="cursor-pointer" // Makes the icon clickable
-            onClick={handleSearch} // Triggers search when the icon is clicked
-          />
+          <button onClick={handleSearch} className="rounded-e-md h-full p-2 hover:bg-gray-50">
+            <FaSearch />
+          </button>
         </div>
-      </div>
 
         <SortMenu
           list={sortOptions}
@@ -285,10 +278,10 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
           updateSelected={(value) => setSortBy(value)}
           width='200px'
         />
-        <button title='Clear all filters' onClick={handleClearAll} className='rounded-md border border-red-100 px-2 hover:border-red-500 hover:text-red-500'>Clear all</button>
+        <button title='Clear all filters' onClick={handleClearAll} className='rounded-md border border-red-100 py-1 px-2 hover:border-red-500 hover:text-red-500'>Clear all</button>
       </div>
       <div className="flex items-center gap-x-2 gap-y-2 my-3 text-sm text-gray-700 flex-wrap">
-      <div title='Amount' className="flex bg-white items-center rounded-md border">
+        <div title='Amount' className="flex bg-white items-center rounded-md border">
           <span className='text-base text-gray-500 px-1'><MdCurrencyRupee /></span>
           <input
             ref={minAmountRef}

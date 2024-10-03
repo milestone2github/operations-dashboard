@@ -123,8 +123,8 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
   }
 
   useEffect(() => {
-    if(searchKeyword)
-      updateFilters({...filters, searchBy: selectedMenuOption})
+    if (searchKeyword)
+      updateFilters({ ...filters, searchBy: selectedMenuOption })
   }, [selectedMenuOption])
 
   return (
@@ -144,37 +144,31 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
           })}</span>
         </div>
 
-        <div className={'rounded-md  focus-within:ring-2 focus-within:ring-blue-500'}>
-           
-          <div className="flex items-center px-2 py-1 text-sm rounded-md border text-gray-500">
-            <div className="relative">
-              <select
-                value={selectedMenuOption}
-                onChange={(e) => setSelectedMenuOption(e.target.value)}   
-                className={`bg-gray-100 text-sm rounded-md focus:outline-none`}
-              >
-                <option value="family head">Family Head</option>
-                <option value="investor name">Investor Name</option>
-                <option value="PAN">PAN</option>
-              </select>
-            </div>
-
-            {/* Search Input */}
-            <input
-              type="text"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
-              placeholder="Search Keywords"
-              className="mx-1 text-sm rounded-md focus:outline-none"
-            />
-
-            {/* Search Icon */}
-            <FaSearch
-              className="cursor-pointer" // Makes the icon clickable
-              onClick={handleSearch} // Triggers search when the icon is clicked
-            />
+        <div className="mx-3 flex items-center text-sm border rounded-md focus-within:ring-2 focus-within:ring-blue-500">
+          <div className="relative">
+            <select
+              value={selectedMenuOption}
+              onChange={(e) => setSelectedMenuOption(e.target.value)}
+              className={'bg-gray-50 h-full text-sm focus:outline-none p-1 border-e rounded-s-md hover:bg-gray-100'}
+            >
+              <option value="family head">Family Head</option>
+              <option value="investor name">Investor Name</option>
+              <option value="PAN">PAN</option>
+            </select>
           </div>
+
+          <input
+            type="text"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}  // Trigger search on Enter key
+            placeholder="Search Keywords"
+            className="ms-2 mx-1 w-full text-sm focus:outline-none"
+          />
+
+          <button onClick={handleSearch} className="rounded-e-md h-full p-2 hover:bg-gray-50">
+            <FaSearch />
+          </button>
         </div>
 
         <SortMenu
@@ -187,28 +181,28 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
       </div>
       <div className="flex items-center gap-x-2 gap-y-2 my-3 text-sm text-gray-700 flex-wrap">
         <div title='Amount' className="flex bg-white items-center rounded-md border">
-            <span className='text-base text-gray-500 px-1'><MdCurrencyRupee /></span>
-            <input
-              ref={minAmountRef}
-              type="number"
-              name="minAmount"
-              id="filter-min-amount"
-              placeholder='Min'
-              title='Min amount'
-              className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center hover:bg-gray-100 placeholder:text-gray-500 ${!filters.minAmount ? 'text-gray-500' : 'text-blue-600'}`}
-              onBlur={handleMinAmountChange}
-            />
-            <div className='h-7 border-s'></div>
-            <input
-              ref={maxAmountRef}
-              type="number"
-              name="maxAmount"
-              id="filter-max-amount"
-              placeholder='Max'
-              title='Max amount'
-              className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center rounded-e-md hover:bg-gray-100 placeholder:text-gray-500 ${!filters.maxAmount ? 'text-gray-500' : 'text-blue-600'}`}
-              onBlur={handleMaxAmountChange}
-            />
+          <span className='text-base text-gray-500 px-1'><MdCurrencyRupee /></span>
+          <input
+            ref={minAmountRef}
+            type="number"
+            name="minAmount"
+            id="filter-min-amount"
+            placeholder='Min'
+            title='Min amount'
+            className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center hover:bg-gray-100 placeholder:text-gray-500 ${!filters.minAmount ? 'text-gray-500' : 'text-blue-600'}`}
+            onBlur={handleMinAmountChange}
+          />
+          <div className='h-7 border-s'></div>
+          <input
+            ref={maxAmountRef}
+            type="number"
+            name="maxAmount"
+            id="filter-max-amount"
+            placeholder='Max'
+            title='Max amount'
+            className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center rounded-e-md hover:bg-gray-100 placeholder:text-gray-500 ${!filters.maxAmount ? 'text-gray-500' : 'text-blue-600'}`}
+            onBlur={handleMaxAmountChange}
+          />
         </div>
         <div className="flex bg-white items-center rounded-md border">
           <span className='text-xl ps-px'><CiCalendarDate /></span>

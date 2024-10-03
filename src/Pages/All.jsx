@@ -10,6 +10,7 @@ import { color } from '../Statuscolor/color'
 import Loader from '../components/Loader'
 import { FaSadTear } from 'react-icons/fa'
 import { getSavedFilters } from '../redux/savedFilters/SavedFiltersAction'
+import { PiGitBranchFill } from 'react-icons/pi'
 const items = 25
 
 const initialFilters = {
@@ -120,9 +121,10 @@ const All = () => {
       <section className='px-2 md:px-6 w-full'>
         <article className='border max-h-[60vh] bg-gray-50 rounded-md overflow-x-scroll w-full md:w-[calc(100vw-152px)] min-h-[75vh] relative custom-scrollbar'>
           <table className='filtered-trx'>
-            <thead className='bg-blue-50 sticky top-0'>
+            <thead className='bg-blue-50 sticky top-0 z-[1]'>
               <tr className='font-medium text-nowrap py-3  text-gray-800'>
                 <th className='text-sm'>S. No.</th>
+                <th className='text-sm'>Status</th>
                 <th className='text-sm'>Transaction date</th>
                 <th className='text-sm'>Transaction type</th>
                 <th className='text-sm'>Pan number</th>
@@ -133,7 +135,6 @@ const All = () => {
                 <th className='text-sm'>Scheme name</th>
                 <th className='text-sm'>Amount</th>
                 <th className='text-sm'>Units</th>
-                <th className='text-sm'>Status</th>
                 <th className='text-sm'>SM Name</th>
                 <th className='text-sm'>Registrant</th>
                 <th className='text-sm'>Folio No.</th>
@@ -146,6 +147,7 @@ const All = () => {
                 <th className='text-sm'>SIP/SWP/STP date</th>
                 <th className='text-sm'>SIP Pause month</th>
                 <th className='text-sm'>Tenure of SIP</th>
+                <th className='text-sm'>Approval Status</th>
                 <th className='text-sm'>Order ID</th>
                 <th className='text-sm'>Cheque No.</th>
               </tr>
@@ -154,11 +156,47 @@ const All = () => {
             <tbody className='divide-y px-3'>{
               status === 'pending' ? showLoading : !transactions.length ? notFound :
                 transactions?.map((item, index) => {
-                  let statusColor = color.find(colorItem => colorItem.type === item.status)
+                  let status = item.status
+                  let approvalStatus = item.approvalStatus
+                  let folioNumber = item.folioNumber
+                  let orderId = item.orderId
+                  let orderPlatform = item.orderPlatform
+                  let amount = item.amount
+                  let note = item.note
+                  let linkStatus = item.linkStatus
+                  let sipSwpStpDate = item.sipSwpStpDate
+                  let id = item._id
+                  
+                  if(item.hasFractions) {
+                    status = item.transactionFractions?.status
+                    approvalStatus = item.transactionFractions?.approvalStatus
+                    folioNumber = item.transactionFractions?.folioNumber
+                    orderId = item.transactionFractions?.orderId
+                    orderPlatform = item.transactionFractions?.orderPlatform
+                    amount = item.transactionFractions?.fractionAmount
+                    note = item.transactionFractions?.note
+                    linkStatus = item.transactionFractions?.linkStatus
+                    sipSwpStpDate = item.transactionFractions?.transactionDate
+                    id = item.transactionFractions?._id
+                  }
+                  let statusColor = color.find(colorItem => colorItem.type === status)
 
                   return (
-                    <tr key={item._id} className='text-sm'>
-                      <td>{(page - 1) * items + (index + 1)}</td>
+                    <tr key={id} className='text-sm'>
+                      <td>
+                        <span className='relative'>
+                        {(page - 1) * items + (index + 1)}
+                      {/* {item.hasFractions && <PiGitBranchFill className='rotate-90 text-blue-600 -z-0' />} */}
+                      {item.hasFractions && <strong className='ms-1 absolute -top-1 left-full bg-purple-200 rounded-sm px-1 py- text-purple-800 text-[10px] leading-3'>F</strong>}
+                        </span>
+                      </td>
+                      <td >
+                        <span
+                          className='px-2 py-1 rounded-full'
+                          style={{ backgroundColor: statusColor.bgcolor, color: statusColor.color }}
+                        >{statusColor.value}
+                        </span>
+                      </td>
                       <td>{formatDateDDShortMonthNameYY(item.transactionPreference)}</td>
                       <td>{item.transactionType}</td>
                       <td>{item.panNumber}</td>
@@ -167,28 +205,27 @@ const All = () => {
                       <td><span className='w-44 two-line-ellipsis'>{item.relationshipManager}</span></td>
                       <td><span className='w-44 two-line-ellipsis'>{item.amcName}</span></td>
                       <td><span className='w-44 two-line-ellipsis'>{item.schemeName}</span></td>
-                      <td>{item.amount}</td>
+                      <td>{Number(amount).toLocaleString('en-In', {
+                        minimumFractionDigits: 0, 
+                        maximumFractionDigits: 2, 
+                        style: 'currency', 
+                        currency: 'INR'
+                      })}</td>
                       <td>{item.transactionUnits}</td>
-                      <td >
-                        <span
-                          className='px-3 py-2 rounded-full'
-                          style={{ backgroundColor: statusColor.bgcolor, color: statusColor.color }}
-                        >{statusColor.value}
-                        </span>
-                      </td>
                       <td><span className='w-44 two-line-ellipsis'>{item.serviceManager || 'N/A'}</span></td>
                       <td><span className='w-44 two-line-ellipsis'>{item.registrantName}</span></td>
-                      <td>{item.folioNumber}</td>
+                      <td>{folioNumber}</td>
                       <td>{item.schemeOption}</td>
                       <td><span className='w-44 two-line-ellipsis'>{item.fromSchemeName}</span></td>
                       <td>{item.fromSchemeOption}</td>
                       <td>{item.transactionFor}</td>
                       <td>{item.paymentMode}</td>
                       <td>{item.firstTransactionAmount}</td>
-                      <td>{formatDateDDShortMonthNameYY(item.sipSwpStpDate)}</td>
+                      <td>{formatDateDDShortMonthNameYY(sipSwpStpDate)}</td>
                       <td>{item.sipPauseMonths}</td>
                       <td>{item.tenure}</td>
-                      <td>{item.orderId}</td>
+                      <td>{approvalStatus}</td>
+                      <td>{orderId}</td>
                       <td>{item.chequeNumber}</td>
                     </tr>)
                 })}

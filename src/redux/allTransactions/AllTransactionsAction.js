@@ -6,10 +6,12 @@ export const getFilteredTransactions = createAsyncThunk('allTransactions/getFilt
     query.append('page', page || 1)
     query.append('items', items || 10)
     if(filters.sort) {query.append('sort', filters.sort)}
-    
-    // delete filters.sort
+
     for(const [key, value] of Object.entries(filters)) {
-      if(value && key !== 'sort') {query.append(key, value)}
+      if(Array.isArray(value) && key !== 'sort') {
+        value.forEach(item => query.append(key, item))
+      }
+      else if(value && key !== 'sort') {query.append(key, value)}
     }
 
     try {

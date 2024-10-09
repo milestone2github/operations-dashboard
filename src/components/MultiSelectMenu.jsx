@@ -82,7 +82,7 @@ function MultiSelectMenu({ list, selectedValues, updateSelectedValues, width='26
     }
   };
 
-  const selectedCount = selectedValues.reduce((count, item) => {
+  const selectedCount = selectedValues?.reduce((count, item) => {
     return list.includes(item) ? count + 1 : count
   }, 0)
 

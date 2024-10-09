@@ -1,5 +1,4 @@
 export const transactionStatusList = [
-  "",
   'PENDING', 
   'APPROVED',//new
   'REJECTED',//new

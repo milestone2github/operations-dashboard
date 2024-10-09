@@ -1,19 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react'
-import SearchSelectMenu from './SearchSelectMenu'
 import { useDispatch, useSelector } from 'react-redux'
-import { getAllAmc, getAllSchemes, getRMNames, getSMNames } from '../redux/allFilterOptions/FilterOptionsAction'
-import toast from 'react-hot-toast'
-import { CiCalendarDate } from 'react-icons/ci'
-import { formatDateDDShortMonthNameYY } from '../utils/formatDate'
 import { resetSchemeList } from '../redux/allFilterOptions/FilterOptionsSlice'
+import SearchSelectMenu from './SearchSelectMenu'
 import SortMenu from './SortMenu'
 import { MdCurrencyRupee, MdFilterList } from 'react-icons/md'
 import { FiSave } from 'react-icons/fi'
 import { FaSearch } from 'react-icons/fa'
-import { IoCheckmarkCircle } from 'react-icons/io5'
-import { resetAddStatus, setActiveAll } from '../redux/savedFilters/SavedFiltersSlice'
+import { CiCalendarDate } from 'react-icons/ci'
+import { formatDateDDShortMonthNameYY } from '../utils/formatDate'
 import { addSavedFilters, updateActiveSavedFilters } from '../redux/savedFilters/SavedFiltersAction'
+import { resetAddStatus, setActiveAll } from '../redux/savedFilters/SavedFiltersSlice'
+import MultiSelectMenu from './MultiSelectMenu'
+import { getAllSchemes } from '../redux/allFilterOptions/FilterOptionsAction'
 import { filterKeyMap } from '../utils/map'
+import toast from 'react-hot-toast'
 
 const sortOptions = ['Latest', 'Oldest', 'Amount: low to high', 'Amount: high to low']
 const sortMap = new Map()
@@ -24,13 +24,9 @@ sortMap.set('Amount: high to low', 'amount-desc')
 
 const reverseSortMap = new Map([...sortMap].map(([key, value]) => [value, key]));
 
-function FiltersBar({ filters, updateFilters, results, aum }) {
+function FiltersBar({ filters, updateFilters, clearAllFilters, results, aum, filterConfig, amcOptions, schemeOptions, rmNameOptions, smNameOptions, statusOptions, approvalStatusOptions, typeOptions, forOptions }) {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedMenuOption, setSelectedMenuOption] = useState('family head');
-  const { amcList, typeList, schemesList, rmNameList, smNameList, statusList, approvalStatusList, transactionForList, error } = useSelector(state => state.allFilterOptions)
-  const [filteredAmcs, setFilteredAmcs] = useState([''])
-  const [filteredSchemes, setFilteredSchemes] = useState([''])
-  const [filteredStatus, setFilteredStatus] = useState(statusList)
   const [isFilterListVisible, setIsFilterListVisible] = useState(false)
   const [sortBy, setSortBy] = useState('Latest')
   const dispatch = useDispatch()
@@ -42,31 +38,11 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
   const { all, addStatus } = useSelector(state => state.savedFilters)
 
   useEffect(() => {
-    dispatch(getAllAmc())
-    dispatch(getRMNames())
-    dispatch(getSMNames())
-  }, [])
-
-  useEffect(() => {
     if (filters.amcName)
       dispatch(getAllSchemes(filters.amcName))
     else
       dispatch(resetSchemeList())
   }, [filters.amcName])
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error)
-    }
-  }, [error])
-
-  useEffect(() => {
-    setFilteredAmcs(amcList)
-  }, [amcList])
-
-  useEffect(() => {
-    setFilteredSchemes(schemesList)
-  }, [schemesList])
 
   useEffect(() => {
     updateFilters({ ...filters, sort: sortMap.get(sortBy) })
@@ -106,27 +82,17 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
     }
   }
 
-  const handleFilterAmc = (key) => {
-    setFilteredAmcs(amcList.filter(item => item.toLowerCase().includes(key.toLowerCase())))
-  }
-
-  const handleFilterSchemes = (key) => {
-    setFilteredSchemes(schemesList.filter(item => item.toLowerCase().includes(key.toLowerCase())))
-  }
-
-  const handleFilterStatus = (key) => {
-    setFilteredStatus(statusList.filter(item => item.toLowerCase().includes(key.toLowerCase())))
-  }
-
   const handleSaveCurrentFilter = () => {
-    if (all.filters?.length >= import.meta.env.VITE_SAVED_FILTER_LIMIT || 3) {
+    if (all.filters?.length >= (import.meta.env.VITE_SAVED_FILTER_LIMIT || 3)) {
       let response = confirm("The filter limit has been reached. The oldest filter will be removed to save the new one. Do you want to proceed?")
-      console.log('response: ', response)//test
+
       if (!response) { return }
     }
     let filterSearchParams = new URLSearchParams();
     for (const [key, value] of Object.entries(filters)) {
-      if (value) {
+      if(['searchBy', 'searchKey'].includes(key)) 
+        continue
+      if (Array.isArray(value)? value.length : value) {
         filterSearchParams.append(key, value)
       }
     }
@@ -146,23 +112,7 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
   }, [addStatus])
 
   const handleClearAll = () => {
-    updateFilters({
-      minDate: '',
-      maxDate: '',
-      amcName: '',
-      schemeName: '',
-      rmName: '',
-      smName: '',
-      type: '',
-      sort: 'trxdate-desc',
-      minAmount: '',
-      maxAmount: '',
-      transactionFor: '',
-      status: '',
-      approvalStatus: '',
-      searchKey: '',
-      searchBy: 'family head'
-    })
+    clearAllFilters()
     setSortBy('Latest')
     minAmountRef.current.value = ''
     maxAmountRef.current.value = ''
@@ -194,7 +144,7 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
     <div className="flex flex-col text-sm text-gray-700">
       <div className="flex justify-start items-center flex-wrap gap-2">
         <p className='text-gray-700 font-medium text-lg'>Filters</p>
-        <div className='relative border rounded border-blue-300 flex h-6'>
+        {filterConfig.saveFilter && <div className='relative border rounded border-blue-300 flex h-6'>
           <button ref={viewListBtn} title='saved filters' onClick={toggleListVisiblilty} className={`px-1 ${isFilterListVisible ? 'bg-blue-200' : ''} hover:bg-blue-200`}><MdFilterList className='text-blue-800 text-base' /></button>
           <div className='h-6 border-s border-s-blue-300'></div>
           <button
@@ -222,17 +172,11 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
                       </span>)
                     })
                   }
-                  {/* <div className='relative ms-auto'>
-                  <input className='absolute invisible' type="radio" name="selectedSavedFilter" id={`filter${index+1}`} />
-                  <label className='ms-2 rounded-full ring-1 ring-inset ring-green-500 flex items-center justify-center' htmlFor={`filter${index+1}`}>
-                    <IoCheckmarkCircle className='text-2xl text-green-500'/>
-                  </label>
-                </div> */}
                 </li>
               )
             })
           }</ul>}
-        </div>
+        </div>}
 
         <div className='flex items-center bg-blue-100 p-1 px-2 gap-2 rounded-md'>
           <span className='text-[10px] leading-tight text-gray-500 '>Results</span>
@@ -281,7 +225,7 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
         <button title='Clear all filters' onClick={handleClearAll} className='rounded-md border border-red-100 py-1 px-2 hover:border-red-500 hover:text-red-500'>Clear all</button>
       </div>
       <div className="flex items-center gap-x-2 gap-y-2 my-3 text-sm text-gray-700 flex-wrap">
-        <div title='Amount' className="flex bg-white items-center rounded-md border">
+        {filterConfig.amount && <div title='Amount' className="flex bg-white items-center rounded-md border">
           <span className='text-base text-gray-500 px-1'><MdCurrencyRupee /></span>
           <input
             ref={minAmountRef}
@@ -304,8 +248,8 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
             className={`bg-transparent focus:bg-gray-100 focus:outline-none text-sm w-[76px] p-1 text-center rounded-e-md hover:bg-gray-100 placeholder:text-gray-500 ${!filters.maxAmount ? 'text-gray-500' : 'text-blue-600'}`}
             onBlur={handleMaxAmountChange}
           />
-        </div>
-        <div className="flex bg-white items-center rounded-md border">
+        </div>}
+        {filterConfig.date && <div className="flex bg-white items-center rounded-md border">
           <span className='text-xl ps-px'><CiCalendarDate /></span>
 
           <label
@@ -337,95 +281,92 @@ function FiltersBar({ filters, updateFilters, results, aum }) {
               onFocus={(e) => e.target.showPicker()}
             />
           </label>
-        </div>
+        </div>}
 
-        <select
+        {filterConfig.type && <select
           name="type"
           id="type"
           value={filters.type}
           onChange={handleFilterChange}
           className={`px-2 py-1 text-sm rounded-md border focus:outline-blue-500 ${!filters.type ? 'text-gray-500' : 'text-blue-600'}`}
         >
-          {typeList?.map(item => (
-            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`} selected={item === filters.type}>{item || "Type"}</option>
+          {typeOptions?.map(item => (
+            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`}>{item || "Type"}</option>
           ))}
-        </select>
+        </select>}
 
         <SearchSelectMenu
           selectedValue={filters.amcName}
           updateSelected={(item) => { handleFilterChange({ target: { name: 'amcName', value: item } }) }}
-          list={filteredAmcs}
-          handleSearchAction={handleFilterAmc}
+          list={amcOptions}
           defaultEmptyName='AMC Name'
         />
 
         <SearchSelectMenu
           selectedValue={filters.schemeName}
           updateSelected={(item) => { handleFilterChange({ target: { name: 'schemeName', value: item } }) }}
-          list={filteredSchemes}
-          handleSearchAction={handleFilterSchemes}
+          list={schemeOptions}
           defaultEmptyName='Scheme Name'
         />
 
-        <select
+        {filterConfig.relationshipManager && <select
           name="rmName"
           id="rm-name"
           value={filters.rmName}
           onChange={handleFilterChange}
           className={`px-2 py-1 text-sm rounded-md border focus:outline-blue-500 ${!filters.rmName ? 'text-gray-500' : 'text-blue-600'}`}
         >
-          {rmNameList?.map(item => (
-            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`} selected={item === filters.rmName}>{item || "RM Name"}</option>
+          {rmNameOptions?.map(item => (
+            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`}>{item || "RM Name"}</option>
           ))}
-        </select>
+        </select>}
 
-        <select
+        {filterConfig.serviceManager && <select
           name="smName"
           id="sm-name"
           value={filters.smName}
           onChange={handleFilterChange}
           className={`px-2 py-1 text-sm rounded-md border focus:outline-blue-500 ${!filters.smName ? 'text-gray-500' : 'text-blue-600'}`}
         >
-          {smNameList?.map(item => (
-            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`} selected={item === filters.smName}>{item || "SM Name"}</option>
+          {smNameOptions?.map(item => (
+            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`}>{item || "SM Name"}</option>
           ))}
-        </select>
+        </select>}
 
-        <SearchSelectMenu
-          selectedValue={filters.status}
-          updateSelected={(item) => { handleFilterChange({ target: { name: 'status', value: item } }) }}
-          list={filteredStatus}
-          handleSearchAction={handleFilterStatus}
+        {filterConfig.status && <MultiSelectMenu
+          selectedValues={filters.status}
+          updateSelectedValues={(item) => { handleFilterChange({ target: { name: 'status', value: item } }) }}
+          list={statusOptions}
           defaultEmptyName='Status'
-        />
+        />}
 
-        <select
+        {filterConfig.trxFor && <select
           name="transactionFor"
           id="transactionFor"
           value={filters.transactionFor}
           onChange={handleFilterChange}
           className={`px-2 py-1 text-sm rounded-md border focus:outline-blue-500 ${!filters.transactionFor ? 'text-gray-500' : 'text-blue-600'}`}
         >
-          {transactionForList?.map(item => (
-            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`} selected={item === filters.transactionFor}>{item || "Transaction For"}</option>
+          {forOptions?.map(item => (
+            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`}>{item || "Transaction For"}</option>
           ))}
-        </select>
+        </select>}
 
-        <select
+        {filterConfig.approvalStatus && <select
           name="approvalStatus"
           id="approvalStatus"
           value={filters.approvalStatus}
           onChange={handleFilterChange}
           className={`px-2 py-1 text-sm rounded-md border focus:outline-blue-500 ${!filters.approvalStatus ? 'text-gray-500' : 'text-blue-600'}`}
         >
-          {approvalStatusList?.map(item => (
-            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`} selected={item === filters.approvalStatus}>{item || "Approval List"}</option>
+          {approvalStatusOptions?.map(item => (
+            <option key={item} value={item} className={`${!item ? 'text-gray-500' : 'text-gray-700'}`}>{item || "Approval List"}</option>
           ))}
-        </select>
+        </select>}
 
       </div>
     </div>
   )
 }
 
-export default FiltersBar
+export default FiltersBar;

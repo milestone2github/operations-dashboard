@@ -10,7 +10,7 @@ import { color } from '../Statuscolor/color'
 import Loader from '../components/Loader'
 import { FaSadTear } from 'react-icons/fa'
 import { getSavedFilters } from '../redux/savedFilters/SavedFiltersAction'
-import { PiGitBranchFill } from 'react-icons/pi'
+import { getAllAmc, getRMNames, getSMNames } from '../redux/allFilterOptions/FilterOptionsAction'
 const items = 25
 
 const initialFilters = {
@@ -25,17 +25,29 @@ const initialFilters = {
   minAmount: '',
   maxAmount: '',
   transactionFor: '',
-  status: '',
+  status: [],
   approvalStatus: '',
   searchBy: 'family head',
   searchKey: ''
 }
 
+const filterConfig = {
+  amount: true,
+  date: true,
+  type: true,
+  trxFor: true,
+  relationshipManager: true,
+  serviceManager: true,
+  status: true,
+  approvalStatus: true,
+  saveFilter: true
+}
 
 const All = () => {
   const [filters, setFilters] = useState(initialFilters)
   const [abortController, setAbortController] = useState(null)
   const { transactions, page, totalCount, totalAmount, status, error } = useSelector(state => state.allTransactions)
+  const { amcList, typeList, schemesList, rmNameList, smNameList, statusList, approvalStatusList, transactionForList, error: listError } = useSelector(state => state.allFilterOptions)
   const {all} = useSelector(state => state.savedFilters)
   const dispatch = useDispatch()
 
@@ -43,8 +55,15 @@ const All = () => {
     setFilters(value)
   }
 
+  const clearAllFilters = () => {
+    setFilters(initialFilters)
+  }
+
   useEffect(() => {
     dispatch(getSavedFilters())
+    dispatch(getAllAmc())
+    dispatch(getRMNames())
+    dispatch(getSMNames())
   }, [])
 
   useEffect(() => {
@@ -54,6 +73,7 @@ const All = () => {
       for (const [key, value] of params.entries()) {
         paramObj[key] = value
       }
+      paramObj.status = paramObj?.status?.split(',')
       setFilters({ ...initialFilters, ...paramObj });
     }
   }, [all?.active])
@@ -82,7 +102,6 @@ const All = () => {
       dispatch(getFilteredTransactions({ filters, items, page: page - 1 }))
     }
   }
-  
 
   const handleNext = () => {
     if (transactions.length >= items) {
@@ -114,7 +133,22 @@ const All = () => {
         <Header title='Transactions' />
         <hr className='border-b border-slate-100 w-full' />
         <div className='py-2'>
-          <FiltersBar filters={filters} updateFilters={updateFilters} results={totalCount} aum={totalAmount}/>
+          <FiltersBar 
+            filters={filters}
+            updateFilters={updateFilters}
+            clearAllFilters={clearAllFilters}
+            filterConfig={filterConfig}
+            results={totalCount}
+            aum={totalAmount}
+            amcOptions={amcList}
+            schemeOptions={schemesList}
+            forOptions={transactionForList}
+            typeOptions={typeList}
+            rmNameOptions={rmNameList}
+            smNameOptions={smNameList}
+            statusOptions={statusList}
+            approvalStatusOptions={approvalStatusList}
+          />
         </div>
       </div>
 
@@ -130,17 +164,17 @@ const All = () => {
                 <th className='text-sm'>Pan number</th>
                 <th className='text-sm'>Investor name</th>
                 <th className='text-sm'>Family head</th>
-                <th className='text-sm'>RM Name</th>
+                <th className='text-sm'>RM name</th>
                 <th className='text-sm'>AMC name</th>
                 <th className='text-sm'>Scheme name</th>
                 <th className='text-sm'>Amount</th>
                 <th className='text-sm'>Units</th>
-                <th className='text-sm'>SM Name</th>
-                <th className='text-sm'>Registrant</th>
-                <th className='text-sm'>Folio No.</th>
-                <th className='text-sm'>Scheme Option</th>
                 <th className='text-sm'>From scheme</th>
+                <th className='text-sm'>SM name</th>
+                <th className='text-sm'>Folio No.</th>
                 <th className='text-sm'>From scheme option</th>
+                <th className='text-sm'>Scheme Option</th>
+                <th className='text-sm'>Registrant</th>
                 <th className='text-sm'>Transaction for</th>
                 <th className='text-sm'>Payment mode</th>
                 <th className='text-sm'>First trx amount</th>
@@ -166,6 +200,7 @@ const All = () => {
                   let linkStatus = item.linkStatus
                   let sipSwpStpDate = item.sipSwpStpDate
                   let id = item._id
+                  let type = item.category === 'switch' ? 'Switch' : item.transactionType
                   
                   if(item.hasFractions) {
                     status = item.transactionFractions?.status
@@ -186,7 +221,6 @@ const All = () => {
                       <td>
                         <span className='relative'>
                         {(page - 1) * items + (index + 1)}
-                      {/* {item.hasFractions && <PiGitBranchFill className='rotate-90 text-blue-600 -z-0' />} */}
                       {item.hasFractions && <strong className='ms-1 absolute -top-1 left-full bg-purple-200 rounded-sm px-1 py- text-purple-800 text-[10px] leading-3'>F</strong>}
                         </span>
                       </td>
@@ -198,13 +232,13 @@ const All = () => {
                         </span>
                       </td>
                       <td>{formatDateDDShortMonthNameYY(item.transactionPreference)}</td>
-                      <td>{item.transactionType}</td>
+                      <td>{type}</td>
                       <td>{item.panNumber}</td>
                       <td><span className='w-44 two-line-ellipsis'>{item.investorName}</span></td>
                       <td><span className='w-44 two-line-ellipsis'>{item.familyHead}</span></td>
                       <td><span className='w-44 two-line-ellipsis'>{item.relationshipManager}</span></td>
                       <td><span className='w-44 two-line-ellipsis'>{item.amcName}</span></td>
-                      <td><span className='w-44 two-line-ellipsis'>{item.schemeName}</span></td>
+                      <td title={item.schemeName}><span className='w-44 two-line-ellipsis'>{item.schemeName}</span></td>
                       <td>{Number(amount).toLocaleString('en-In', {
                         minimumFractionDigits: 0, 
                         maximumFractionDigits: 2, 
@@ -212,12 +246,12 @@ const All = () => {
                         currency: 'INR'
                       })}</td>
                       <td>{item.transactionUnits}</td>
+                      <td title={item.fromSchemeName}><span className='w-44 two-line-ellipsis'>{item.fromSchemeName}</span></td>
                       <td><span className='w-44 two-line-ellipsis'>{item.serviceManager || 'N/A'}</span></td>
-                      <td><span className='w-44 two-line-ellipsis'>{item.registrantName}</span></td>
                       <td>{folioNumber}</td>
-                      <td>{item.schemeOption}</td>
-                      <td><span className='w-44 two-line-ellipsis'>{item.fromSchemeName}</span></td>
                       <td>{item.fromSchemeOption}</td>
+                      <td>{item.schemeOption}</td>
+                      <td><span className='w-44 two-line-ellipsis'>{item.registrantName}</span></td>
                       <td>{item.transactionFor}</td>
                       <td>{item.paymentMode}</td>
                       <td>{item.firstTransactionAmount}</td>

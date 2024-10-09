@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Header from '../components/Header'
-import FiltersBar from '../components/ReusableFiltersBar'
+import FiltersBar from '../components/FiltersBar'
 import toast, { Toaster } from 'react-hot-toast'
 import { BsArrowRight } from 'react-icons/bs'
 import { formatDateDDShortMonthNameYY } from '../utils/formatDate'
@@ -50,6 +50,7 @@ const History = () => {
   const dispatch = useDispatch()
 
   useEffect(() => {
+    // dispatch(getSavedFilters())
     dispatch(getAllAmc())
     dispatch(getRMNames())
     dispatch(getSMNames())
@@ -63,10 +64,7 @@ const History = () => {
     setFilters(initialFilters)
   }
 
-  // useEffect(() => {
-  //   dispatch(getSavedFilters())
-  // }, [])
-
+  // // side effect to apply saved filter on start of the page 
   // useEffect(() => {
   //   if (all?.filters.length && all?.active >= 0) {
   //     let params = new URLSearchParams(all.filters[all.active])
@@ -74,6 +72,7 @@ const History = () => {
   //     for (const [key, value] of params.entries()) {
   //       paramObj[key] = value
   //     }
+  //     paramObj.status = paramObj?.status?.split(',')
   //     setFilters({ ...initialFilters, ...paramObj });
   //   }
   // }, [all?.active])
@@ -147,7 +146,7 @@ const History = () => {
             typeOptions={typeList}
             rmNameOptions={rmNameList}
             smNameOptions={smNameList}
-            statusOptions={statusList.filter(status => !['', 'PENDING'].includes(status))}
+            statusOptions={statusList.filter(status => !['PENDING'].includes(status))}
             approvalStatusOptions={approvalStatusList}
           />
         </div>
@@ -171,7 +170,7 @@ const History = () => {
                 <th className='text-sm'>Amount</th>
                 <th className='text-sm'>Units</th>
                 <th className='text-sm'>From scheme name</th>
-                <th className='text-sm'>SM Name</th>
+                <th className='text-sm'>SM name</th>
                 <th className='text-sm'>Folio No.</th>
                 <th className='text-sm'>From scheme option</th>
                 <th className='text-sm'>Scheme option</th>
@@ -222,7 +221,6 @@ const History = () => {
                       <td>
                         <span className='relative'>
                           {(page - 1) * items + (index + 1)}
-                          {/* {item.hasFractions && <PiGitBranchFill className='rotate-90 text-blue-600 -z-0' />} */}
                           {item.hasFractions && <strong className='ms-1 absolute -top-1 left-full bg-purple-200 rounded-sm px-1 py- text-purple-800 text-[10px] leading-3'>F</strong>}
                         </span>
                       </td>

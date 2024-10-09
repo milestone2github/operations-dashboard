@@ -64,7 +64,7 @@ function FiltersBar({ filters, updateFilters, clearAllFilters, results, aum, fil
 
   const handleMinAmountChange = (e) => {
     const value = e.target.value
-    let prevValue = minAmountRef.current?.prevValue
+    let prevValue = minAmountRef.current?.prevValue || ''
 
     if (prevValue !== value) {
       minAmountRef.current.prevValue = value
@@ -74,7 +74,7 @@ function FiltersBar({ filters, updateFilters, clearAllFilters, results, aum, fil
 
   const handleMaxAmountChange = (e) => {
     const value = e.target.value
-    let prevValue = maxAmountRef.current?.prevValue
+    let prevValue = maxAmountRef.current?.prevValue || ''
 
     if (prevValue !== value) {
       maxAmountRef.current.prevValue = value

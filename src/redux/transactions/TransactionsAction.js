@@ -40,7 +40,7 @@ export const saveFractions = createAsyncThunk('transactions/saveFractions',
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while saving fractions")
+        throw new Error(resData.error || "Internal server error while saving fractions")
       }
   
       return resData.data
@@ -68,7 +68,7 @@ export const generateLink = createAsyncThunk('transactions/generateLink',
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while generating link")
+        throw new Error(resData.error || "Internal server error while generating link")
       }
   
       return resData.data
@@ -95,7 +95,7 @@ export const updateOrderId = createAsyncThunk('transactions/updateOrderId',
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while updating order ID")
+        throw new Error(resData.error || "Internal server error while updating order ID")
       }
   
       return resData.data
@@ -122,7 +122,7 @@ export const updateNote = createAsyncThunk('transactions/updateNote',
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while updating note")
+        throw new Error(resData.error || "Internal server error while updating note")
       }
   
       return resData.data
@@ -148,7 +148,7 @@ export const addFraction = createAsyncThunk('transactions/addFraction',
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while adding fraction")
+        throw new Error(resData.error || "Internal server error while adding fraction")
       }
   
       return resData.data
@@ -173,7 +173,7 @@ export const removeFraction = createAsyncThunk('transactions/removeFraction',
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while removing fraction")
+        throw new Error(resData.error || "Internal server error while removing fraction")
       }
   
       return resData.data
@@ -195,7 +195,7 @@ export const getSystematic = createAsyncThunk('transactions/systematic',
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while getting systematic transactions")
+        throw new Error(resData.error || "Internal server error while getting systematic transactions")
       }
   
       return resData.data
@@ -239,7 +239,7 @@ export const getSwitch = createAsyncThunk('transactions/switch',
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while getting switch transactions")
+        throw new Error(resData.error || "Internal server error while getting switch transactions")
       }
   
       return resData.data
@@ -262,7 +262,7 @@ export const addSystematicFraction = createAsyncThunk('transactions/systematic/a
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while adding systematic fraction")
+        throw new Error(resData.error || "Internal server error while adding systematic fraction")
       }
   
       return resData.data
@@ -285,7 +285,7 @@ export const addPurchRedFraction = createAsyncThunk('transactions/systematic/add
       const resData = await response.json()
   
       if(!response.ok) {
-        throw new Error(resData.Error || "Internal server error while adding systematic fraction")
+        throw new Error(resData.error || "Internal server error while adding systematic fraction")
       }
   
       return resData.data

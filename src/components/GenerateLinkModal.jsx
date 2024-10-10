@@ -23,7 +23,7 @@ function GenerateLinkModal({ isOpen, title, handleCancel, handleProceed, status,
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    handleProceed(platform, orderId, paymentMode)
+    handleProceed(platform, orderId?.trim(), paymentMode)
   }
 
   if (!isOpen) return null

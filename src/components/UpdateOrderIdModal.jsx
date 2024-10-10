@@ -19,7 +19,7 @@ function UpdateOrderIdModal({ isOpen, handleCancel, handleProceed, existingData,
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    handleProceed(platform, orderId)
+    handleProceed(platform, orderId?.trim())
   }
 
   if (!isOpen) return null

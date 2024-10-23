@@ -160,6 +160,7 @@ const All = () => {
                 <th className='text-sm'>S. No.</th>
                 <th className='text-sm'>Status</th>
                 <th className='text-sm'>Transaction date</th>
+                <th className='text-sm'>Execution date</th>
                 <th className='text-sm'>Transaction type</th>
                 <th className='text-sm'>Pan number</th>
                 <th className='text-sm'>Investor name</th>
@@ -192,6 +193,7 @@ const All = () => {
                 transactions?.map((item, index) => {
                   let status = item.status
                   let approvalStatus = item.approvalStatus
+                  let executionDate = item.createdAt
                   let folioNumber = item.folioNumber
                   let orderId = item.orderId
                   let orderPlatform = item.orderPlatform
@@ -232,6 +234,7 @@ const All = () => {
                         </span>
                       </td>
                       <td>{formatDateDDShortMonthNameYY(item.transactionPreference)}</td>
+                      <td>{formatDateDDShortMonthNameYY(executionDate)}</td>
                       <td>{type}</td>
                       <td>{item.panNumber}</td>
                       <td><span className='w-44 two-line-ellipsis'>{item.investorName}</span></td>

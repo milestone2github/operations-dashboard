@@ -73,7 +73,7 @@ const All = () => {
       for (const [key, value] of params.entries()) {
         paramObj[key] = value
       }
-      paramObj.status = paramObj?.status?.split(',')
+      if(paramObj.status) paramObj.status = paramObj?.status?.split(',')
       setFilters({ ...initialFilters, ...paramObj });
     }
   }, [all?.active])

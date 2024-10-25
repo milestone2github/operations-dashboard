@@ -77,7 +77,7 @@ function NfoTransactions() {
                 <th className='text-sm'>Status</th>
                 <th className='text-sm'>Folio No.</th>
                 <th className='text-sm'>Scheme Option</th>
-                <th className='text-sm'>Order ID</th>
+                <th className='text-sm'>Tracking ID</th>
               </tr>
             </thead>
 
@@ -106,7 +106,7 @@ function NfoTransactions() {
                       </td>
                       <td>{item.folioNumber}</td>
                       <td>{item.schemeOption}</td>
-                      <td>{item.orderId}</td>
+                      <td>{item.bseOrderNumber}</td>
                     </tr>)
                 })}
             </tbody>

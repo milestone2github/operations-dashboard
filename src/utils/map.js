@@ -24,3 +24,9 @@ export const filterKeyMap = {
   'approvalStatus': 'Approval Status',
   'sort': 'Sort By'
 }
+
+export const kycStatusColorMap = {
+  'Validated': 'bg-green-300',
+  'Registered': 'bg-yellow-200',
+  'Rejected': 'bg-red-300',
+}

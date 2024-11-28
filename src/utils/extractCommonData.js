@@ -42,3 +42,13 @@ export const countPending = (systematic, purchRedemp, switchData) => {
   let switchCount = switchData.reduce(sumPending, 0)
   return sysCount + purredCount + switchCount;
 }
+
+export const getInvestorsSet = (systematic, purchRedemp, switchData) => {
+  let allTransanctions = [];
+  allTransanctions.push(...systematic, ...purchRedemp, ...switchData);
+  // get set of unique investors along with pan numbers
+  let investorsSet = [...new Set(allTransanctions.map(item => 
+    item.panNumber + '+' + item.investorName
+  ))];
+  return investorsSet;
+}

@@ -7,7 +7,7 @@ import { MdClose, MdUpdate } from "react-icons/md";
 import toast, { Toaster } from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import Loader from '../components/Loader';
-import { addFraction, generateLink, getTransactionsFilterByFh, removeFraction, saveFractions, updateNote, updateOrderId } from '../redux/transactions/TransactionsAction';
+import { addFraction, fetchKycStatus, generateLink, getTransactionsFilterByFh, removeFraction, saveFractions, updateNote, updateOrderId } from '../redux/transactions/TransactionsAction';
 import {
   switchAddFraction,
   removeSwitchFraction,
@@ -26,17 +26,18 @@ import {
 } from '../redux/transactions/TransactionSlice';
 
 import { formatDate, formatDateToYYYYMMDD } from '../utils/formatDate';
-import { countAll, countPending, extractCommonData } from '../utils/extractCommonData';
+import { countAll, countPending, extractCommonData, getInvestorsSet } from '../utils/extractCommonData';
 import GenerateLinkModal from '../components/GenerateLinkModal';
 import Header from '../components/Header';
 import UpdateOrderIdModal from '../components/UpdateOrderIdModal';
 import Dropdown from '../components/Dropdown';
 import { IoCheckmarkCircleOutline, IoEllipsisVerticalSharp } from 'react-icons/io5';
-import { transactionTypeColorMap, transactionTypeTextMap } from '../utils/map';
+import { kycStatusColorMap, transactionTypeColorMap, transactionTypeTextMap } from '../utils/map';
 import NoteDropdown from '../components/NoteDropdown';
 
 const initialCommonData = {
   investorName: '',
+  investors: [],
   familyHead: '',
   panNumber: '',
   relationshipManager: '',
@@ -90,6 +91,8 @@ const Details = () => {
   const [redemptions, setRedemptions] = useState([])
   const { role } = useSelector(state => state.user.userData?.role)
 
+  const [kycStatus, setKycStatus] = useState({});
+
   // Permissions
   const canModifyExecutionDate = ['mutual funds senior', 'mutual funds'].includes(role.toLowerCase())
   const canModifyTransactions = ['operations senior', 'operations', 'management', 'Administrator'].includes(role.toLowerCase())
@@ -140,6 +143,11 @@ const Details = () => {
         switchTransactions
       ),
       pendingTrxCount: countPending(
+        systematicTransactions,
+        purchRedempTransactions,
+        switchTransactions
+      ),
+      investors: getInvestorsSet(
         systematicTransactions,
         purchRedempTransactions,
         switchTransactions
@@ -579,6 +587,14 @@ const Details = () => {
     if (error) { updateStatusAfter4s(resetError) }
   }, [orderIdStatus, noteUpdateStatus, linkGenerateStatus, error])
 
+  const handleGetKycStatus = async (pan) => {
+    const result = await fetchKycStatus(pan);
+    if (result && result.Status) {
+      let status = result.Status.slice(4);
+      setKycStatus(prevState => ({...prevState, [pan]: status}))
+    }
+  }
+
   const showLoading = (<div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
     <Loader />
   </div>)
@@ -590,8 +606,8 @@ const Details = () => {
         <Header title='Transaction Details' />
       </div>
       {isLoading ? showLoading : <div className="table-section  bg-[#F8FAFC] p-3 flex flex-col items-center gap-4 overflow-y-auto h-[88vh]">
-        <div className='card text-[#000000] client-data w-[90vw] md:w-[87vw]  lg:w-[90vw] grid grid-cols-2 sm:grid-cols-3 gap-2 lg:gap-6'>
-          <div className=' bg-blue-50 w-full rounded-md border-2 border-solid border-[#EDEDED] flex  flex-col gap-4 p-4 tracking-wide'>
+        <div className='card text-[#000000] client-data w-[90vw] md:w-[87vw]  lg:w-[90vw] grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 lg:gap-4'>
+          <div className=' bg-blue-50 w-full rounded-md border-2 border-solid border-blue-200 flex  flex-col gap-4 p-4 tracking-wide'>
             {/* <div>
               <h2 className=' text-xs font-semibold'>Client Name</h2>
               <p className=' text-lg'>{commonData.investorName}</p>
@@ -606,7 +622,7 @@ const Details = () => {
               <p className=' text-lg'>{commonData.panNumber}</p>
             </div>
           </div>
-          <div className=' bg-[#FEFBE8] w-full rounded-md border-2 border-solid border-[#EDEDED] flex flex-col gap-4 p-4 tracking-wide'>
+          <div className=' bg-yellow-50 w-full rounded-md border-2 border-solid border-yellow-200 flex flex-col gap-4 p-4 tracking-wide'>
             <div>
               <h2 className=' text-xs font-semibold'>RM Name</h2>
               <p className=' text-lg'>{commonData.relationshipManager}</p>
@@ -617,7 +633,7 @@ const Details = () => {
               <p className=' text-lg'>{commonData.createdAt}</p>
             </div>
           </div>
-          <div className=' bg-[#FDF1F1] w-full rounded-md border-2 border-solid border-[#EDEDED] flex flex-col gap-4 p-4 tracking-wide'>
+          <div className=' bg-red-50 w-full rounded-md border-2 border-solid border-red-200 flex flex-col gap-4 p-4 tracking-wide'>
             <div>
               <h2 className=' text-xs font-semibold'>Pending TRX Count</h2>
               <p className=' text-lg'>{commonData.pendingTrxCount}</p>
@@ -627,6 +643,32 @@ const Details = () => {
               <h2 className=' text-xs font-semibold'>Transaction Count</h2>
               <p className=' text-lg'>{commonData.transactionCount}</p>
             </div>
+          </div>
+          <div className=' bg-green-50 w-full rounded-md border-2 border-solid border-green-200 flex flex-col gap-4 p-4 tracking-wide'>
+              <h2 className=' text-xs font-semibold'>Investors</h2>
+              <ul className='flex flex-col gap-2'>{
+                commonData.investors.map(investor => {
+                  let splittedData = investor?.split('+');
+                  let pan = splittedData[0];
+                  let name = splittedData[1];
+
+                  return (
+                    <li key={pan} className='flex gap-2 justify-between'>
+                      <p className='text-sm'>{name}</p>
+                      {kycStatus[pan] ? 
+                        <p className={`p-1 ${kycStatusColorMap[kycStatus[pan]?.trim()]} text-black text-xs h-fit rounded`}>{kycStatus[pan]}</p> : 
+                        <button 
+                          onClick={()=>handleGetKycStatus(pan)} 
+                          className='border border-blue-400 p-1 text-xs text-nowrap h-fit w-fit rounded text-blue-700'
+                          >KYC status
+                        </button>
+                      }
+                    </li>
+                  )
+                })
+              }
+              </ul>
+
           </div>
         </div>
 
@@ -1338,35 +1380,35 @@ const Details = () => {
                                           {fractionItem.approvalStatus === 'Approved' ?
                                             <span>Approved</span> :
                                             <select
-                                            name="approval-status"
-                                            className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
-                                            value={fractionItem.approvalStatus}
-                                            onChange={(e) => {
-                                              const value = e.target.value
-                                              // if (!value) return
+                                              name="approval-status"
+                                              className='disabled:bg-blue-50 py-2'
+                                              disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
+                                              value={fractionItem.approvalStatus}
+                                              onChange={(e) => {
+                                                const value = e.target.value
+                                                // if (!value) return
 
-                                              setStps(prevState => {
-                                                return prevState.map((transaction, i) => {
-                                                  if (i === index) {
-                                                    return {
-                                                      ...transaction,
-                                                      transactionFractions: transaction.transactionFractions.map((fraction, j) => {
-                                                        if (j === fracIndex) {
-                                                          return { ...fraction, approvalStatus: value };
-                                                        }
-                                                        return fraction;
-                                                      })
-                                                    };
-                                                  }
-                                                  return transaction;
+                                                setStps(prevState => {
+                                                  return prevState.map((transaction, i) => {
+                                                    if (i === index) {
+                                                      return {
+                                                        ...transaction,
+                                                        transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                          if (j === fracIndex) {
+                                                            return { ...fraction, approvalStatus: value };
+                                                          }
+                                                          return fraction;
+                                                        })
+                                                      };
+                                                    }
+                                                    return transaction;
+                                                  });
                                                 });
-                                              });
-                                            }}>
-                                            {approvalStatusOptions.map(statusOption => (
-                                              <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
-                                            ))}
-                                          </select>}
+                                              }}>
+                                              {approvalStatusOptions.map(statusOption => (
+                                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                              ))}
+                                            </select>}
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
@@ -1732,35 +1774,35 @@ const Details = () => {
                                           {fractionItem.approvalStatus === 'Approved' ?
                                             <span>Approved</span> :
                                             <select
-                                            name="approval-status"
-                                            className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
-                                            value={fractionItem.approvalStatus}
-                                            onChange={(e) => {
-                                              const value = e.target.value
-                                              // if (!value) return
+                                              name="approval-status"
+                                              className='disabled:bg-blue-50 py-2'
+                                              disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
+                                              value={fractionItem.approvalStatus}
+                                              onChange={(e) => {
+                                                const value = e.target.value
+                                                // if (!value) return
 
-                                              setSwps(prevState => {
-                                                return prevState.map((transaction, i) => {
-                                                  if (i === index) {
-                                                    return {
-                                                      ...transaction,
-                                                      transactionFractions: transaction.transactionFractions.map((fraction, j) => {
-                                                        if (j === fracIndex) {
-                                                          return { ...fraction, approvalStatus: value };
-                                                        }
-                                                        return fraction;
-                                                      })
-                                                    };
-                                                  }
-                                                  return transaction;
+                                                setSwps(prevState => {
+                                                  return prevState.map((transaction, i) => {
+                                                    if (i === index) {
+                                                      return {
+                                                        ...transaction,
+                                                        transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                          if (j === fracIndex) {
+                                                            return { ...fraction, approvalStatus: value };
+                                                          }
+                                                          return fraction;
+                                                        })
+                                                      };
+                                                    }
+                                                    return transaction;
+                                                  });
                                                 });
-                                              });
-                                            }}>
-                                            {approvalStatusOptions.map(statusOption => (
-                                              <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
-                                            ))}
-                                          </select>}
+                                              }}>
+                                              {approvalStatusOptions.map(statusOption => (
+                                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                              ))}
+                                            </select>}
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
@@ -2085,35 +2127,35 @@ const Details = () => {
                                           {fractionItem.approvalStatus === 'Approved' ?
                                             <span>Approved</span> :
                                             <select
-                                            name="approval-status"
-                                            className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
-                                            value={fractionItem.approvalStatus}
-                                            onChange={(e) => {
-                                              const value = e.target.value
-                                              // if (!value) return
+                                              name="approval-status"
+                                              className='disabled:bg-blue-50 py-2'
+                                              disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
+                                              value={fractionItem.approvalStatus}
+                                              onChange={(e) => {
+                                                const value = e.target.value
+                                                // if (!value) return
 
-                                              setPurchases(prevState => {
-                                                return prevState.map((transaction, i) => {
-                                                  if (i === index) {
-                                                    return {
-                                                      ...transaction,
-                                                      transactionFractions: transaction.transactionFractions.map((fraction, j) => {
-                                                        if (j === fracIndex) {
-                                                          return { ...fraction, approvalStatus: value };
-                                                        }
-                                                        return fraction;
-                                                      })
-                                                    };
-                                                  }
-                                                  return transaction;
+                                                setPurchases(prevState => {
+                                                  return prevState.map((transaction, i) => {
+                                                    if (i === index) {
+                                                      return {
+                                                        ...transaction,
+                                                        transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                          if (j === fracIndex) {
+                                                            return { ...fraction, approvalStatus: value };
+                                                          }
+                                                          return fraction;
+                                                        })
+                                                      };
+                                                    }
+                                                    return transaction;
+                                                  });
                                                 });
-                                              });
-                                            }}>
-                                            {approvalStatusOptions.map(statusOption => (
-                                              <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
-                                            ))}
-                                          </select>}
+                                              }}>
+                                              {approvalStatusOptions.map(statusOption => (
+                                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                              ))}
+                                            </select>}
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
@@ -2443,35 +2485,35 @@ const Details = () => {
                                           {fractionItem.approvalStatus === 'Approved' ?
                                             <span>Approved</span> :
                                             <select
-                                            name="approval-status"
-                                            className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
-                                            value={fractionItem.approvalStatus}
-                                            onChange={(e) => {
-                                              const value = e.target.value
-                                              // if (!value) return
+                                              name="approval-status"
+                                              className='disabled:bg-blue-50 py-2'
+                                              disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
+                                              value={fractionItem.approvalStatus}
+                                              onChange={(e) => {
+                                                const value = e.target.value
+                                                // if (!value) return
 
-                                              setRedemptions(prevState => {
-                                                return prevState.map((transaction, i) => {
-                                                  if (i === index) {
-                                                    return {
-                                                      ...transaction,
-                                                      transactionFractions: transaction.transactionFractions.map((fraction, j) => {
-                                                        if (j === fracIndex) {
-                                                          return { ...fraction, approvalStatus: value };
-                                                        }
-                                                        return fraction;
-                                                      })
-                                                    };
-                                                  }
-                                                  return transaction;
+                                                setRedemptions(prevState => {
+                                                  return prevState.map((transaction, i) => {
+                                                    if (i === index) {
+                                                      return {
+                                                        ...transaction,
+                                                        transactionFractions: transaction.transactionFractions.map((fraction, j) => {
+                                                          if (j === fracIndex) {
+                                                            return { ...fraction, approvalStatus: value };
+                                                          }
+                                                          return fraction;
+                                                        })
+                                                      };
+                                                    }
+                                                    return transaction;
+                                                  });
                                                 });
-                                              });
-                                            }}>
-                                            {approvalStatusOptions.map(statusOption => (
-                                              <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
-                                            ))}
-                                          </select>}
+                                              }}>
+                                              {approvalStatusOptions.map(statusOption => (
+                                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                              ))}
+                                            </select>}
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?
@@ -2734,19 +2776,19 @@ const Details = () => {
                                           {fractionItem.approvalStatus === 'Approved' ?
                                             <span>Approved</span> :
                                             <select
-                                            name="approval-status"
-                                            className='disabled:bg-blue-50 py-2'
-                                            disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
-                                            value={fractionItem.approvalStatus}
-                                            onChange={(e) => {
-                                              const value = e.target.value
-                                              // if (!value) return
-                                              dispatch(updateSwitchFractionApprovalStatus({ index, fracIndex, approvalStatus: value }))
-                                            }}>
-                                            {approvalStatusOptions.map(statusOption => (
-                                              <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
-                                            ))}
-                                          </select>}
+                                              name="approval-status"
+                                              className='disabled:bg-blue-50 py-2'
+                                              disabled={!canModifyTransactions || item.linkStatus === 'locked' || ['deleted'].includes(fractionItem.linkStatus)}
+                                              value={fractionItem.approvalStatus}
+                                              onChange={(e) => {
+                                                const value = e.target.value
+                                                // if (!value) return
+                                                dispatch(updateSwitchFractionApprovalStatus({ index, fracIndex, approvalStatus: value }))
+                                              }}>
+                                              {approvalStatusOptions.map(statusOption => (
+                                                <option key={statusOption} value={statusOption}>{statusOption || 'Select'}</option>
+                                              ))}
+                                            </select>}
                                         </td>
 
                                         <td>{fractionItem.linkStatus === 'generated' ?

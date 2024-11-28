@@ -133,6 +133,33 @@ export const updateNote = createAsyncThunk('transactions/updateNote',
   }
 )
 
+
+export const fetchKycStatus = async (pan) => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/data/KYCStatusCheck`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        Pan: pan,
+        detailCheck: "N",
+        detailedOutput: "N",
+      }),
+    });
+    const jsonData = await response.json();
+
+    if (!response.ok || !jsonData) {
+      return null;
+    }
+
+    return jsonData;
+  } catch (error) {
+    console.error("Error fetching kyc status: ", error.message);
+    return null;
+  }
+};
+
 // ********  NOT REQUIRED ********** 
 export const addFraction = createAsyncThunk('transactions/addFraction', 
   async ({id, fractionAmount, status}, {rejectWithValue}) => {

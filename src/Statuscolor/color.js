@@ -54,6 +54,48 @@ export const color =[
         value: "PAYMENT_PENDING"
     },
     {
+        type:"RECONCILIATION_PENDING_REQUEST",
+        bgcolor:"rgb(249 247 220)",
+        color:"rgb(234 179 8)",
+        value: "MINOR RECONCILED"
+    },
+    {
+        type:"RECONCILIATION_HOLD_REQUEST",
+        bgcolor:"rgb(249, 209, 163)",
+        color:"rgb(180, 96, 1)",
+        value: "MAJOR RECONCILED"
+    },
+    {
+        type:"RECONCILED",
+        bgcolor:"rgb(220 252 231)",
+        color:"rgb(22 163 74)",
+        value: "RECONCILED"
+    },
+    {
+        type:"RECONCILIATION_PENDING",
+        bgcolor:"rgb(249 247 220)",
+        color:"rgb(234 179 8)",
+        value: "MINOR RECONCILED"
+    },
+    {
+        type:"RECONCILIATION_HOLD",
+        bgcolor:"rgb(220 252 231)",
+        color:"rgb(74 222 128)",
+        value: "MAJOR RECONCILED"
+    },
+    {
+        type:"RECONCILIATION_FAILED_REQUEST",
+        bgcolor:"rgb(254 226 226)",
+        color:"rgb(220 38 38)",
+        value: "RECONCILIATION FAILED"
+    },
+    {
+        type:"RECONCILIATION_FAILED",
+        bgcolor:"rgb(254 226 226)",
+        color:"rgb(220 38 38)",
+        value: "RECONCILIATION FAILED"
+    },
+    {
         type: undefined,
         bgcolor:"rgb(240, 240, 240)",
         color:"rgb(120 120 120)",

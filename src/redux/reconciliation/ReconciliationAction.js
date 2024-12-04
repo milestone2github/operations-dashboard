@@ -18,11 +18,11 @@ export const getRecoTransactions = createAsyncThunk(
     } = filters;
 
     let query = new URLSearchParams();
-    
+
     // Add pagination params
     query.append('page', page);
     query.append('items', items);
-    
+
     // Add sorting if provided
     if (sort) query.append('sort', sort);
 
@@ -46,16 +46,82 @@ export const getRecoTransactions = createAsyncThunk(
           credentials: 'include',
         }
       );
-  
+
       const resData = await response.json();
-  
+
       if (!response.ok) {
         throw new Error(resData.error || "Internal server error while getting reconciliation transactions");
       }
-  
+
       return resData.data;
     } catch (error) {
       console.error("Error getting reconciliation transactions: ", error.message);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const reconcileTransaction = createAsyncThunk(
+  'reconciliation/reconcile',
+  async ({ trxId, fractionId, updates }, { rejectWithValue }) => {
+    if(fractionId) {
+      updates = {fractionId, ...updates};
+    }
+
+    try {
+      // make update request 
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/ops-dash/reconciliation/${trxId}`,
+        {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updates),
+        }
+      );
+
+      const resData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(resData.error || "Internal server error while reconciliation");
+      }
+
+      return resData.data;
+    } catch (error) {
+      console.error("Error doing reconciliation: ", error.message);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const approveReconciliation = createAsyncThunk(
+  'reconciliation/approve',
+  async ({ trxId, fractionId, approve }, { rejectWithValue }) => {
+    if(fractionId) {
+      updates = {fractionId, approve};
+    }
+    console.log('making request for approve... ', trxId, updates, fractionId);//debug
+    try {
+      // make update request 
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/ops-dash/reconciliation/${trxId}/approve`,
+        {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updates),
+        }
+      );
+
+      const resData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(resData.error || "Internal server error while approving reconciliation");
+      }
+
+      return resData.data;
+    } catch (error) {
+      console.error("Error doing approving reconciliation: ", error.message);
       return rejectWithValue(error.message);
     }
   }

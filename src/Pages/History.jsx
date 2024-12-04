@@ -24,7 +24,7 @@ const initialFilters = {
   minAmount: '',
   maxAmount: '',
   transactionFor: '',
-  status: ['NOT-PENDING'],
+  status: ['NOT-PENDING', 'NOT-APPROVED', 'NOT-RECONCILIATION_PENDING_REQUEST', 'NOT-RECONCILIATION_HOLD_REQUEST', 'NOT-RECONCILIATION_FAILED_REQUEST'],
   approvalStatus: '',
   searchBy: 'family head',
   searchKey: ''
@@ -146,7 +146,7 @@ const History = () => {
             typeOptions={typeList}
             rmNameOptions={rmNameList}
             smNameOptions={smNameList}
-            statusOptions={statusList.filter(status => !['PENDING'].includes(status))}
+            statusOptions={statusList.filter(status => !['PENDING', 'APPROVED'].includes(status))}
             approvalStatusOptions={approvalStatusList}
           />
         </div>
@@ -226,7 +226,7 @@ const History = () => {
                       </td>
                       <td >
                         <span
-                          className='px-2 py-1 rounded-full'
+                          className='px-2 py-1 rounded-full text-nowrap'
                           style={{ backgroundColor: statusColor.bgcolor, color: statusColor.color }}
                         >{statusColor.value}
                         </span>

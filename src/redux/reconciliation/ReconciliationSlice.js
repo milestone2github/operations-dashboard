@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
-import { getRecoTransactions } from "./ReconciliationAction"
+import { approveReconciliation, getRecoTransactions, reconcileTransaction } from "./ReconciliationAction"
 
 const initialState = {
   transactions : [],
@@ -8,12 +8,21 @@ const initialState = {
   totalCount: 0,
   totalAmount: 0,
   page: 0,
+  updateStatus: 'idle', // pending | failed | completed 
+  updateError: null
 }
 
 const reconciliationSlice = createSlice({
   name: 'reconciliation',
   initialState,
-  reducers: {},
+  reducers: {
+    resetErrors(state) {
+      state.status = 'idle'
+      state.error = null
+      state.updateError = null
+      state.updateStatus = 'idle'
+    }
+  },
   extraReducers: (builder) => {
     builder.addCase(getRecoTransactions.pending, (state) => {
       state.status = 'pending'
@@ -31,8 +40,43 @@ const reconciliationSlice = createSlice({
       state.totalAmount = totalAmount
       state.page = page
     })
+
+
+    builder.addCase(reconcileTransaction.pending, (state) => {
+      state.updateStatus = 'pending'
+      state.updateError = null
+    })
+    builder.addCase(reconcileTransaction.rejected, (state, action) => {
+      state.updateStatus = 'failed'
+      state.updateError = action.payload
+    })
+    builder.addCase(reconcileTransaction.fulfilled, (state, action) => {
+      const transaction = action.payload
+      state.updateStatus = 'completed'
+      state.transactions = state.transactions.map(item =>
+        item._id === transaction._id ? transaction : item
+      )
+    })
+    
+    
+    builder.addCase(approveReconciliation.pending, (state) => {
+      state.updateStatus = 'pending'
+      state.updateError = null
+    })
+    builder.addCase(approveReconciliation.rejected, (state, action) => {
+      state.updateStatus = 'failed'
+      state.updateError = action.payload
+    })
+    builder.addCase(approveReconciliation.fulfilled, (state, action) => {
+      const transaction = action.payload
+      state.updateStatus = 'completed'
+      state.transactions = state.transactions.map(item =>
+        //todo to remove if parent otherwise update
+        item._id === transaction._id ? transaction : item
+      )
+    })
   }
 })
 
-export const {} = reconciliationSlice.actions
+export const {resetErrors} = reconciliationSlice.actions
 export default reconciliationSlice.reducer

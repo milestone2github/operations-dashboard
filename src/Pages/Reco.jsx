@@ -6,10 +6,15 @@ import { IoIosArrowForward, IoIosArrowUp } from "react-icons/io";
 import { FaSadTear } from "react-icons/fa";
 import Loader from "../components/Loader";
 import { useSelector, useDispatch } from "react-redux";
-import { getRecoTransactions } from "../redux/reconciliation/ReconciliationAction";
+import { getRecoTransactions, reconcileTransaction } from "../redux/reconciliation/ReconciliationAction";
 import { BsArrowRight } from "react-icons/bs";
 import toast, { Toaster } from "react-hot-toast";
 import { getAllAmc, getRMNames } from "../redux/allFilterOptions/FilterOptionsAction";
+import UpdateMinorsModal from "../components/UpdateMinorsModal";
+import { color } from "../Statuscolor/color";
+import { resetErrors } from "../redux/reconciliation/ReconciliationSlice";
+import { hasPermission } from "../utils/permission";
+import { MdAdminPanelSettings } from "react-icons/md";
 
 const itemsPerPage = 25; // Number of items to display per page
 
@@ -41,10 +46,15 @@ const Reco = () => {
   const [filters, setFilters] = useState(initialFilters);
   const [openDropdown, setOpenDropdown] = useState({});
 
-  const { transactions, status, error, totalCount, totalAmount, page } = useSelector((state) => state.reconciliation);
+  // const { role } = useSelector(state => state.user.userData?.role)
+  const role = "Operations";
+  const { transactions, status, error, totalCount, totalAmount, page, updateStatus, updateError } = useSelector((state) => state.reconciliation);
   const { amcList, typeList, schemesList, rmNameList, error: listError } = useSelector(state => state.allFilterOptions)
   const dispatch = useDispatch();
-  const totalPages = Math.ceil(totalCount / itemsPerPage); // Calculate total pages
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  const [isOpenMinorEdit, setIsOpenMinorEdit] = useState(false);
+  const [selectedMinor, setSelectedMinor] = useState({});
 
   useEffect(() => {
     dispatch(getAllAmc())
@@ -66,8 +76,20 @@ const Reco = () => {
   useEffect(() => {
     if (status === 'failed' && error) {
       toast.error(error)
+      setTimeout(() => {
+        resetErrors()
+      }, 4000);
     }
   }, [status, error])
+
+  useEffect(() => {
+    if (updateStatus === 'failed' && updateError) {
+      toast.error(updateError)
+      setTimeout(() => {
+        resetErrors()
+      }, 4000);
+    }
+  }, [updateStatus, updateError])
 
   const toggleDropdown = (id) => {
     setOpenDropdown((prevState) => ({
@@ -87,6 +109,22 @@ const Reco = () => {
       dispatch(getRecoTransactions({ filters, page: page + 1, items: itemsPerPage }))
     }
   };
+
+  const performReconciliation = (trxId, updates, fractionId) => {
+    fractionId ?
+      dispatch(reconcileTransaction({ trxId, updates, fractionId })) :
+      dispatch(reconcileTransaction({ trxId, updates }));
+  }
+
+  const closeMinorEditModal = () => {
+    setSelectedMinor({});
+    setIsOpenMinorEdit(false);
+  }
+
+  const submitMinorEdit = (updates) => {
+    console.log('submitted minors: ', updates);
+    performReconciliation(selectedMinor.trxId, updates, selectedMinor.fractionId);
+  }
 
   const showLoading = (
     <tr>
@@ -159,6 +197,8 @@ const Reco = () => {
                 <th className="text-sm">Tenure of SIP</th>
                 <th className="text-sm">Order ID</th>
                 <th className="text-sm">Cheque No.</th>
+                <th style={{ textAlign: 'center' }} className="text-sm">Actions/Status</th>
+                <ApproveColumn role={role} />
               </tr>
             </thead>
 
@@ -171,7 +211,8 @@ const Reco = () => {
                     const hasFractions =
                       item.transactionFractions &&
                       item.transactionFractions.length > 0;
-                    let type = item.category === 'switch' ? 'Switch' : item.transactionType
+                    let type = item.category === 'switch' ? 'Switch' : item.transactionType;
+                    let status = color.find((colorItem) => colorItem.type === item.status);
 
                     return (
                       <React.Fragment key={item._id}>
@@ -225,15 +266,25 @@ const Reco = () => {
                           <td>{item.tenure}</td>
                           <td>{item.orderId}</td>
                           <td>{item.chequeNumber}</td>
+                          {!hasFractions && <ReconcileButtonGroup
+                            item={item}
+                            role={role}
+                            status={status}
+                            setIsOpenMinorEdit={setIsOpenMinorEdit}
+                            setSelectedMinor={setSelectedMinor}
+                            performReconciliation={performReconciliation}
+                          />}
+                          {!hasFractions && <ApproveButton role={role} item={item} />}
                         </tr>
 
                         {openDropdown[item._id] && hasFractions && (
                           <tr>
-                            <td colSpan="26">
-                              <div className="p-4 bg-blue-50">
-                                <table className="w-full table-fixed">
+                            <td colSpan="28">
+                              <div className="bg-blue-50">
+                                <table className="w-full">
                                   <thead>
-                                    <tr className="text-left bg-blue-200">
+                                    <tr className="font-medium text-nowrap py-3 bg-blue-100">
+                                      <th className="text-sm w-16"></th>
                                       <th className="text-sm w-8">S. No.</th>
                                       <th className="text-sm w-24">Transaction date</th>
                                       <th className="text-sm w-24">Transaction type</th>
@@ -259,63 +310,79 @@ const Reco = () => {
                                       <th className="text-sm w-24">Tenure of SIP</th>
                                       <th className="text-sm w-24">Order ID</th>
                                       <th className="text-sm w-24">Cheque No.</th>
+                                      <th style={{ textAlign: 'center' }} className="text-sm">Actions/Status</th>
+                                      <ApproveColumn role={role} />
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {item.transactionFractions.map(
-                                      (fraction, fractionIndex) => (
-                                        <tr
-                                          key={fraction._id}
-                                          className="bg-blue-100"
-                                        >
-                                          <td className="text-sm">
-                                            {index + 1}.{fractionIndex + 1}
-                                          </td>
-                                          <td className="text-sm">
-                                            {fraction.transactionDate
-                                              ? formatDateDDShortMonthNameYY(
-                                                fraction.transactionDate
-                                              )
-                                              : formatDateDDShortMonthNameYY(
-                                                item.transactionPreference
-                                              )}
-                                          </td>
-                                          <td className="text-sm">{type}</td>
-                                          <td className="text-sm">{item.panNumber}</td>
-                                          <td className="text-sm">{item.investorName}</td>
-                                          <td className="text-sm">{item.familyHead}</td>
-                                          <td className="text-sm">{item.relationshipManager}</td>
-                                          <td className="text-sm">{item.amcName}</td>
-                                          <td className="text-sm">{item.schemeName}</td>
-                                          <td className="text-sm">{Number(fraction.fractionAmount).toLocaleString('en-IN', {
-                                            minimumFractionDigits: 0,
-                                            maximumFractionDigits: 2,
-                                            style: 'currency',
-                                            currency: 'INR'
-                                          })}</td>
-                                          <td className="text-sm">{item.transactionUnits}</td>
-                                          <td className="text-sm">{item.fromSchemeName}</td>
-                                          <td className="text-sm">{item.serviceManager}</td>
-                                          <td className="text-sm">{fraction.folioNumber || item.folioNumber}</td>
-                                          <td className="text-sm">{item.fromSchemeOption}</td>
-                                          <td className="text-sm">{item.schemeOption}</td>
-                                          <td className="text-sm">{item.registrantName}</td>
-                                          <td className="text-sm">{item.transactionFor}</td>
-                                          <td className="text-sm">{item.paymentMode}</td>
-                                          <td className="text-sm">{item.firstTransactionAmount}</td>
-                                          <td className="text-sm">
-                                            {item.sipSwpStpDate
-                                              ? formatDateDDShortMonthNameYY(
-                                                item.sipSwpStpDate
-                                              )
-                                              : "N/A"}
-                                          </td>
-                                          <td className="text-sm">{item.sipPauseMonths}</td>
-                                          <td className="text-sm">{item.tenure}</td>
-                                          <td className="text-sm">{fraction.orderId || item.orderId}</td>
-                                          <td className="text-sm">{item.chequeNumber}</td>
-                                        </tr>
-                                      )
+                                      (fraction, fractionIndex) => {
+                                        let fractionStatus = color.find(colorItem => colorItem.type === fraction.status)
+                                        return (
+                                          <tr
+                                            key={fraction._id}
+                                            className="bg-blue-50"
+                                          >
+                                            <td className="w-16"></td>
+                                            <td className="text-sm">
+                                              {index + 1}.{fractionIndex + 1}
+                                            </td>
+                                            <td className="text-sm">
+                                              {fraction.transactionDate
+                                                ? formatDateDDShortMonthNameYY(
+                                                  fraction.transactionDate
+                                                )
+                                                : formatDateDDShortMonthNameYY(
+                                                  item.transactionPreference
+                                                )}
+                                            </td>
+                                            <td className="text-sm">{type}</td>
+                                            <td className="text-sm">{item.panNumber}</td>
+                                            <td className="text-sm">{item.investorName}</td>
+                                            <td className="text-sm">{item.familyHead}</td>
+                                            <td className="text-sm">{item.relationshipManager}</td>
+                                            <td className="text-sm">{item.amcName}</td>
+                                            <td className="text-sm">{item.schemeName}</td>
+                                            <td className="text-sm">{Number(fraction.fractionAmount).toLocaleString('en-IN', {
+                                              minimumFractionDigits: 0,
+                                              maximumFractionDigits: 2,
+                                              style: 'currency',
+                                              currency: 'INR'
+                                            })}</td>
+                                            <td className="text-sm">{item.transactionUnits}</td>
+                                            <td className="text-sm">{item.fromSchemeName}</td>
+                                            <td className="text-sm">{item.serviceManager}</td>
+                                            <td className="text-sm">{fraction.folioNumber || item.folioNumber}</td>
+                                            <td className="text-sm">{item.fromSchemeOption}</td>
+                                            <td className="text-sm">{item.schemeOption}</td>
+                                            <td className="text-sm">{item.registrantName}</td>
+                                            <td className="text-sm">{item.transactionFor}</td>
+                                            <td className="text-sm">{item.paymentMode}</td>
+                                            <td className="text-sm">{item.firstTransactionAmount}</td>
+                                            <td className="text-sm">
+                                              {item.sipSwpStpDate
+                                                ? formatDateDDShortMonthNameYY(
+                                                  item.sipSwpStpDate
+                                                )
+                                                : "N/A"}
+                                            </td>
+                                            <td className="text-sm">{item.sipPauseMonths}</td>
+                                            <td className="text-sm">{item.tenure}</td>
+                                            <td className="text-sm">{fraction.orderId || item.orderId}</td>
+                                            <td className="text-sm">{item.chequeNumber}</td>
+                                            <ReconcileButtonGroup
+                                              item={item}
+                                              fraction={fraction}
+                                              role={role}
+                                              status={fractionStatus}
+                                              setIsOpenMinorEdit={setIsOpenMinorEdit}
+                                              setSelectedMinor={setSelectedMinor}
+                                              performReconciliation={performReconciliation}
+                                            />
+                                            <ApproveButton role={role} item={fraction} />
+                                          </tr>
+                                        )
+                                      }
                                     )}
                                   </tbody>
                                 </table>
@@ -350,9 +417,76 @@ const Reco = () => {
           >Next<BsArrowRight /></button>
         </div>
       </section>
+
+      {/* update minor issues modal  */}
+      <UpdateMinorsModal
+        isOpen={isOpenMinorEdit}
+        originalData={selectedMinor}
+        onClose={closeMinorEditModal}
+        onSubmit={submitMinorEdit}
+      />
+
       <Toaster />
     </main>
   );
 };
 
 export default Reco;
+
+
+// reconcile actions button group component
+const ReconcileButtonGroup = ({ item, fraction, role, status, setIsOpenMinorEdit, setSelectedMinor, performReconciliation }) => {
+  return (
+    <td style={{ textAlign: 'center' }}>
+      {['APPROVED'].includes(fraction?.status || item.status) ? <div className="flex gap-2">
+        <button onClick={() => { performReconciliation(item._id, { status: 'matched' }, fraction?._id || null) }} disabled={!hasPermission(role, 'reconcile', 'matched')} className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'>Matched</button>
+        <button
+          onClick={() => {
+            setIsOpenMinorEdit(true);
+            setSelectedMinor({
+              trxId: item._id,
+              fractionId: fraction?._id || null,
+              folioNumber: fraction?.folioNumber || item.folioNumber,
+              orderId: fraction?.orderId || item.orderId,
+              firstTransactionAmount: item.firstTransactionAmount,
+              transactionPreference: item.transactionPreference,
+              sipSwpStpDate: fraction?.sipSwpStpDate || item.sipSwpStpDate
+            })
+          }}
+          disabled={!hasPermission(role, 'reconcile', 'minor_issues')}
+          className='text-nowrap border border-blue-300 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:text-blue-300'
+        >Minor Issues
+        </button>
+        <button onClick={() => { performReconciliation(item._id, { status: 'major_issues' }, fraction?._id || null) }} disabled={!hasPermission(role, 'reconcile', 'major_issues')} className="text-nowrap rounded-3xl px-4 py-2 text-sm text-blue-800 disabled:text-blue-300 enabled:hover:underline">Major Issues</button>
+        <button onClick={() => { performReconciliation(item._id, { status: 'rejected' }, fraction?._id || null) }} disabled={!hasPermission(role, 'reconcile', 'reject')} className="rounded-3xl px-4 py-2 text-sm text-red-600 disabled:text-red-300 enabled:hover:underline">Reject</button>
+      </div> :
+        <span style={{ backgroundColor: status?.bgcolor, color: status?.color }} className="p-1 px-2 text-nowrap rounded-full">{status?.value}</span>
+      }
+    </td>
+  )
+}
+
+// approve column component for Admins 
+const ApproveColumn = ({ role }) => {
+
+  if (!hasPermission(role, 'approval', 'approve')) return null;
+
+  return (<th className="text-sm">Approval</th>)
+}
+
+// approve button component for admins 
+const ApproveButton = ({ item, role }) => {
+
+  if (!hasPermission(role, 'approval', 'approve')) return null;
+
+  return (
+    <td >
+      <button
+        disabled={!['RECONCILIATION_PENDING_REQUEST', 'RECONCILIATION_HOLD_REQUEST', 'RECONCILIATION_FAILED_REQUEST'].includes(item.status)}
+        className="text-sm text-green-800 w-28 border border-green-400 bg-green-200 rounded-3xl px-4 py-2 enabled:hover:bg-green-300 disabled:bg-green-50 disabled:text-green-300"
+      >Approve
+      </button>
+    </td>
+  )
+}
+

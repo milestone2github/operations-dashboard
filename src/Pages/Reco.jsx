@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import FiltersBar from "../components/FiltersBar";
 import { formatDateDDShortMonthNameYY } from "../utils/formatDate";
@@ -14,7 +14,7 @@ import UpdateMinorsModal from "../components/UpdateMinorsModal";
 import { color } from "../Statuscolor/color";
 import { resetErrors } from "../redux/reconciliation/ReconciliationSlice";
 import { hasPermission } from "../utils/permission";
-import { MdAdminPanelSettings } from "react-icons/md";
+import UpdateMajorsModal from "../components/UpdateMojorsModal";
 
 const itemsPerPage = 25; // Number of items to display per page
 
@@ -55,6 +55,9 @@ const Reco = () => {
 
   const [isOpenMinorEdit, setIsOpenMinorEdit] = useState(false);
   const [selectedMinor, setSelectedMinor] = useState({});
+
+  const [isOpenMajorEdit, setIsOpenMajorEdit] = useState(false);
+  const [selectedMajor, setSelectedMajor] = useState({});
 
   useEffect(() => {
     dispatch(getAllAmc())
@@ -116,14 +119,24 @@ const Reco = () => {
       dispatch(reconcileTransaction({ trxId, updates }));
   }
 
+  // MINOR edit handlers 
   const closeMinorEditModal = () => {
     setSelectedMinor({});
     setIsOpenMinorEdit(false);
   }
 
   const submitMinorEdit = (updates) => {
-    console.log('submitted minors: ', updates);
     performReconciliation(selectedMinor.trxId, updates, selectedMinor.fractionId);
+  }
+
+  // MAJOR edit handlers 
+  const closeMajorEditModal = () => {
+    setSelectedMajor({});
+    setIsOpenMajorEdit(false);
+  }
+
+  const submitMajorEdit = (updates) => {
+    performReconciliation(selectedMajor.trxId, updates, selectedMajor.fractionId);
   }
 
   const showLoading = (
@@ -213,7 +226,8 @@ const Reco = () => {
                       item.transactionFractions.length > 0;
                     let type = item.category === 'switch' ? 'Switch' : item.transactionType;
                     let status = color.find((colorItem) => colorItem.type === item.status);
-
+                    let reconcileStatus = color.find((colorItem) => colorItem.type === item.reconciliation?.reconcileStatus);
+                    
                     return (
                       <React.Fragment key={item._id}>
                         <tr className="text-sm">
@@ -269,12 +283,14 @@ const Reco = () => {
                           {!hasFractions && <ReconcileButtonGroup
                             item={item}
                             role={role}
-                            status={status}
+                            reconcileStatus={reconcileStatus}
                             setIsOpenMinorEdit={setIsOpenMinorEdit}
                             setSelectedMinor={setSelectedMinor}
+                            setIsOpenMajorEdit={setIsOpenMajorEdit}
+                            setSelectedMajor={setSelectedMajor}
                             performReconciliation={performReconciliation}
                           />}
-                          {!hasFractions && <ApproveButton role={role} item={item} />}
+                          {!hasFractions && <ApproveButton role={role} reconcileStatus={item.reconciliation?.reconcileStatus} />}
                         </tr>
 
                         {openDropdown[item._id] && hasFractions && (
@@ -318,6 +334,8 @@ const Reco = () => {
                                     {item.transactionFractions.map(
                                       (fraction, fractionIndex) => {
                                         let fractionStatus = color.find(colorItem => colorItem.type === fraction.status)
+                                        let fractionReconcileStatus = color.find(colorItem => colorItem.type === fraction.reconciliation?.reconcileStatus)
+                                        
                                         return (
                                           <tr
                                             key={fraction._id}
@@ -374,12 +392,14 @@ const Reco = () => {
                                               item={item}
                                               fraction={fraction}
                                               role={role}
-                                              status={fractionStatus}
+                                              reconcileStatus={fractionReconcileStatus}
                                               setIsOpenMinorEdit={setIsOpenMinorEdit}
                                               setSelectedMinor={setSelectedMinor}
+                                              setIsOpenMajorEdit={setIsOpenMajorEdit}
+                                              setSelectedMajor={setSelectedMajor}
                                               performReconciliation={performReconciliation}
                                             />
-                                            <ApproveButton role={role} item={fraction} />
+                                            <ApproveButton role={role} reconcileStatus={fraction.reconciliation?.reconcileStatus} />
                                           </tr>
                                         )
                                       }
@@ -418,12 +438,20 @@ const Reco = () => {
         </div>
       </section>
 
-      {/* update minor issues modal  */}
+      {/* update MINOR issues modal  */}
       <UpdateMinorsModal
         isOpen={isOpenMinorEdit}
         originalData={selectedMinor}
         onClose={closeMinorEditModal}
         onSubmit={submitMinorEdit}
+      />
+
+      {/* update MAJOR issues modal  */}
+      <UpdateMajorsModal
+        isOpen={isOpenMajorEdit}
+        originalData={selectedMajor}
+        onClose={closeMajorEditModal}
+        onSubmit={submitMajorEdit}
       />
 
       <Toaster />
@@ -435,11 +463,14 @@ export default Reco;
 
 
 // reconcile actions button group component
-const ReconcileButtonGroup = ({ item, fraction, role, status, setIsOpenMinorEdit, setSelectedMinor, performReconciliation }) => {
+const ReconcileButtonGroup = ({ item, fraction, role, reconcileStatus, setIsOpenMinorEdit, setSelectedMinor, setIsOpenMajorEdit, setSelectedMajor, performReconciliation }) => {
   return (
     <td style={{ textAlign: 'center' }}>
-      {['APPROVED'].includes(fraction?.status || item.status) ? <div className="flex gap-2">
+      {!(fraction?.reconciliation?.reconcileStatus || item.reconciliation?.reconcileStatus) ? <div className="flex gap-2">
+        {/* matched button  */}
         <button onClick={() => { performReconciliation(item._id, { status: 'matched' }, fraction?._id || null) }} disabled={!hasPermission(role, 'reconcile', 'matched')} className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'>Matched</button>
+
+        {/* minor edit button */}
         <button
           onClick={() => {
             setIsOpenMinorEdit(true);
@@ -449,7 +480,7 @@ const ReconcileButtonGroup = ({ item, fraction, role, status, setIsOpenMinorEdit
               folioNumber: fraction?.folioNumber || item.folioNumber,
               orderId: fraction?.orderId || item.orderId,
               firstTransactionAmount: item.firstTransactionAmount,
-              transactionPreference: item.transactionPreference,
+              transactionPreference: fraction?.transactionDate || item.transactionPreference,
               sipSwpStpDate: fraction?.sipSwpStpDate || item.sipSwpStpDate
             })
           }}
@@ -457,10 +488,29 @@ const ReconcileButtonGroup = ({ item, fraction, role, status, setIsOpenMinorEdit
           className='text-nowrap border border-blue-300 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:text-blue-300'
         >Minor Issues
         </button>
-        <button onClick={() => { performReconciliation(item._id, { status: 'major_issues' }, fraction?._id || null) }} disabled={!hasPermission(role, 'reconcile', 'major_issues')} className="text-nowrap rounded-3xl px-4 py-2 text-sm text-blue-800 disabled:text-blue-300 enabled:hover:underline">Major Issues</button>
+
+        {/* major edit button */}
+        <button
+          onClick={() => {
+            setIsOpenMajorEdit(true);
+            setSelectedMajor({
+              trxId: item._id,
+              fractionId: fraction?._id || null,
+              amount: fraction?.fractionAmount || item.amount,
+              panNumber: item.panNumber,
+              schemeName: item.schemeName,
+              amcName: item.amcName
+            })
+          }}
+          disabled={!hasPermission(role, 'reconcile', 'major_issues')}
+          className="text-nowrap rounded-3xl px-4 py-2 text-sm text-blue-800 disabled:text-blue-300 enabled:hover:underline"
+        >Major Issues
+        </button>
+
+        {/* reject button  */}
         <button onClick={() => { performReconciliation(item._id, { status: 'rejected' }, fraction?._id || null) }} disabled={!hasPermission(role, 'reconcile', 'reject')} className="rounded-3xl px-4 py-2 text-sm text-red-600 disabled:text-red-300 enabled:hover:underline">Reject</button>
       </div> :
-        <span style={{ backgroundColor: status?.bgcolor, color: status?.color }} className="p-1 px-2 text-nowrap rounded-full">{status?.value}</span>
+        <span style={{ backgroundColor: reconcileStatus?.bgcolor, color: reconcileStatus?.color }} className="p-1 px-2 text-xs text-nowrap rounded-full">{reconcileStatus?.value}</span>
       }
     </td>
   )
@@ -475,14 +525,14 @@ const ApproveColumn = ({ role }) => {
 }
 
 // approve button component for admins 
-const ApproveButton = ({ item, role }) => {
+const ApproveButton = ({ reconcileStatus, role }) => {
 
   if (!hasPermission(role, 'approval', 'approve')) return null;
 
   return (
     <td >
       <button
-        disabled={!['RECONCILIATION_PENDING_REQUEST', 'RECONCILIATION_HOLD_REQUEST', 'RECONCILIATION_FAILED_REQUEST'].includes(item.status)}
+        disabled={!['RECONCILED_WITH_MAJOR_REQUESTED', 'RECONCILIATION_REJECTED_REQUEST'].includes(reconcileStatus)}
         className="text-sm text-green-800 w-28 border border-green-400 bg-green-200 rounded-3xl px-4 py-2 enabled:hover:bg-green-300 disabled:bg-green-50 disabled:text-green-300"
       >Approve
       </button>

@@ -54,46 +54,40 @@ export const color =[
         value: "PAYMENT_PENDING"
     },
     {
-        type:"RECONCILIATION_PENDING_REQUEST",
-        bgcolor:"rgb(249 247 220)",
-        color:"rgb(234 179 8)",
-        value: "MINOR RECONCILED"
-    },
-    {
-        type:"RECONCILIATION_HOLD_REQUEST",
-        bgcolor:"rgb(249, 209, 163)",
-        color:"rgb(180, 96, 1)",
-        value: "MAJOR RECONCILED"
-    },
-    {
         type:"RECONCILED",
         bgcolor:"rgb(220 252 231)",
-        color:"rgb(22 163 74)",
+        color:"rgb(21 128 61)",
         value: "RECONCILED"
     },
     {
-        type:"RECONCILIATION_PENDING",
-        bgcolor:"rgb(249 247 220)",
-        color:"rgb(234 179 8)",
+        type:"RECONCILED_WITH_MINOR",
+        bgcolor:"rgb(236 252 203)",
+        color:"rgb(101 163 13)",
         value: "MINOR RECONCILED"
     },
     {
-        type:"RECONCILIATION_HOLD",
-        bgcolor:"rgb(220 252 231)",
-        color:"rgb(74 222 128)",
+        type:"RECONCILED_WITH_MAJOR_REQUESTED",
+        bgcolor:"rgb(254 249 195)",
+        color:"rgb(202 138 4)",
+        value: "MAJOR RECONCILED REQUESTED"
+    },
+    {
+        type:"RECONCILED_WITH_MAJOR",
+        bgcolor:"rgb(255 237 213)",
+        color:"rgb(234 88 12)",
         value: "MAJOR RECONCILED"
     },
     {
-        type:"RECONCILIATION_FAILED_REQUEST",
-        bgcolor:"rgb(254 226 226)",
-        color:"rgb(220 38 38)",
-        value: "RECONCILIATION FAILED"
+        type:"RECONCILIATION_REJECTED_REQUEST",
+        bgcolor:"rgb(255 237 213)",
+        color:"rgb(239 68 68)",
+        value: "RECONCILIATION REJECTED REQUEST"
     },
     {
-        type:"RECONCILIATION_FAILED",
+        type:"RECONCILIATION_REJECTED",
         bgcolor:"rgb(254 226 226)",
-        color:"rgb(220 38 38)",
-        value: "RECONCILIATION FAILED"
+        color:"rgb(185 28 28)",
+        value: "RECONCILIATION REJECTED"
     },
     {
         type: undefined,

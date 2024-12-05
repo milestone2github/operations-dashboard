@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { BiLoaderAlt } from "react-icons/bi";
+import { useSelector } from "react-redux";
 const initialFields = {
   folioNumber: "",
   firstTransactionAmount: "",
@@ -8,15 +10,13 @@ const initialFields = {
 }
 
 const UpdateMinorsModal = ({ isOpen, onClose, onSubmit, originalData }) => {
-  const [fields, setFields] = useState({
-    folioNumber: originalData?.folioNumber || "",
-    firstTransactionAmount: originalData?.firstTransactionAmount || "",
-    transactionPreference: originalData?.transactionPreference || "",
-    sipSwpStpDate: originalData?.sipSwpStpDate || "",
-    orderId: originalData?.orderId || "",
-  });
-
+  const [fields, setFields] = useState(initialFields);
   const [updatedFields, setUpdatedFields] = useState({});
+  const { updateStatus } = useSelector((state) => state.reconciliation);
+
+  useEffect(() => {
+    if (['completed', 'failed'].includes(updateStatus)) { handleClose() }
+  }, [updateStatus])
 
   // Handle field change and track updates
   const handleFieldChange = (fieldName, value) => {
@@ -27,7 +27,6 @@ const UpdateMinorsModal = ({ isOpen, onClose, onSubmit, originalData }) => {
   const handleSubmit = () => {
     let updatedData = { status: 'minor_issues', ...updatedFields };
     onSubmit(updatedData); // Only pass updated fields
-    handleClose()
   };
 
   const handleClose = () => {
@@ -129,7 +128,7 @@ const UpdateMinorsModal = ({ isOpen, onClose, onSubmit, originalData }) => {
             <input
               type="text"
               value={fields.orderId}
-              onChange={(e) => handleFieldChange("orderId", e.target.value)}
+              onChange={(e) => handleFieldChange("orderId", e.target.value?.toUpperCase())}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
               placeholder="Enter Order ID"
             />
@@ -140,15 +139,20 @@ const UpdateMinorsModal = ({ isOpen, onClose, onSubmit, originalData }) => {
         <div className="flex justify-end mt-8 space-x-4">
           <button
             onClick={handleClose}
-            className="px-5 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            disabled={updateStatus === 'pending'}
+            className="px-5 py-2 text-gray-700 border border-gray-300 rounded-lg disabled:text-gray-400 enabled:hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="px-5 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            disabled={updateStatus === 'pending'}
+            className="px-5 py-2 w-28  bg-blue-500 text-white rounded-lg disabled:bg-blue-400 enabled:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
-            Update
+            {updateStatus === 'pending' ?
+              <BiLoaderAlt className='text-lg animate-spin mx-auto' /> :
+              'Update'
+            }
           </button>
         </div>
       </div>

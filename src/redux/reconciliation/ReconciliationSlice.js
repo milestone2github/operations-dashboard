@@ -52,10 +52,10 @@ const reconciliationSlice = createSlice({
     })
     builder.addCase(reconcileTransaction.fulfilled, (state, action) => {
       const transaction = action.payload
-      state.updateStatus = 'completed'
       state.transactions = state.transactions.map(item =>
         item._id === transaction._id ? transaction : item
       )
+      state.updateStatus = 'completed'
     })
     
     

@@ -24,7 +24,8 @@ const initialFilters = {
   minAmount: '',
   maxAmount: '',
   transactionFor: '',
-  status: ['NOT-PENDING', 'NOT-APPROVED', 'NOT-RECONCILIATION_PENDING_REQUEST', 'NOT-RECONCILIATION_HOLD_REQUEST', 'NOT-RECONCILIATION_FAILED_REQUEST'],
+  status: ['NOT-PENDING'],
+  // reconcileStatus: ['NOT-RECONCILED_WITH_MAJOR_REQUESTED', 'NOT-RECONCILIATION_REJECTED_REQUEST'],
   approvalStatus: '',
   searchBy: 'family head',
   searchKey: ''
@@ -63,19 +64,6 @@ const History = () => {
   const clearAllFilters = () => {
     setFilters(initialFilters)
   }
-
-  // // side effect to apply saved filter on start of the page 
-  // useEffect(() => {
-  //   if (all?.filters.length && all?.active >= 0) {
-  //     let params = new URLSearchParams(all.filters[all.active])
-  //     let paramObj = {}
-  //     for (const [key, value] of params.entries()) {
-  //       paramObj[key] = value
-  //     }
-  //     paramObj.status = paramObj?.status?.split(',')
-  //     setFilters({ ...initialFilters, ...paramObj });
-  //   }
-  // }, [all?.active])
 
   useEffect(() => {
     if (abortController) {
@@ -146,7 +134,7 @@ const History = () => {
             typeOptions={typeList}
             rmNameOptions={rmNameList}
             smNameOptions={smNameList}
-            statusOptions={statusList.filter(status => !['PENDING', 'APPROVED'].includes(status))}
+            statusOptions={statusList.filter(status => !['PENDING'].includes(status))}
             approvalStatusOptions={approvalStatusList}
           />
         </div>
@@ -159,6 +147,7 @@ const History = () => {
               <tr className='font-medium text-nowrap py-3  text-gray-800'>
                 <th className='text-sm'>S. No.</th>
                 <th className='text-sm'>Status</th>
+                <th className='text-sm'>Reconcile Status</th>
                 <th className='text-sm'>Transaction date</th>
                 <th className='text-sm'>Transaction type</th>
                 <th className='text-sm'>Pan number</th>
@@ -191,6 +180,7 @@ const History = () => {
               status === 'pending' ? showLoading : !transactions.length ? notFound :
                 transactions?.map((item, index) => {
                   let status = item.status
+                  let reconcileStatus = item.reconciliation?.reconcileStatus
                   let approvalStatus = item.approvalStatus
                   let folioNumber = item.folioNumber
                   let orderId = item.orderId
@@ -204,6 +194,7 @@ const History = () => {
 
                   if (item.hasFractions) {
                     status = item.transactionFractions?.status
+                    reconcileStatus = item.transactionFractions?.reconciliation?.reconcileStatus
                     approvalStatus = item.transactionFractions?.approvalStatus
                     folioNumber = item.transactionFractions?.folioNumber
                     orderId = item.transactionFractions?.orderId
@@ -215,6 +206,7 @@ const History = () => {
                     id = item.transactionFractions?._id
                   }
                   let statusColor = color.find(colorItem => colorItem.type === status)
+                  let reconcileStatusColor = color.find(colorItem => colorItem.type === reconcileStatus)
 
                   return (
                     <tr key={id} className='text-sm'>
@@ -229,6 +221,13 @@ const History = () => {
                           className='px-2 py-1 rounded-full text-nowrap'
                           style={{ backgroundColor: statusColor.bgcolor, color: statusColor.color }}
                         >{statusColor.value}
+                        </span>
+                      </td>
+                      <td >
+                        <span
+                          className='px-2 py-1 text-xs rounded-full text-nowrap'
+                          style={{ backgroundColor: reconcileStatusColor.bgcolor, color: reconcileStatusColor.color }}
+                        >{reconcileStatusColor.value}
                         </span>
                       </td>
                       <td>{formatDateDDShortMonthNameYY(item.transactionPreference)}</td>

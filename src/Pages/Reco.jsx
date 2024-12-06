@@ -46,8 +46,7 @@ const Reco = () => {
   const [filters, setFilters] = useState(initialFilters);
   const [openDropdown, setOpenDropdown] = useState({});
 
-  // const { role } = useSelector(state => state.user.userData?.role)
-  const role = "Operations";
+  const { role } = useSelector(state => state.user.userData?.role)
   const { transactions, status, error, totalCount, totalAmount, page, updateStatus, updateError } = useSelector((state) => state.reconciliation);
   const { amcList, typeList, schemesList, rmNameList, error: listError } = useSelector(state => state.allFilterOptions)
   const dispatch = useDispatch();

@@ -175,6 +175,7 @@ const All = () => {
                 <th className='text-sm'>Folio No.</th>
                 <th className='text-sm'>From scheme option</th>
                 <th className='text-sm'>Scheme Option</th>
+                <th className='text-sm'>Frequency</th>
                 <th className='text-sm'>Registrant</th>
                 <th className='text-sm'>Transaction for</th>
                 <th className='text-sm'>Payment mode</th>
@@ -254,6 +255,7 @@ const All = () => {
                       <td>{folioNumber}</td>
                       <td>{item.fromSchemeOption}</td>
                       <td>{item.schemeOption}</td>
+                      <td>{item.frequency}</td>
                       <td><span className='w-44 two-line-ellipsis'>{item.registrantName}</span></td>
                       <td>{item.transactionFor}</td>
                       <td>{item.paymentMode}</td>

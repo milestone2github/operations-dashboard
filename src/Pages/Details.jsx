@@ -691,6 +691,7 @@ const Details = () => {
                   <th>Scheme Name / Option</th>
                   <th>Execution Date</th>
                   <th>Folio</th>
+                  <th>Frequency</th>
                   <th>Tenure of SIP</th>
                   <th>First Traxn Amount</th>
                   <th>SIP Date</th>
@@ -764,6 +765,7 @@ const Details = () => {
                             />
                           </td>
                           <td>{item.folioNumber}</td>
+                          <td>{item.frequency}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
                           <td className='relative'>
@@ -863,6 +865,7 @@ const Details = () => {
                                     <th>Transaction For</th>
                                     <th>Scheme Name / Option</th>
                                     <th>Folio</th>
+                                    <th>Frequency</th>
                                     <th>Tenure of SIP</th>
                                     <th>First Traxn Amount</th>
                                     <th>SIP Date</th>
@@ -916,6 +919,7 @@ const Details = () => {
                                               });
                                             }} />
                                         </td>
+                                        <td>{item.frequency}</td>
                                         <td>{item.tenure}</td>
                                         <td className='min-w-32'>{item.firstTransactionAmount}</td>
 
@@ -1087,6 +1091,7 @@ const Details = () => {
                   <th>Target Scheme Name / Option</th>
                   <th>Execution Date</th>
                   <th>Folio</th>
+                  <th>Frequency</th>
                   <th>Tenure of STP</th>
                   <th className='min-w-32'>First Traxn Amount</th>
                   <th>STP Date</th>
@@ -1160,6 +1165,7 @@ const Details = () => {
                             />
                           </td>
                           <td>{item.folioNumber}</td>
+                          <td>{item.frequency}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
                           <td className='relative'>
@@ -1261,6 +1267,7 @@ const Details = () => {
                                     <th>Source Scheme</th>
                                     <th>Target Scheme Name / Option</th>
                                     <th>Folio</th>
+                                    <th>Frequency</th>
                                     <th>Tenure of STP</th>
                                     <th className='min-w-32'>First Traxn Amount</th>
                                     <th>STP Date</th>
@@ -1314,6 +1321,7 @@ const Details = () => {
                                               });
                                             }} />
                                         </td>
+                                        <td>{item.frequency}</td>
                                         <td>{item.tenure}</td>
                                         <td className='min-w-32'>{item.firstTransactionAmount}</td>
                                         <td className='relative'>
@@ -1484,6 +1492,7 @@ const Details = () => {
                   <th>Source Scheme / Scheme Option</th>
                   <th>Execution Date</th>
                   <th>Folio</th>
+                  <th>Frequency</th>
                   <th>Tenure of SWP</th>
                   <th>First Traxn Amount</th>
                   <th>SWP Date</th>
@@ -1556,6 +1565,7 @@ const Details = () => {
                             />
                           </td>
                           <td>{item.folioNumber}</td>
+                          <td>{item.frequency}</td>
                           <td>{item.tenure}</td>
                           <td className='min-w-32'>{item.firstTransactionAmount}</td>
                           <td className='relative'>
@@ -1655,6 +1665,7 @@ const Details = () => {
                                     <th>Transaction For</th>
                                     <th>Source Scheme / Scheme Option</th>
                                     <th>Folio</th>
+                                    <th>Frequency</th>
                                     <th>Tenure of SWP</th>
                                     <th className='min-w-32'>First Traxn Amount</th>
                                     <th>SWP Date</th>
@@ -1708,6 +1719,7 @@ const Details = () => {
                                               });
                                             }} />
                                         </td>
+                                        <td>{item.frequency}</td>
                                         <td>{item.tenure}</td>
                                         <td className='min-w-32'>{item.firstTransactionAmount}</td>
                                         <td className='relative'>

@@ -91,11 +91,12 @@ const Details = () => {
   const [redemptions, setRedemptions] = useState([])
   const { role } = useSelector(state => state.user.userData?.role)
 
+  const [kycLoading, setKycLoading] = useState({});
   const [kycStatus, setKycStatus] = useState({});
 
   // Permissions
   const canModifyExecutionDate = ['mutual funds senior', 'mutual funds'].includes(role.toLowerCase())
-  const canModifyTransactions = ['operations senior', 'operations', 'management', 'Administrator'].includes(role.toLowerCase())
+  const canModifyTransactions = ['operations senior', 'operations', 'management', 'administrator'].includes(role.toLowerCase())
 
   useEffect(() => {
     setSips(systematicTransactions.filter(item => item.transactionType === 'SIP'))
@@ -588,10 +589,13 @@ const Details = () => {
   }, [orderIdStatus, noteUpdateStatus, linkGenerateStatus, error])
 
   const handleGetKycStatus = async (pan) => {
+    setKycLoading(prevState => ({ ...prevState, [pan]: true }));
     const result = await fetchKycStatus(pan);
+    setKycLoading(prevState => ({ ...prevState, [pan]: false }));
+
     if (result && result.Status) {
       let status = result.Status.slice(4);
-      setKycStatus(prevState => ({...prevState, [pan]: status}))
+      setKycStatus(prevState => ({ ...prevState, [pan]: status }));
     }
   }
 
@@ -645,29 +649,30 @@ const Details = () => {
             </div>
           </div>
           <div className=' bg-green-50 w-full rounded-md border-2 border-solid border-green-200 flex flex-col gap-4 p-4 tracking-wide'>
-              <h2 className=' text-xs font-semibold'>Investors</h2>
-              <ul className='flex flex-col gap-2'>{
-                commonData.investors.map(investor => {
-                  let splittedData = investor?.split('+');
-                  let pan = splittedData[0];
-                  let name = splittedData[1];
+            <h2 className=' text-xs font-semibold'>Investors</h2>
+            <ul className='flex flex-col gap-2'>{
+              commonData.investors.map(investor => {
+                let splittedData = investor?.split('+');
+                let pan = splittedData[0];
+                let name = splittedData[1];
 
-                  return (
-                    <li key={pan} className='flex gap-2 justify-between'>
-                      <p className='text-sm'>{name}</p>
-                      {kycStatus[pan] ? 
-                        <p className={`p-1 ${kycStatusColorMap[kycStatus[pan]?.trim()]} text-black text-xs h-fit rounded`}>{kycStatus[pan]}</p> : 
-                        <button 
-                          onClick={()=>handleGetKycStatus(pan)} 
-                          className='border border-blue-400 p-1 text-xs text-nowrap h-fit w-fit rounded text-blue-700'
-                          >KYC status
-                        </button>
-                      }
-                    </li>
-                  )
-                })
-              }
-              </ul>
+                return (
+                  <li key={pan} className='flex gap-2 justify-between'>
+                    <p className='text-sm'>{name}</p>
+                    {kycStatus[pan] ?
+                      <p className={`p-1 ${kycStatusColorMap[kycStatus[pan]?.trim()]} text-black text-xs h-fit rounded`}>{kycStatus[pan]}</p> :
+                      <button
+                        onClick={() => handleGetKycStatus(pan)}
+                        disabled={kycLoading[pan]}
+                        className='border border-blue-400 p-1 text-xs text-nowrap h-fit w-fit rounded text-blue-700'
+                      >{kycLoading[pan] ? 'Loading...' : 'KYC status'} 
+                      </button>
+                    }
+                  </li>
+                )
+              })
+            }
+            </ul>
 
           </div>
         </div>

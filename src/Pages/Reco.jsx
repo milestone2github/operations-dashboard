@@ -139,7 +139,6 @@ const Reco = () => {
   }
 
   const handleApproveReconciliation = (trxId, status, fractionId) => {
-    console.log('approve reco: ', {trxId, status, fractionId}); //debug
     dispatch(approveReconciliation({ trxId, fractionId, approve: 1, status }))
   }
 

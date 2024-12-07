@@ -41,8 +41,8 @@ const UpdateMajorsModal = ({ isOpen, onClose, onSubmit, originalData }) => {
   };
 
   const handleClose = () => {
-    onClose();
     setFields(initialFields);
+    onClose();
   }
 
   if (!isOpen) return null;

@@ -6,7 +6,7 @@ import { IoIosArrowForward, IoIosArrowUp } from "react-icons/io";
 import { FaSadTear } from "react-icons/fa";
 import Loader from "../components/Loader";
 import { useSelector, useDispatch } from "react-redux";
-import { getRecoTransactions, reconcileTransaction } from "../redux/reconciliation/ReconciliationAction";
+import { approveReconciliation, getRecoTransactions, reconcileTransaction } from "../redux/reconciliation/ReconciliationAction";
 import { BsArrowRight } from "react-icons/bs";
 import toast, { Toaster } from "react-hot-toast";
 import { getAllAmc, getRMNames } from "../redux/allFilterOptions/FilterOptionsAction";
@@ -138,6 +138,11 @@ const Reco = () => {
     performReconciliation(selectedMajor.trxId, updates, selectedMajor.fractionId);
   }
 
+  const handleApproveReconciliation = (trxId, status, fractionId) => {
+    console.log('approve reco: ', {trxId, status, fractionId}); //debug
+    dispatch(approveReconciliation({ trxId, fractionId, approve: 1, status }))
+  }
+
   const showLoading = (
     <tr>
       <td className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -226,7 +231,7 @@ const Reco = () => {
                     let type = item.category === 'switch' ? 'Switch' : item.transactionType;
                     let status = color.find((colorItem) => colorItem.type === item.status);
                     let reconcileStatus = color.find((colorItem) => colorItem.type === item.reconciliation?.reconcileStatus);
-                    
+
                     return (
                       <React.Fragment key={item._id}>
                         <tr className="text-sm">
@@ -289,7 +294,12 @@ const Reco = () => {
                             setSelectedMajor={setSelectedMajor}
                             performReconciliation={performReconciliation}
                           />}
-                          {!hasFractions && <ApproveButton role={role} reconcileStatus={item.reconciliation?.reconcileStatus} />}
+                          {!hasFractions && <ApproveButton
+                            role={role}
+                            trxId={item._id}
+                            reconcileStatus={item.reconciliation?.reconcileStatus}
+                            handleApproveReconciliation={handleApproveReconciliation}
+                          />}
                         </tr>
 
                         {openDropdown[item._id] && hasFractions && (
@@ -334,7 +344,7 @@ const Reco = () => {
                                       (fraction, fractionIndex) => {
                                         let fractionStatus = color.find(colorItem => colorItem.type === fraction.status)
                                         let fractionReconcileStatus = color.find(colorItem => colorItem.type === fraction.reconciliation?.reconcileStatus)
-                                        
+
                                         return (
                                           <tr
                                             key={fraction._id}
@@ -398,7 +408,13 @@ const Reco = () => {
                                               setSelectedMajor={setSelectedMajor}
                                               performReconciliation={performReconciliation}
                                             />
-                                            <ApproveButton role={role} reconcileStatus={fraction.reconciliation?.reconcileStatus} />
+                                            <ApproveButton
+                                              role={role}
+                                              trxId={item._id}
+                                              fractionId={fraction._id}
+                                              handleApproveReconciliation={handleApproveReconciliation}
+                                              reconcileStatus={fraction.reconciliation?.reconcileStatus}
+                                            />
                                           </tr>
                                         )
                                       }
@@ -524,13 +540,20 @@ const ApproveColumn = ({ role }) => {
 }
 
 // approve button component for admins 
-const ApproveButton = ({ reconcileStatus, role }) => {
+const ApproveButton = ({ trxId, fractionId, reconcileStatus, role, handleApproveReconciliation }) => {
 
   if (!hasPermission(role, 'approval', 'approve')) return null;
+
+  if(['RECONCILED_WITH_MAJOR', 'RECONCILIATION_REJECTED'].includes(reconcileStatus)) {
+    return (<td>
+      <span className="p-1 px-2 text-xs text-nowrap bg-green-100 text-green-700 rounded-full">Approved</span>
+    </td>)
+  }
 
   return (
     <td >
       <button
+        onClick={() => handleApproveReconciliation(trxId, reconcileStatus, fractionId)}
         disabled={!['RECONCILED_WITH_MAJOR_REQUESTED', 'RECONCILIATION_REJECTED_REQUEST'].includes(reconcileStatus)}
         className="text-sm text-green-800 w-28 border border-green-400 bg-green-200 rounded-3xl px-4 py-2 enabled:hover:bg-green-300 disabled:bg-green-50 disabled:text-green-300"
       >Approve

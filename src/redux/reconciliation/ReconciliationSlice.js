@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit"
 import { approveReconciliation, getRecoTransactions, reconcileTransaction } from "./ReconciliationAction"
 
 const initialState = {
-  transactions : [],
+  transactions: [],
   status: 'idle', // pending | failed | completed 
   error: null,
   totalCount: 0,
@@ -57,8 +57,8 @@ const reconciliationSlice = createSlice({
       )
       state.updateStatus = 'completed'
     })
-    
-    
+
+
     builder.addCase(approveReconciliation.pending, (state) => {
       state.updateStatus = 'pending'
       state.updateError = null
@@ -68,15 +68,16 @@ const reconciliationSlice = createSlice({
       state.updateError = action.payload
     })
     builder.addCase(approveReconciliation.fulfilled, (state, action) => {
-      const transaction = action.payload
-      state.updateStatus = 'completed'
-      state.transactions = state.transactions.map(item =>
-        //todo to remove if parent otherwise update
+      const transaction = action.payload;
+
+      state.transactions = state.transactions.map(item => 
         item._id === transaction._id ? transaction : item
-      )
-    })
+      );
+
+      state.updateStatus = 'completed';
+    });
   }
 })
 
-export const {resetErrors} = reconciliationSlice.actions
+export const { resetErrors } = reconciliationSlice.actions
 export default reconciliationSlice.reducer

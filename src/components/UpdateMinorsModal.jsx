@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BiLoaderAlt } from "react-icons/bi";
 import { useSelector } from "react-redux";
+import { formatDateDDShortMonthNameYY } from "../utils/formatDate";
 const initialFields = {
   folioNumber: "",
   firstTransactionAmount: "",
@@ -30,8 +31,8 @@ const UpdateMinorsModal = ({ isOpen, onClose, onSubmit, originalData }) => {
   };
 
   const handleClose = () => {
-    onClose();
     setFields(initialFields);
+    onClose();
   }
 
   if (!isOpen) return null;
@@ -89,7 +90,7 @@ const UpdateMinorsModal = ({ isOpen, onClose, onSubmit, originalData }) => {
               Transaction Preference (Date)
             </label>
             <div className="text-gray-500 text-xs mb-2">
-              <span className="font-medium">Previous:</span> {originalData?.transactionPreference || "N/A"}
+              <span className="font-medium">Previous:</span> {originalData?.transactionPreference ? formatDateDDShortMonthNameYY(originalData?.transactionPreference) : "N/A"}
             </div>
             <input
               type="date"
@@ -107,7 +108,7 @@ const UpdateMinorsModal = ({ isOpen, onClose, onSubmit, originalData }) => {
               SIP/SWP/STP Date
             </label>
             <div className="text-gray-500 text-xs mb-2">
-              <span className="font-medium">Previous:</span> {originalData?.sipSwpStpDate || "N/A"}
+              <span className="font-medium">Previous:</span> {originalData?.sipSwpStpDate ? formatDateDDShortMonthNameYY(originalData?.sipSwpStpDate) : "N/A"}
             </div>
             <input
               type="date"

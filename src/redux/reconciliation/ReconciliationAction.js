@@ -96,11 +96,12 @@ export const reconcileTransaction = createAsyncThunk(
 
 export const approveReconciliation = createAsyncThunk(
   'reconciliation/approve',
-  async ({ trxId, fractionId, approve }, { rejectWithValue }) => {
+  async ({ trxId, fractionId, approve, status }, { rejectWithValue }) => {
+    let updates = {approve, status}
     if(fractionId) {
-      updates = {fractionId, approve};
+      updates.fractionId = fractionId;
     }
-    console.log('making request for approve... ', trxId, updates, fractionId);//debug
+
     try {
       // make update request 
       const response = await fetch(

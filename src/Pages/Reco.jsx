@@ -15,6 +15,8 @@ import { color } from "../Statuscolor/color";
 import { resetErrors } from "../redux/reconciliation/ReconciliationSlice";
 import { hasPermission } from "../utils/permission";
 import UpdateMajorsModal from "../components/UpdateMojorsModal";
+import ConfirmDialogModal from "../components/ConfirmDialogModal";
+import { PiAnchorSimpleDuotone } from "react-icons/pi";
 
 const itemsPerPage = 25; // Number of items to display per page
 
@@ -57,6 +59,11 @@ const Reco = () => {
 
   const [isOpenMajorEdit, setIsOpenMajorEdit] = useState(false);
   const [selectedMajor, setSelectedMajor] = useState({});
+
+  const [isOpenMatchedModal, setIsOpenMatchedModal] = useState(false);
+  const [selectedMatchedTrx, setSelectedMatchedTrx] = useState({});
+  const [isOpenRejectModal, setIsOpenRejectModal] = useState(false);
+  const [selectedRejectTrx, setSelectedRejectTrx] = useState({});
 
   useEffect(() => {
     dispatch(getAllAmc())
@@ -119,6 +126,19 @@ const Reco = () => {
   }
 
   // MINOR edit handlers 
+  const openMinorEditModal = (item, fraction) => {
+    setIsOpenMinorEdit(true);
+    setSelectedMinor({
+      trxId: item._id,
+      fractionId: fraction?._id || null,
+      folioNumber: fraction?.folioNumber || item.folioNumber,
+      orderId: fraction?.orderId || item.orderId,
+      firstTransactionAmount: item.firstTransactionAmount,
+      transactionPreference: fraction?.transactionDate || item.transactionPreference,
+      sipSwpStpDate: fraction?.sipSwpStpDate || item.sipSwpStpDate
+    })
+  }
+
   const closeMinorEditModal = () => {
     setSelectedMinor({});
     setIsOpenMinorEdit(false);
@@ -129,6 +149,18 @@ const Reco = () => {
   }
 
   // MAJOR edit handlers 
+  const openMajorEditModal = (item, fraction) => {
+    setIsOpenMajorEdit(true);
+    setSelectedMajor({
+      trxId: item._id,
+      fractionId: fraction?._id || null,
+      amount: fraction?.fractionAmount || item.amount,
+      panNumber: item.panNumber,
+      schemeName: item.schemeName,
+      amcName: item.amcName
+    })
+  }
+
   const closeMajorEditModal = () => {
     setSelectedMajor({});
     setIsOpenMajorEdit(false);
@@ -137,6 +169,52 @@ const Reco = () => {
   const submitMajorEdit = (updates) => {
     performReconciliation(selectedMajor.trxId, updates, selectedMajor.fractionId);
   }
+
+  // *** MATCHED handlers
+  const openMatchedModal = (item, fraction) => {
+    setSelectedMatchedTrx({
+      trxId: item._id,
+      fractionId: fraction?._id || null,
+      panNumber: item.panNumber,
+      investorName: item.investorName,
+      familyHead: item.familyHead,
+      schemeName: item.schemeName,
+      amount: fraction?.fractionAmount || item.amount
+    });
+    setIsOpenMatchedModal(true);
+  }
+
+  const confirmMatched = () => {
+    performReconciliation(selectedMatchedTrx.trxId, { status: 'matched' }, selectedMatchedTrx.fractionId || null)
+  }
+  const closeMatchedConfirmModal = () => {
+    setSelectedMatchedTrx({});
+    setIsOpenMatchedModal(false);
+  }
+  // MATCHED handlers end ***
+
+  // *** REJECT handlers
+  const openRejectModal = (item, fraction) => {
+    setSelectedRejectTrx({
+      trxId: item._id,
+      fractionId: fraction?._id || null,
+      panNumber: item.panNumber,
+      investorName: item.investorName,
+      familyHead: item.familyHead,
+      schemeName: item.schemeName,
+      amount: fraction?.fractionAmount || item.amount
+    });
+    setIsOpenRejectModal(true);
+  }
+
+  const confirmReject = () => {
+    performReconciliation(selectedRejectTrx.trxId, { status: 'rejected' }, selectedRejectTrx.fractionId || null)
+  }
+  const closeRejectConfirmModal = () => {
+    setSelectedRejectTrx({});
+    setIsOpenRejectModal(false);
+  }
+  // REJECT handlers end ***
 
   const handleApproveReconciliation = (trxId, status, fractionId) => {
     dispatch(approveReconciliation({ trxId, fractionId, approve: 1, status }))
@@ -189,7 +267,8 @@ const Reco = () => {
               <tr className="font-medium text-nowrap py-3 text-gray-800">
                 <th className="text-sm"></th> {/* Placeholder for dropdown button */}
                 <th className="text-sm">S. No.</th>
-                <th className="text-sm">Transaction date</th>
+                <th className="text-sm">Preferred date</th>
+                <th className="text-sm">Ops Exec date</th>
                 <th className="text-sm">Transaction type</th>
                 <th className="text-sm">Pan number</th>
                 <th className="text-sm">Investor name</th>
@@ -212,6 +291,7 @@ const Reco = () => {
                 <th className="text-sm">SIP Pause month</th>
                 <th className="text-sm">Tenure of SIP</th>
                 <th className="text-sm">Order ID</th>
+                <th className="text-sm">Order Platform</th>
                 <th className="text-sm">Cheque No.</th>
                 <th style={{ textAlign: 'center' }} className="text-sm">Actions/Status</th>
                 <ApproveColumn role={role} />
@@ -230,6 +310,8 @@ const Reco = () => {
                     let type = item.category === 'switch' ? 'Switch' : item.transactionType;
                     let status = color.find((colorItem) => colorItem.type === item.status);
                     let reconcileStatus = color.find((colorItem) => colorItem.type === item.reconciliation?.reconcileStatus);
+                    let validationLength = item.validations?.length || 0;
+                    let opsExecDate = validationLength > 0 ? item.validations[validationLength - 1]?.validatedAt : null;
 
                     return (
                       <React.Fragment key={item._id}>
@@ -250,6 +332,9 @@ const Reco = () => {
                             {formatDateDDShortMonthNameYY(
                               item.transactionPreference
                             )}
+                          </td>
+                          <td>
+                            {formatDateDDShortMonthNameYY(opsExecDate)}
                           </td>
                           <td>{type}</td>
                           <td>{item.panNumber}</td>
@@ -282,16 +367,16 @@ const Reco = () => {
                           <td>{item.sipPauseMonths}</td>
                           <td>{item.tenure}</td>
                           <td>{item.orderId}</td>
+                          <td>{item.orderPlatform}</td>
                           <td>{item.chequeNumber}</td>
                           {!hasFractions && <ReconcileButtonGroup
                             item={item}
                             role={role}
                             reconcileStatus={reconcileStatus}
-                            setIsOpenMinorEdit={setIsOpenMinorEdit}
-                            setSelectedMinor={setSelectedMinor}
-                            setIsOpenMajorEdit={setIsOpenMajorEdit}
-                            setSelectedMajor={setSelectedMajor}
-                            performReconciliation={performReconciliation}
+                            openMinorEditModal={openMinorEditModal}
+                            openMajorEditModal={openMajorEditModal}
+                            openMatchedModal={openMatchedModal}
+                            openRejectModal={openRejectModal}
                           />}
                           {!hasFractions && <ApproveButton
                             role={role}
@@ -303,14 +388,15 @@ const Reco = () => {
 
                         {openDropdown[item._id] && hasFractions && (
                           <tr>
-                            <td colSpan="28">
+                            <td colSpan="30">
                               <div className="bg-blue-50">
                                 <table className="w-full">
                                   <thead>
                                     <tr className="font-medium text-nowrap py-3 bg-blue-100">
                                       <th className="text-sm w-16"></th>
                                       <th className="text-sm w-8">S. No.</th>
-                                      <th className="text-sm w-24">Transaction date</th>
+                                      <th className="text-sm w-24">Preferred date</th>
+                                      <th className="text-sm w-24">Ops Exec date</th>
                                       <th className="text-sm w-24">Transaction type</th>
                                       <th className="text-sm w-24">Pan number</th>
                                       <th className="text-sm w-24">Investor name</th>
@@ -333,6 +419,7 @@ const Reco = () => {
                                       <th className="text-sm w-24">SIP Pause month</th>
                                       <th className="text-sm w-24">Tenure of SIP</th>
                                       <th className="text-sm w-24">Order ID</th>
+                                      <th className="text-sm w-24">Order Platform</th>
                                       <th className="text-sm w-24">Cheque No.</th>
                                       <th style={{ textAlign: 'center' }} className="text-sm">Actions/Status</th>
                                       <ApproveColumn role={role} />
@@ -343,6 +430,8 @@ const Reco = () => {
                                       (fraction, fractionIndex) => {
                                         let fractionStatus = color.find(colorItem => colorItem.type === fraction.status)
                                         let fractionReconcileStatus = color.find(colorItem => colorItem.type === fraction.reconciliation?.reconcileStatus)
+                                        let fractionValidationLength = fraction.validations?.length || 0;
+                                        let fractionOpsExecDate = fractionValidationLength > 0 ? fraction.validations[fractionValidationLength - 1]?.validatedAt : null;
 
                                         return (
                                           <tr
@@ -362,6 +451,7 @@ const Reco = () => {
                                                   item.transactionPreference
                                                 )}
                                             </td>
+                                            <td className="text-sm">{formatDateDDShortMonthNameYY(fractionOpsExecDate)}</td>
                                             <td className="text-sm">{type}</td>
                                             <td className="text-sm">{item.panNumber}</td>
                                             <td className="text-sm">{item.investorName}</td>
@@ -395,17 +485,17 @@ const Reco = () => {
                                             <td className="text-sm">{item.sipPauseMonths}</td>
                                             <td className="text-sm">{item.tenure}</td>
                                             <td className="text-sm">{fraction.orderId || item.orderId}</td>
+                                            <td className="text-sm">{fraction.orderPlatform || item.orderPlatform}</td>
                                             <td className="text-sm">{item.chequeNumber}</td>
                                             <ReconcileButtonGroup
                                               item={item}
                                               fraction={fraction}
                                               role={role}
                                               reconcileStatus={fractionReconcileStatus}
-                                              setIsOpenMinorEdit={setIsOpenMinorEdit}
-                                              setSelectedMinor={setSelectedMinor}
-                                              setIsOpenMajorEdit={setIsOpenMajorEdit}
-                                              setSelectedMajor={setSelectedMajor}
-                                              performReconciliation={performReconciliation}
+                                              openMinorEditModal={openMinorEditModal}
+                                              openMajorEditModal={openMajorEditModal}
+                                              openMatchedModal={openMatchedModal}
+                                              openRejectModal={openRejectModal}
                                             />
                                             <ApproveButton
                                               role={role}
@@ -468,6 +558,28 @@ const Reco = () => {
         onSubmit={submitMajorEdit}
       />
 
+      {/* confirm matched transaction modal  */}
+      <ConfirmDialogModal
+        isOpen={isOpenMatchedModal}
+        onConfirm={confirmMatched}
+        onClose={closeMatchedConfirmModal}
+        confirmBtnText='Matched'
+        transactionData={selectedMatchedTrx}
+        header="Confirm Reconciliation"
+        actionType="success"
+      />
+
+      {/* confirm reject transaction modal  */}
+      <ConfirmDialogModal
+        isOpen={isOpenRejectModal}
+        onConfirm={confirmReject}
+        onClose={closeRejectConfirmModal}
+        confirmBtnText='Reject'
+        transactionData={selectedRejectTrx}
+        header="Reject Selected Transaction"
+        actionType="danger"
+      />
+
       <Toaster />
     </main>
   );
@@ -477,27 +589,21 @@ export default Reco;
 
 
 // reconcile actions button group component
-const ReconcileButtonGroup = ({ item, fraction, role, reconcileStatus, setIsOpenMinorEdit, setSelectedMinor, setIsOpenMajorEdit, setSelectedMajor, performReconciliation }) => {
+const ReconcileButtonGroup = ({ item, fraction, role, reconcileStatus, openMinorEditModal, openMajorEditModal, openMatchedModal, openRejectModal }) => {
   return (
     <td style={{ textAlign: 'center' }}>
       {!(fraction?.reconciliation?.reconcileStatus || item.reconciliation?.reconcileStatus) ? <div className="flex gap-2">
         {/* matched button  */}
-        <button onClick={() => { performReconciliation(item._id, { status: 'matched' }, fraction?._id || null) }} disabled={!hasPermission(role, 'reconcile', 'matched')} className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'>Matched</button>
+        <button
+          onClick={() => openMatchedModal(item, fraction)}
+          disabled={!hasPermission(role, 'reconcile', 'matched')}
+          className='w-28 border border-blue-300 bg-blue-100 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-300'
+        >Matched
+        </button>
 
         {/* minor edit button */}
         <button
-          onClick={() => {
-            setIsOpenMinorEdit(true);
-            setSelectedMinor({
-              trxId: item._id,
-              fractionId: fraction?._id || null,
-              folioNumber: fraction?.folioNumber || item.folioNumber,
-              orderId: fraction?.orderId || item.orderId,
-              firstTransactionAmount: item.firstTransactionAmount,
-              transactionPreference: fraction?.transactionDate || item.transactionPreference,
-              sipSwpStpDate: fraction?.sipSwpStpDate || item.sipSwpStpDate
-            })
-          }}
+          onClick={() => openMinorEditModal(item, fraction)}
           disabled={!hasPermission(role, 'reconcile', 'minor_issues')}
           className='text-nowrap border border-blue-300 rounded-3xl px-4 py-2 text-sm text-blue-800 enabled:hover:bg-blue-200 disabled:text-blue-300'
         >Minor Issues
@@ -505,24 +611,19 @@ const ReconcileButtonGroup = ({ item, fraction, role, reconcileStatus, setIsOpen
 
         {/* major edit button */}
         <button
-          onClick={() => {
-            setIsOpenMajorEdit(true);
-            setSelectedMajor({
-              trxId: item._id,
-              fractionId: fraction?._id || null,
-              amount: fraction?.fractionAmount || item.amount,
-              panNumber: item.panNumber,
-              schemeName: item.schemeName,
-              amcName: item.amcName
-            })
-          }}
+          onClick={() => openMajorEditModal(item, fraction)}
           disabled={!hasPermission(role, 'reconcile', 'major_issues')}
           className="text-nowrap rounded-3xl px-4 py-2 text-sm text-blue-800 disabled:text-blue-300 enabled:hover:underline"
         >Major Issues
         </button>
 
         {/* reject button  */}
-        <button onClick={() => { performReconciliation(item._id, { status: 'rejected' }, fraction?._id || null) }} disabled={!hasPermission(role, 'reconcile', 'reject')} className="rounded-3xl px-4 py-2 text-sm text-red-600 disabled:text-red-300 enabled:hover:underline">Reject</button>
+        <button
+          onClick={() => openRejectModal(item, fraction)}
+          disabled={!hasPermission(role, 'reconcile', 'reject')}
+          className="rounded-3xl px-4 py-2 text-sm text-red-600 disabled:text-red-300 enabled:hover:underline"
+        >Reject
+        </button>
       </div> :
         <span style={{ backgroundColor: reconcileStatus?.bgcolor, color: reconcileStatus?.color }} className="p-1 px-2 text-xs text-nowrap rounded-full">{reconcileStatus?.value}</span>
       }
@@ -543,7 +644,7 @@ const ApproveButton = ({ trxId, fractionId, reconcileStatus, role, handleApprove
 
   if (!hasPermission(role, 'approval', 'approve')) return null;
 
-  if(['RECONCILED_WITH_MAJOR', 'RECONCILIATION_REJECTED'].includes(reconcileStatus)) {
+  if (['RECONCILED_WITH_MAJOR', 'RECONCILIATION_REJECTED'].includes(reconcileStatus)) {
     return (<td>
       <span className="p-1 px-2 text-xs text-nowrap bg-green-100 text-green-700 rounded-full">Approved</span>
     </td>)

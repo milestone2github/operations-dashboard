@@ -148,7 +148,8 @@ const History = () => {
                 <th className='text-sm'>S. No.</th>
                 <th className='text-sm'>Status</th>
                 <th className='text-sm'>Reconcile Status</th>
-                <th className='text-sm'>Transaction date</th>
+                <th className="text-sm">Preferred date</th>
+                <th className="text-sm">Ops Exec date</th>
                 <th className='text-sm'>Transaction type</th>
                 <th className='text-sm'>Pan number</th>
                 <th className='text-sm'>Investor name</th>
@@ -172,6 +173,7 @@ const History = () => {
                 <th className='text-sm'>Tenure of SIP</th>
                 <th className='text-sm'>Approval Status</th>
                 <th className='text-sm'>Order ID</th>
+                <th className='text-sm'>Order Platform</th>
                 <th className='text-sm'>Cheque No.</th>
               </tr>
             </thead>
@@ -191,19 +193,27 @@ const History = () => {
                   let sipSwpStpDate = item.sipSwpStpDate
                   let id = item._id
                   let type = item.category === 'switch' ? 'Switch' : item.transactionType
+                  let preferredDate = item.transactionPreference; 
+                  let validationLength = item.validations?.length || 0;
+                  let opsExecDate = validationLength > 0 ? item.validations[validationLength - 1]?.validatedAt : null;
 
                   if (item.hasFractions) {
-                    status = item.transactionFractions?.status
-                    reconcileStatus = item.transactionFractions?.reconciliation?.reconcileStatus
-                    approvalStatus = item.transactionFractions?.approvalStatus
-                    folioNumber = item.transactionFractions?.folioNumber
-                    orderId = item.transactionFractions?.orderId
-                    orderPlatform = item.transactionFractions?.orderPlatform
-                    amount = item.transactionFractions?.fractionAmount
-                    note = item.transactionFractions?.note
-                    linkStatus = item.transactionFractions?.linkStatus
-                    sipSwpStpDate = item.transactionFractions?.transactionDate
-                    id = item.transactionFractions?._id
+                    const fraction = item.transactionFractions;
+                    status = fraction?.status
+                    reconcileStatus = fraction?.reconciliation?.reconcileStatus
+                    approvalStatus = fraction?.approvalStatus
+                    folioNumber = fraction?.folioNumber
+                    orderId = fraction?.orderId
+                    orderPlatform = fraction?.orderPlatform
+                    amount = fraction?.fractionAmount
+                    note = fraction?.note
+                    linkStatus = fraction?.linkStatus
+                    sipSwpStpDate = fraction?.transactionDate
+                    id = fraction?._id
+                    preferredDate = fraction?.transactionDate ?? preferredDate;
+
+                    let validationLength = fraction?.validations?.length || 0;
+                    opsExecDate = validationLength > 0 ? fraction?.validations[validationLength - 1]?.validatedAt : opsExecDate;
                   }
                   let statusColor = color.find(colorItem => colorItem.type === status)
                   let reconcileStatusColor = color.find(colorItem => colorItem.type === reconcileStatus)
@@ -230,7 +240,8 @@ const History = () => {
                         >{reconcileStatusColor.value}
                         </span>
                       </td>
-                      <td>{formatDateDDShortMonthNameYY(item.transactionPreference)}</td>
+                      <td>{formatDateDDShortMonthNameYY(preferredDate)}</td>
+                      <td>{formatDateDDShortMonthNameYY(opsExecDate)}</td>
                       <td>{type}</td>
                       <td>{item.panNumber}</td>
                       <td><span className='w-44 two-line-ellipsis'>{item.investorName}</span></td>
@@ -259,6 +270,7 @@ const History = () => {
                       <td>{item.tenure}</td>
                       <td>{approvalStatus}</td>
                       <td>{orderId}</td>
+                      <td>{orderPlatform}</td>
                       <td>{item.chequeNumber}</td>
                     </tr>)
                 })}
